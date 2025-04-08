@@ -1,0 +1,63 @@
+{
+  "name": "chat-app",
+  "version": "1.0.0",
+  "description": "A chat application with user authentication and group chat features.",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "react-scripts --openssl-legacy-provider start",
+    "start-prod": "serve -s dist",
+    "build": "webpack",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "dependencies": {
+    "@babel/core": "^7.26.10",
+    "@babel/preset-env": "^7.26.9",
+    "@react-oauth/google": "^0.12.1",
+    "axios": "^0.27.2",
+    "babel-loader": "^10.0.0",
+    "dotenv": "^10.0.0",
+    "html-webpack-plugin": "^5.6.3",
+    "jwt-decode": "^4.0.0",
+    "process": "^0.11.10",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-icons": "^4.3.1",
+    "react-router-dom": "^5.3.0",
+    "react-scripts": "4.0.3",
+    "styled-components": "^5.3.0",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "@babel/preset-react": "^7.26.3",
+    "@webpack-cli/serve": "^3.0.1",
+    "cross-env": "^7.0.3",
+    "css-loader": "^7.1.2",
+    "eslint": "^7.32.0",
+    "eslint-plugin-react": "^7.27.1",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.99.2",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.1"
+  },
+  "keywords": [
+    "chat",
+    "react",
+    "websocket",
+    "authentication"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

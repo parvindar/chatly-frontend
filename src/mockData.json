@@ -1,0 +1,21 @@
+{
+  "groups": [
+    { "id": "1", "name": "General" },
+    { "id": "2", "name": "Development" },
+    { "id": "3", "name": "Design" }
+  ],
+  "messages": {
+    "1": [
+      { "content": "Welcome to the General group!", "sender": "Admin" },
+      { "content": "Hello everyone!", "sender": "User1" }
+    ],
+    "2": [
+      { "content": "Let's discuss the new feature.", "sender": "Dev1" },
+      { "content": "Sure, I have some ideas.", "sender": "Dev2" }
+    ],
+    "3": [
+      { "content": "The new design looks great!", "sender": "Designer1" },
+      { "content": "Thanks! Glad you like it.", "sender": "Designer2" }
+    ]
+  }
+}
