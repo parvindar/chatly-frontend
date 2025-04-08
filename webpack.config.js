@@ -4,14 +4,22 @@ const webpack = require('webpack');
 const dotenv = require('dotenv');
 const fs = require('fs');
 
-// Get environment variables from .env file
-const envFilePath = '.env';
-const env = dotenv.parse(fs.readFileSync(envFilePath));
+let envVars = {};
 
-// Convert to object like { "process.env.REACT_APP_API_URL": JSON.stringify("...") }
-const envKeys = Object.keys(env).reduce((prev, next) => {
-  prev[`process.env.${next}`] = JSON.stringify(env[next]);
-  return prev;
+// Load from .env if it exists
+const envPath = path.resolve(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  const fileEnv = dotenv.parse(fs.readFileSync(envPath));
+  envVars = fileEnv;
+} else {
+  console.warn('.env file not found — using process.env fallback');
+  envVars = process.env;
+}
+
+// Format for DefinePlugin
+const defineEnv = Object.keys(envVars).reduce((acc, key) => {
+  acc[`process.env.${key}`] = JSON.stringify(envVars[key]);
+  return acc;
 }, {});
 
 module.exports = {
@@ -40,7 +48,7 @@ module.exports = {
     extensions: ['.js', '.jsx'],
   },
   plugins: [
-    new webpack.DefinePlugin(envKeys),
+    new webpack.DefinePlugin(defineEnv),
     new webpack.ProvidePlugin({
         process: 'process/browser',
       }),
