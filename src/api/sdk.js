@@ -41,17 +41,21 @@ export const initializeWebSocket = () => {
 
   socket.onmessage = (event) => {
     let wsmessage;
-    try {
-      wsmessage = JSON.parse(event.data);
-    } catch (e) {
-      console.log(event.data);
-      console.log(e);
-    }
-    console.log('WebSocket message received:', wsmessage);
 
-    if (listeners[wsmessage.type]) {
-      listeners[wsmessage.type](wsmessage.message);
-    }
+    const messages = event.data.split('\n');
+
+    for (const message of messages) {
+      try {
+        wsmessage = JSON.parse(message);
+      } catch (e) {
+        console.log('WebSocket message received:', message);
+        console.log(e);
+      }
+
+      if (listeners[wsmessage.type]) {
+        listeners[wsmessage.type](wsmessage.message);
+      }
+  }
   };
 
   socket.onclose = () => {

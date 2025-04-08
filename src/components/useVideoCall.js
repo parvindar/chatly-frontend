@@ -9,6 +9,7 @@ export const useVideoCall = (userId) => {
   const localStreamRef = useRef(null);
   const [currentCall, setCurrentCall] = useState(null);
   const [videoCallState, setVideoCallState] = useState("idle"); // New state for video call status
+  const [remoteICECandidate, setRemoteICECandidate] = useState([]);
 
   useEffect(() => {
     addMessageListener("video_call", handleSignalMessage);
@@ -17,11 +18,41 @@ export const useVideoCall = (userId) => {
     };
   }, []);
 
+useEffect(() => {
+  if(pcRef.current){
+    console.log("✅ Peer connection established");
+
+    // For ICE candidates
+    const candidates = [...remoteICECandidate];
+    while (candidates.length > 0) {
+      console.log("length:", candidates.length);
+      console.log("useEffect: Adding ICE candidate:");
+      const candidate = candidates.shift();
+      pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+    setRemoteICECandidate([]);
+
+  }
+}, [pcRef.current]);
+
   const createPeerConnection = (remoteUserId) => {
     const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" },{
-        urls: "stun:stun.relay.metered.ca:80",
-      },
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: 'stun:stun1.l.google.com:19302' },
+       {
+        username: "8EI2VeNoMLDDpLI086s-PqgJ11zN94-7e_H5yJvmg-M3Tj1_QYP1k8PRZLPGGvRYAAAAAGf1KPpwYXJ2aW5kYXI=",
+        credential: "088e82ce-1480-11f0-bd79-0242ac140004",
+        urls: [
+            "turn:ss-turn1.xirsys.com:80?transport=udp",
+            "turn:ss-turn1.xirsys.com:3478?transport=udp",
+            "turn:ss-turn1.xirsys.com:80?transport=tcp",
+            "turn:ss-turn1.xirsys.com:3478?transport=tcp",
+            "turns:ss-turn1.xirsys.com:443?transport=tcp",
+            "turns:ss-turn1.xirsys.com:5349?transport=tcp"
+        ]
+     },
+
       {
         urls: "turn:global.relay.metered.ca:80",
         username: "49dcc6138b74f979af70849f",
@@ -41,14 +72,16 @@ export const useVideoCall = (userId) => {
         urls: "turns:global.relay.metered.ca:443?transport=tcp",
         username: "49dcc6138b74f979af70849f",
         credential: "qEljicolNVrA8XGY",
-      },],
+      },
+      
+       ],
       iceCandidatePoolSize: 10,
     });
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
         console.log("ICE candidate type:", event.candidate.type);
-        console.log("Sending ICE candidate:", event.candidate);
+        console.log("Sending ICE candidate:");
         sendMessageWebSocket({
           type: "video_call",
           message: {
@@ -63,8 +96,7 @@ export const useVideoCall = (userId) => {
 
     pc.ontrack = (event) => {
       if (remoteVideoRef.current) {
-        console.log("✅ Received remote stream ", event.streams[0]);
-        console.log("Remote stream tracks:", event.streams[0]?.getTracks());
+        console.log("✅ Received remote stream ");
         remoteVideoRef.current.srcObject = null;
         remoteVideoRef.current.srcObject = event.streams[0];
 
@@ -105,6 +137,8 @@ export const useVideoCall = (userId) => {
       return;
     }
 
+    localStreamRef.current = stream;
+
     requestAnimationFrame(() => {
       const videoEl = localVideoRef.current;
       if (!videoEl) return;
@@ -123,7 +157,6 @@ export const useVideoCall = (userId) => {
       }
     });
 
-    localStreamRef.current = stream;
     const pc = createPeerConnection(remoteUserId);
     pcRef.current = pc;
     setCurrentCall(remoteUserId);
@@ -197,19 +230,24 @@ export const useVideoCall = (userId) => {
 
   const handleAnswer = async ({ sdp }) => {
     if (pcRef.current) {
-      console.log("Setting remote description:", sdp);
+      console.log("Setting remote description:");
       await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
+    }else{
+      console.error("handleAnswer: No peer connection found");
     }
   };
 
   const handleIceCandidate = async ({ candidate }) => {
-    if (pcRef.current && candidate) {
-      console.log("Adding ICE candidate:", candidate);
+    if (pcRef.current) {
+      console.log("Adding ICE candidate:");
       try {
         await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (err) {
         console.error("Error adding ICE candidate:", err);
       }
+    }else{
+      console.error("handleIceCandidate: No peer connection found");
+      setRemoteICECandidate(prevCandidates => [...prevCandidates, candidate]);
     }
   };
 

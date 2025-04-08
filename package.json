@@ -4,7 +4,7 @@
   "description": "A chat application with user authentication and group chat features.",
   "main": "src/index.js",
   "scripts": {
-    "start": "react-scripts --openssl-legacy-provider start",
+    "start": "cross-env HTTPS=true react-scripts --openssl-legacy-provider start",
     "start-prod": "serve -s dist",
     "build": "webpack",
     "test": "react-scripts test",
@@ -36,6 +36,7 @@
     "eslint": "^7.32.0",
     "eslint-plugin-react": "^7.27.1",
     "style-loader": "^4.0.0",
+    "terser-webpack-plugin": "^5.3.14",
     "webpack": "^5.99.2",
     "webpack-cli": "^6.0.1",
     "webpack-dev-server": "^5.2.1"
