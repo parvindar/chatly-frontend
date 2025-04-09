@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin  } from '@react-oauth/google';
 import {jwtDecode} from "jwt-decode";
 import { login, loginViaGoogle } from '../api/sdk'; // Assuming login function is defined in sdk.js
 import styled from 'styled-components';
@@ -139,6 +139,37 @@ const LoginPage = () => {
     console.log("Login Failed");
   };
 
+
+  const GoogleLoginButton = () => (
+    <button
+      onClick={() => login()}
+      style={{
+        width: '300px', // set your desired width
+        backgroundColor: '#4285F4',
+        color: '#fff',
+        padding: '10px',
+        border: 'none',
+        borderRadius: '5px',
+        fontSize: '16px',
+        fontWeight: '500',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '10px',
+        cursor: 'pointer',
+      }}
+    >
+      <img
+        src="https://developers.google.com/identity/images/g-logo.png"
+        alt="google logo"
+        style={{ width: 20, height: 20 }}
+      />
+      Sign in with Google
+    </button>
+  );
+
+
+
   return (
     <LoginContainer>
       <LoginForm onSubmit={handleLogin}>
@@ -168,9 +199,10 @@ const LoginPage = () => {
         or
         </div>
         <VerticalSpace />
-        <GoogleLogin auto_select useOneTap width={"auto"} theme="filled_black" onSuccess={handleSuccess} onError={handleError} />
+        <GoogleLogin auto_select useOneTap width={260} theme="filled_black" onSuccess={handleSuccess} onError={handleError} />
 
       </LoginForm>
+
       <RegisterLink>
         Don't have an account? <a href="/register">Register here</a>
       </RegisterLink>
