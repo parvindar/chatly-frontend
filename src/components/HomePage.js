@@ -323,11 +323,36 @@ const UserItem = styled.div`
   }
 `;
 
-const UserProfilePic = styled.img`
+const UserProfilePic = styled.div`
+  position: relative;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
   margin-right: 10px;
+`;
+
+const ProfileImage = styled.img`
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+const OnlineStatusIndicator = styled.div`
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  background-color: ${props => props.isOnline ? '#43b581' : '#747f8d'};
+  border-radius: 50%;
+  border: 1px solid #23272a;
+  display: ${props => props.isOnline ? 'block' : 'none'};
+  // box-shadow: 0 0 0 2px ${props => props.isOnline ? '#43b581' : '#747f8d'};
+  // transition: all 0.2s ease-in-out;
+
+  // &:hover {
+  //   transform: scale(1.2);
+  // }
 `;
 
 const UserName = styled.span`
@@ -681,6 +706,9 @@ const [privateChats, setPrivateChats] = useState([]);
     const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
 const [isVideoCallActive, setIsVideoCallActive] = useState(false);
 
+const [userStatusMap, setUserStatusMap] = useState({});
+const [typingUsers, setTypingUsers] = useState({});
+
 const {runAction, isLoading} = useApiAction();
 
        // Reference for the RTCPeerConnection
@@ -800,7 +828,19 @@ const {runAction, isLoading} = useApiAction();
     }
   },[])
 
-    useEffect(() => {
+  useEffect(() =>{
+    if(!privateChats) return ;
+
+    const statusMap = {...userStatusMap};
+
+    for(const chat of privateChats){
+      statusMap[chat.user.id] = chat.user.status;
+    }
+    setUserStatusMap(statusMap);
+
+  },[privateChats])
+
+  useEffect(() => {
     if(!currentUser) return; 
     if(selectedTab !== 'privateChats') return; 
     const fetchPrivateChatss = async () => {
@@ -835,17 +875,39 @@ const {runAction, isLoading} = useApiAction();
 
     const handleMessage = (message) => {
       const { chat_id, ...messageData } = message;
-
       setMessagesMap((prevMap) => ({
         ...prevMap,
         [chat_id]: [...(prevMap[chat_id] || []), messageData],
       }));
     };
 
-    addMessageListener("chat",handleMessage);
+    const handleUserStatus = (message) => {
+      const {user_id, status} = message;
+      setUserStatusMap((prevMap) => ({
+        ...prevMap,
+        [user_id]: status,
+      }));
+    };
+
+    const handleTypingStatus = (message) => {
+      const { user_id, is_typing, chat_id } = message;
+      setTypingUsers(prev => ({
+        ...prev,
+        [chat_id]: {
+          ...prev[chat_id],
+          [user_id]: is_typing
+        }
+      }));
+    };
+
+    addMessageListener("chat", handleMessage);
+    addMessageListener("user_status", handleUserStatus);
+    addMessageListener("typing_status", handleTypingStatus);
 
     return () => {
-      removeMessageListener("chat",handleMessage);
+      removeMessageListener("chat", handleMessage);
+      removeMessageListener("user_status", handleUserStatus);
+      removeMessageListener("typing_status", handleTypingStatus);
     };
   }, []);
 
@@ -990,6 +1052,23 @@ const {runAction, isLoading} = useApiAction();
     }, 0);
   };
 
+  // Add this function to send typing status
+  const sendTypingStatus = useCallback(
+    _.throttle((isTyping) => {
+      if (selectedGroup) {
+        const message = {
+          type: 'typing_status',
+          message: {
+            user_id: currentUser.id,
+            is_typing: isTyping,
+            chat_id: selectedGroup.id
+          }
+        };
+        sendMessageWebSocket(message);
+      }
+    }, 1000), // Throttle to once per second
+    [selectedGroup, currentUser]
+  );
 
   return (
     <Container>
@@ -1071,10 +1150,13 @@ const {runAction, isLoading} = useApiAction();
       isSelected={selectedGroup && selectedGroup.id === chat.id} 
       onClick={() => setSelectedGroup(chat)} 
     >
-      <UserProfilePic
-        src={chat.user.profile_pic || 'https://i.pravatar.cc/40'} 
-        alt={chat.user.name || 'User'}
-      />
+      <UserProfilePic>
+        <ProfileImage
+          src={chat.user.profile_pic || 'https://i.pravatar.cc/40'} 
+          alt={chat.user.name || 'User'}
+        />
+        <OnlineStatusIndicator isOnline={ userStatusMap[chat.user.id] === 'online'} />
+      </UserProfilePic>
       <UserDetails>
         <UserName>{chat.user.name || 'User Name'}</UserName> 
         <UserId>{chat.user.user_id || 'user_id'}</UserId> 
@@ -1121,11 +1203,13 @@ const {runAction, isLoading} = useApiAction();
         <ChatBoxContainer>
           {selectedGroup && (
             <ChatBox
+              messages={messagesMap[selectedGroup?.id] || []}
+              onSendMessage={sendMessage}
+              currentUser={currentUser}
+              typingUsers={typingUsers[selectedGroup?.id] || {}}
+              onTyping={sendTypingStatus}
+              groupMembers={groupMembers}
               group={selectedGroup}
-              messages={messagesMap[selectedGroup.id] || []} 
-              addNewMessage={(message) => {
-                sendMessage(message);
-              }}
             />
           )}
         </ChatBoxContainer>
@@ -1190,10 +1274,13 @@ const {runAction, isLoading} = useApiAction();
       <MemberListContainer>
         {groupMembers.map((member) => (
           <UserItem key={member.id}>
-            <UserProfilePic
-              src={member.profile_pic || 'https://i.pravatar.cc/40'}
-              alt={member.name}
-            />
+            <UserProfilePic>
+              <ProfileImage
+                src={member.profile_pic || 'https://i.pravatar.cc/40'}
+                alt={member.name}
+              />
+              {/* <OnlineStatusIndicator isOnline={userStatusMap[member.id] === 'online'} /> */}
+            </UserProfilePic>
             <UserName>{member.name}</UserName>
             <UserRole isAdmin={member.role === 'admin'}>
               {member.role === 'admin' ? 'Admin' : 'Member'}
@@ -1268,10 +1355,13 @@ const {runAction, isLoading} = useApiAction();
                   isMember={user.is_member || isLoading("addMember")} 
                   onClick = {()=>{ if(!user.is_member && !isLoading("addMember" )) runAction("addMember", ()=>handleAddMember(user.id))}}
                 >
-                  <UserProfilePic
-                    src={user.profile_pic || 'https://i.pravatar.cc/40'}
-                    alt={user.name}
-                  />
+                  <UserProfilePic>
+                    <ProfileImage
+                      src={user.profile_pic || 'https://i.pravatar.cc/40'}
+                      alt={user.name}
+                    />
+                    {/* <OnlineStatusIndicator isOnline={user.is_member} /> */}
+                  </UserProfilePic>
                   <UserDetails>
                     <UserName>{user.name}</UserName>
                     <UserId>{user.user_id}</UserId>
@@ -1305,10 +1395,13 @@ const {runAction, isLoading} = useApiAction();
             isMember={isLoading("createChat")} 
             onClick = {()=>{ if(!isLoading("createChat")) runAction("createChat", ()=>handleCreateChat(user.id))}}
           >
-            <UserProfilePic
-              src={user.profile_pic || 'https://i.pravatar.cc/40'}
-              alt={user.name}
-            />
+            <UserProfilePic>
+              <ProfileImage
+                src={user.profile_pic || 'https://i.pravatar.cc/40'}
+                alt={user.name}
+              />
+              {/* <OnlineStatusIndicator isOnline={user.is_member} /> */}
+            </UserProfilePic>
             <UserDetails>
               <UserName>{user.name}</UserName>
               <UserId>{user.user_id}</UserId>

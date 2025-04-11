@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import colors from '../styles/colors';
 import { IoMdSend } from 'react-icons/io';
+import { BsThreeDots } from 'react-icons/bs';
 
 const ChatContainer = styled.div`
   flex: 1;
@@ -161,11 +162,49 @@ const SendButton = styled.button`
     margin-left: 2px;
   }
 `;
+const TypingIndicator = styled.div`
+  position: absolute;
+  z-index: 2;
+  bottom: 52px;
+  left: 12px;
+  display: flex;
+  height: 20px;
+  align-items: center;
+  color: #dcddde;
+  font-size: 0.8rem;
+  gap: 5px;
+  // background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(35,39,42,1) 100%);
+  // padding: 8px 12px;
+  border-radius: 4px;
+`;
 
-const ChatBox = ({ group, messages, addNewMessage }) => {
+const TypingAnimation = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  
+  .dot {
+    width: 4px;
+    height: 4px;
+    background: #dcddde;
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+    
+    &:nth-child(2) { animation-delay: 0.2s; }
+    &:nth-child(3) { animation-delay: 0.4s; }
+  }
+  
+  @keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-4px); }
+  }
+`;
+
+const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [] }) => {
   const [input, setInput] = useState('');
   const currentUserId = localStorage.getItem('user_id');
   const messageEndRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   const scrollToBottom = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -187,7 +226,13 @@ const ChatBox = ({ group, messages, addNewMessage }) => {
           chat_id: group.id,
           timestamp: new Date().toISOString(),
         };
-        addNewMessage(newMessage);
+        onSendMessage(newMessage);
+
+        if (typingTimeoutRef.current) {
+          onTyping(false);
+          clearTimeout(typingTimeoutRef.current);
+        }
+
         setInput('');
       } catch (error) {
         console.error('Error sending message:', error);
@@ -211,6 +256,54 @@ const ChatBox = ({ group, messages, addNewMessage }) => {
     } else {
       return messageDate.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ', ' + 
              messageDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    
+    onTyping(true);
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      onTyping(false);
+    }, 2000);
+  };
+
+  const checkUsersTyping = () => {
+    const typingUserIds = Object.entries(typingUsers)
+      .filter(([userId, isTyping]) => isTyping && userId !== currentUserId)
+      .map(([userId]) => userId);
+   
+    return typingUserIds.length > 0 ? true : false;
+  }
+
+  const getTypingUsersText = () => {
+    const typingUserIds = Object.entries(typingUsers)
+      .filter(([userId, isTyping]) => isTyping && userId !== currentUserId)
+      .map(([userId]) => userId);
+
+    if (typingUserIds.length === 0) return null;
+
+    if(group.type === 'private'){
+      return '';
+    }
+
+    const typingUserNames = typingUserIds
+      .map(userId => {
+        const member = groupMembers.find(m => m.id === userId);
+        return member ? member.name?.split(' ')[0] : 'Someone';
+      });
+
+    if (typingUserNames.length === 1) {
+      return `${typingUserNames[0]} is typing`;
+    } else if (typingUserNames.length === 2) {
+      return `${typingUserNames[0]} and ${typingUserNames[1]} are typing`;
+    } else {
+      return 'Several people are typing';
     }
   };
 
@@ -255,11 +348,32 @@ const ChatBox = ({ group, messages, addNewMessage }) => {
         ))}
         <div ref={messageEndRef} /> 
       </MessageList>
+      
+      {checkUsersTyping() && (
+        <TypingIndicator>
+          <span>{getTypingUsersText()}</span>
+          <TypingAnimation>
+            <div className="dot" />
+            <div className="dot" />
+            <div className="dot" />
+          </TypingAnimation>
+        </TypingIndicator>
+      )}
+
+      {/* <TypingIndicator>
+          <span>{"Cool is typing"}</span>
+          <TypingAnimation>
+            <div className="dot" />
+            <div className="dot" />
+            <div className="dot" />
+          </TypingAnimation>
+        </TypingIndicator> */}
+      
       <InputContainer>
         <Input
           type="text"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={handleKeyDown} 
           placeholder="Type a message..."
         />

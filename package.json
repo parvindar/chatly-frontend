@@ -4,7 +4,7 @@
   "description": "A chat application with user authentication and group chat features.",
   "main": "src/index.js",
   "scripts": {
-    "start": "cross-env HTTPS=true react-scripts --openssl-legacy-provider start",
+    "start": "react-scripts --openssl-legacy-provider start",
     "start-prod": "serve -s dist",
     "build": "webpack",
     "test": "react-scripts test",
