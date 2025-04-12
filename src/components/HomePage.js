@@ -818,14 +818,24 @@ const {runAction, isLoading} = useApiAction();
       }));
     };
 
+    const handleDeleteMessage = (message) => {
+      const { chat_id, message_id } = message;
+      setMessagesMap((prevMap) => ({
+        ...prevMap,
+        [chat_id]: prevMap[chat_id]?.filter(msg => msg.id !== message_id) || [],
+      }));
+    };
+
     addMessageListener("chat", handleMessage);
     addMessageListener("user_status", handleUserStatus);
     addMessageListener("typing_status", handleTypingStatus);
+    addMessageListener("message_deleted", handleDeleteMessage);
 
     return () => {
       removeMessageListener("chat", handleMessage);
       removeMessageListener("user_status", handleUserStatus);
       removeMessageListener("typing_status", handleTypingStatus);
+      removeMessageListener("message_deleted", handleDeleteMessage);
     };
   }, []);
 

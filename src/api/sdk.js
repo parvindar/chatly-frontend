@@ -188,6 +188,11 @@ export const getMessagesByChatId = async (chatId, lastMessageId=0) => {
   return response.data.data;
 };
 
+export const deleteChatMessage = async (messageId) => {
+  const response = await apiClient.delete(`/message/${messageId}`);
+  return response.data;
+};
+
 
 export const createGroup = async (name, description, type = 'open') => {
   const response = await apiClient.post('/channel', { name, description, type });

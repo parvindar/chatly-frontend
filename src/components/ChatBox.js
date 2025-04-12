@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import colors from '../styles/colors';
 import { IoMdSend } from 'react-icons/io';
 import { BsThreeDots } from 'react-icons/bs';
+import { deleteChatMessage } from '../api/sdk';
 
 const ChatContainer = styled.div`
   flex: 1;
@@ -200,14 +201,59 @@ const TypingAnimation = styled.div`
   }
 `;
 
+const MessageMenu = styled.div`
+  position: absolute;
+  right: 8px;
+  bottom: -2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  cursor: pointer;
+  color: ${colors.textSecondary};
+  
+  ${MessageContainer}:hover & {
+    opacity: 1;
+  }
+`;
+
+const MessageMenuOptions = styled.div`
+  position: absolute;
+  right: 0;
+  bottom: 24px;
+  background-color: #2c2f33;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  min-width: 120px;
+  overflow: hidden;
+`;
+
+const MenuOption = styled.div`
+  padding: 8px 8px;
+  color: ${colors.textSecondary};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  gap: 8px;
+  
+  &:hover {
+    background-color: #36393f;
+  }
+`;
+
 const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => {}, hasMoreMessages = true }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editingMessageContent, setEditingMessageContent] = useState('');
+  const [showMenuForMessage, setShowMenuForMessage] = useState(null);
   const currentUserId = localStorage.getItem('user_id');
   const messageEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messageListRef = useRef(null);
   const isUserScrolling = useRef(false);
+  const menuRef = useRef(null);
+  const menuOptionsRef = useRef(null);
 
   const scrollToBottom = () => {
     if (!isUserScrolling.current) {
@@ -356,46 +402,133 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     }
   };
 
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      console.log("deleting message", messageId);
+      await deleteChatMessage(messageId);
+      setShowMenuForMessage(null);
+    } catch (error) {
+      console.error('Error deleting message:', error);
+    }
+  };
+
+  const handleEditMessage = (message) => {
+    setEditingMessageId(message.id);
+    setEditingMessageContent(message.content);
+    setShowMenuForMessage(null);
+  };
+
+  const handleSaveEdit = async (messageId) => {
+    if (editingMessageContent.trim()) {
+      try {
+        const message = {
+          type: 'edit_message',
+          message: {
+            message_id: messageId,
+            content: editingMessageContent.trim(),
+            chat_id: group.id
+          }
+        };
+        sendMessageWebSocket(message);
+        setEditingMessageId(null);
+        setEditingMessageContent('');
+      } catch (error) {
+        console.error('Error editing message:', error);
+      }
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingMessageContent('');
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && 
+          !menuRef.current.contains(event.target) && 
+          (!menuOptionsRef.current || !menuOptionsRef.current.contains(event.target))) {
+        setShowMenuForMessage(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   if(!group) return ;
 
   return (
     <ChatContainer>
       <MessageList ref={messageListRef}>
-        {messages.map((message, index) => (<MessageContainer key = {index}>
-         
-         {message.sender_id === currentUserId && (
-           <CurrentUserTimeStamp>
-             {formatMessageTimestamp(message.timestamp)}
-           </CurrentUserTimeStamp>
-         )}
-          <MessageItem
-            isCurrentUser={message.sender_id === currentUserId}
-          >
-            {message.sender_id !== currentUserId && (
-              <ProfilePic
-                src={userMap[message.sender_id]?.profile_pic || 'https://i.pravatar.cc/40'}
-                alt={userMap[message.sender_id]?.name.split(' ').map((n) => n[0]).join('')}
-              />
+        {messages.map((message, index) => (
+          <MessageContainer key={index}>
+            {message.sender_id === currentUserId && (
+              <CurrentUserTimeStamp>
+                {formatMessageTimestamp(message.timestamp)}
+              </CurrentUserTimeStamp>
             )}
-            
-            <MessageContent>
-         
+            <MessageItem isCurrentUser={message.sender_id === currentUserId}>
               {message.sender_id !== currentUserId && (
-                <SenderName isCurrentUser={message.sender_id === currentUserId}>
-                  {userMap[message.sender_id]?.name}
-                  <OtherUserTimeStamp>
-                    {formatMessageTimestamp(message.timestamp)}
-                  </OtherUserTimeStamp>
-                </SenderName>
+                <ProfilePic
+                  src={userMap[message.sender_id]?.profile_pic || 'https://i.pravatar.cc/40'}
+                  alt={userMap[message.sender_id]?.name.split(' ').map((n) => n[0]).join('')}
+                />
               )}
               
-              <MessageText>{message.content}</MessageText>
-              
-            </MessageContent>
-          </MessageItem>
+              <MessageContent>
+                {message.sender_id !== currentUserId && (
+                  <SenderName isCurrentUser={message.sender_id === currentUserId}>
+                    {userMap[message.sender_id]?.name}
+                    <OtherUserTimeStamp>
+                      {formatMessageTimestamp(message.timestamp)}
+                    </OtherUserTimeStamp>
+                  </SenderName>
+                )}
+                
+                {editingMessageId === message.id ? (
+                  <div>
+                    <Input
+                      type="text"
+                      value={editingMessageContent}
+                      onChange={(e) => setEditingMessageContent(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSaveEdit(message.id);
+                        } else if (e.key === 'Escape') {
+                          handleCancelEdit();
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                      <button onClick={() => handleSaveEdit(message.id)}>Save</button>
+                      <button onClick={handleCancelEdit}>Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <MessageText>{message.content}</MessageText>
+                )}
+              </MessageContent>
+
+              {message.sender_id === currentUserId && (
+                <MessageMenu ref={menuRef}>
+                  <BsThreeDots onClick={() => setShowMenuForMessage(showMenuForMessage === message.id ? null : message.id)} />
+                  {showMenuForMessage === message.id && (
+                    <MessageMenuOptions ref={menuOptionsRef}>
+                      {/* <MenuOption onClick={() => handleEditMessage(message)}>Edit</MenuOption> */}
+                      <MenuOption onClick={() => handleDeleteMessage(message.id)}>Delete</MenuOption>
+                    </MessageMenuOptions>
+                  )}
+                </MessageMenu>
+              )}
+            </MessageItem>
           </MessageContainer>
         ))}
-        <div ref={messageEndRef} /> 
+        <div ref={messageEndRef} />
       </MessageList>
       
       {checkUsersTyping() && (
