@@ -16,6 +16,8 @@ const VideoCallContainer = styled.div`
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3),
               0 0 0 1px rgba(255, 255, 255, 0.1),
               inset 0 0 30px rgba(0, 0, 0, 0.4);
+  
+  // border: 2px solid ${colors.primaryActive};
 
   &:hover .call-controls {
     opacity: 1;
@@ -40,6 +42,8 @@ const LocalVideo = styled.video`
   bottom: 10px;
   right: 10px;
   border-radius: 8px;
+  // border: 2px solid ${colors.secondary};
+  object-fit: cover;
   z-index: 2;
   transition: transform 0.3s ease;
   cursor: pointer;

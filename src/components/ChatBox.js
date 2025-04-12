@@ -200,19 +200,51 @@ const TypingAnimation = styled.div`
   }
 `;
 
-const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [] }) => {
+const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => {}, hasMoreMessages = true }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const currentUserId = localStorage.getItem('user_id');
   const messageEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const messageListRef = useRef(null);
+  const isUserScrolling = useRef(false);
 
   const scrollToBottom = () => {
-    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!isUserScrolling.current) {
+      messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
     scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (messageListRef.current) {
+        const { scrollTop } = messageListRef.current;
+        if (scrollTop === 0 && messages.length > 0 && hasMoreMessages) {
+          isUserScrolling.current = true;
+          fetchMessages(group.id, messages[0].id);
+        }
+      }
+    };
+
+    const messageList = messageListRef.current;
+    if (messageList) {
+      messageList.addEventListener('scroll', handleScroll);
+    }
+
+    return () => {
+      if (messageList) {
+        messageList.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [messages, group.id, fetchMessages]);
+
+  // Reset the user scrolling flag after messages are loaded
+  useEffect(() => {
+    isUserScrolling.current = false;
   }, [messages]);
 
   useEffect(() => {
@@ -311,7 +343,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
 
     const typingUserNames = typingUserIds
       .map(userId => {
-        const member = groupMembers.find(m => m.id === userId);
+        const member = userMap[userId];
         return member ? member.name?.split(' ')[0] : 'Someone';
       });
 
@@ -328,7 +360,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
 
   return (
     <ChatContainer>
-      <MessageList>
+      <MessageList ref={messageListRef}>
         {messages.map((message, index) => (<MessageContainer key = {index}>
          
          {message.sender_id === currentUserId && (
@@ -341,8 +373,8 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
           >
             {message.sender_id !== currentUserId && (
               <ProfilePic
-                src={message.sender_info.profile_pic || 'https://i.pravatar.cc/40'}
-                alt={message.sender_info.name.split(' ').map((n) => n[0]).join('')}
+                src={userMap[message.sender_id]?.profile_pic || 'https://i.pravatar.cc/40'}
+                alt={userMap[message.sender_id]?.name.split(' ').map((n) => n[0]).join('')}
               />
             )}
             
@@ -350,7 +382,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
          
               {message.sender_id !== currentUserId && (
                 <SenderName isCurrentUser={message.sender_id === currentUserId}>
-                  {message.sender_info.name}
+                  {userMap[message.sender_id]?.name}
                   <OtherUserTimeStamp>
                     {formatMessageTimestamp(message.timestamp)}
                   </OtherUserTimeStamp>

@@ -182,6 +182,13 @@ export const fetchAllGroups = async () => {
   return response.data.data;
 };
 
+
+export const getMessagesByChatId = async (chatId, lastMessageId=0) => {
+  const response = await apiClient.get(`/message/${chatId}?last_message_id=${lastMessageId}&limit=20`);
+  return response.data.data;
+};
+
+
 export const createGroup = async (name, description, type = 'open') => {
   const response = await apiClient.post('/channel', { name, description, type });
   return response.data;
@@ -220,15 +227,4 @@ export const makeMemberGroupAdmin = async (groupId, userId) => {
 export const sendMessage = async (chatId, message) => {
   const response = await apiClient.post(`/chats/${chatId}/messages`, { message });
   return response.data;
-};
-
-// Receive Messages API
-export const receiveMessages = async (chatId) => {
-  try {
-    const response = await apiClient.get(`/chats/${chatId}/messages`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching messages:', error);
-    throw error;
-  }
 };

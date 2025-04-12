@@ -21,7 +21,8 @@ import {
   getGroupMemberOptions,
   fetchPrivateChats,
   createPrivateChat,
-  deleteChat
+  deleteChat,
+  getMessagesByChatId
 } from '../api/sdk';
 
 import { useVideoCall } from '../components/useVideoCall'; // Import the custom hook for video call
@@ -577,7 +578,8 @@ const HomePage = () => {
   const [visibleDropdown, setVisibleDropdown] = useState(null);
   const dropdownRef = useRef(null);
   const [groupMembers, setGroupMembers] = useState([]);
-    const [selectedTab, setSelectedTab] = useState('groups');
+  const [userMap, setUserMap] = useState({"a0000000-0000-0000-0000-000000000000" : { id : "a0000000-0000-0000-0000-000000000000", name : "AI", user_id : "ai", status : "online" }});
+  const [selectedTab, setSelectedTab] = useState('groups');
   const [visibleMemberDropdown, setVisibleMemberDropdown] = useState(null);
   const groupDropdownRef = useRef(null);
   const memberDropdownRef = useRef(null);
@@ -587,6 +589,8 @@ const [isVideoCallActive, setIsVideoCallActive] = useState(false);
 
 const [userStatusMap, setUserStatusMap] = useState({});
 const [typingUsers, setTypingUsers] = useState({});
+const [hasMoreMessages, setHasMoreMessages] = useState({});
+const [initialMessageLoaded, setInitialMessageLoaded] = useState({});
 
 const {runAction, isLoading} = useApiAction();
 
@@ -743,7 +747,27 @@ const {runAction, isLoading} = useApiAction();
     }
     setUserStatusMap(statusMap);
 
+    setUserMap(prev => {
+      const newMap = {...prev};
+      for(const chat of privateChats){
+        newMap[chat.user.id] = chat.user;
+      }
+      return newMap;
+    })
+
   },[privateChats])
+
+  useEffect(()=>{
+    if(groupMembers?.length){
+      setUserMap(prev => {
+        const newMap = {...prev};
+        for(const member of groupMembers){
+          newMap[member.id] = member;
+        }
+        return newMap;
+      })
+    }
+  },[groupMembers])
 
   useEffect(() => {
     if(!currentUser) return; 
@@ -842,6 +866,30 @@ const {runAction, isLoading} = useApiAction();
   // }, [selectedTab]);
 
   // Fetch members of the selected group
+
+  const fetchMessages = async (chatId) => {
+      const messages = await getMessagesByChatId(chatId, messagesMap[chatId]?.[0]?.id);
+
+      if(!messages?.list?.length){
+        setHasMoreMessages((prevMap) => ({
+          ...prevMap,
+          [chatId]: false,
+        }));
+      }else{
+        if(!hasMoreMessages[chatId]){
+          setHasMoreMessages((prevMap) => ({
+            ...prevMap,
+            [chatId]: true,
+          }));
+        }
+      }
+
+      setMessagesMap((prevMap) => ({
+        ...prevMap,
+        [chatId]: [...messages.list, ...(prevMap[chatId] || [])],
+      }));
+  }
+
   useEffect(() => {
     const fetchGroupMembers = async () => {
       if (selectedGroup) {
@@ -854,7 +902,16 @@ const {runAction, isLoading} = useApiAction();
       }
     };
 
-    fetchGroupMembers();
+    if(selectedGroup){
+      if(!initialMessageLoaded[selectedGroup.id]){
+        fetchMessages(selectedGroup.id);
+        setInitialMessageLoaded((prevMap) => ({
+          ...prevMap,
+          [selectedGroup.id]: true,
+        }));
+      }
+      fetchGroupMembers();
+    }
   }, [selectedGroup]);
 
   // Function to send a message
@@ -1140,6 +1197,9 @@ const {runAction, isLoading} = useApiAction();
               onTyping={sendTypingStatus}
               groupMembers={groupMembers}
               group={selectedGroup}
+              userMap={userMap}
+              fetchMessages={fetchMessages}
+              hasMoreMessages={hasMoreMessages[selectedGroup?.id]}
             />
           )}
         </ChatBoxContainer>
