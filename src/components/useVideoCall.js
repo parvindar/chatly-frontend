@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { addMessageListener, removeMessageListener, sendMessageWebSocket } from "../api/sdk";
 
-export const useVideoCall = (userId) => {
+export const useVideoCall = ({id : userId}) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const pcRef = useRef(null);
@@ -10,30 +10,46 @@ export const useVideoCall = (userId) => {
   const [currentCall, setCurrentCall] = useState(null);
   const [videoCallState, setVideoCallState] = useState("idle"); // New state for video call status
   const [remoteICECandidate, setRemoteICECandidate] = useState([]);
+  const [pendingCall, setPendingCall] = useState(null); // New state for pending call requests
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [isRemoteVideoEnabled, setIsRemoteVideoEnabled] = useState(true);
+  // const localVideoRef = useRef(null);
+  // const remoteVideoRef = useRef(null);
+  // const pcRef = useRef(null);
+  // const localStreamRef = useRef(null);
 
   useEffect(() => {
     addMessageListener("video_call", handleSignalMessage);
     return () => {
       removeMessageListener("video_call", handleSignalMessage);
     };
-  }, []);
+  }, [userId,pendingCall,currentCall]);
 
-useEffect(() => {
-  if(pcRef.current){
-    console.log("✅ Peer connection established");
-
-    // For ICE candidates
-    const candidates = [...remoteICECandidate];
-    while (candidates.length > 0) {
-      console.log("length:", candidates.length);
-      console.log("useEffect: Adding ICE candidate:");
-      const candidate = candidates.shift();
-      pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+  useEffect(() => {
+    console.log("useVideoCall userId effect triggered with:", userId);
+    if (!userId) {
+      console.error("userId is required for video calls");
+      return;
     }
-    setRemoteICECandidate([]);
+  }, [userId]);
 
-  }
-}, [pcRef.current]);
+  useEffect(() => {
+    if(pcRef.current){
+      console.log("✅ Peer connection established");
+
+      // For ICE candidates
+      const candidates = [...remoteICECandidate];
+      while (candidates.length > 0) {
+        console.log("length:", candidates.length);
+        console.log("useEffect: Adding ICE candidate:");
+        const candidate = candidates.shift();
+        pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+      }
+      setRemoteICECandidate([]);
+
+    }
+  }, [pcRef.current]);
 
   const createPeerConnection = (remoteUserId) => {
     const pc = new RTCPeerConnection({
@@ -184,6 +200,8 @@ useEffect(() => {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
       audio: true,
+    }).catch((err) => {
+      console.error("Error accessing media devices:", err);
     });
 
     localStreamRef.current = stream;
@@ -263,10 +281,102 @@ useEffect(() => {
       "webrtc-answer": handleAnswer,
       "ice-candidate": handleIceCandidate,
       "call-ended": handleCallEnded,
+      "call-request": handleCallRequest,
+      "call-accepted": handleCallAccepted,
+      "call-rejected": handleCallRejected,
     };
 
     if (handlers[type]) {
-      await handlers[type](msg);
+      try{
+        await handlers[type](msg);
+      }catch(err){
+        console.error("Error handling signal message:", err , type, msg);
+        if(pendingCall){
+          setPendingCall(null);
+        }
+      }
+    }
+  };
+
+  const handleCallRequest = ({ from }) => {
+    console.log("userId:", userId);
+    console.log("from:", from);
+    if(pendingCall && pendingCall !== from){
+      console.log("handleCallRequest: Pending call already exists, rejecting new request");
+      sendMessageWebSocket({
+        type: "video_call",
+        message: {
+          type: "call-rejected",
+          from: userId,
+          to: from, 
+          reason: "busy",
+        },
+      });
+      return;
+    }
+
+    if(currentCall && currentCall !== from){
+      console.log("handleCallRequest: Current call already exists, rejecting new request");
+      sendMessageWebSocket({
+        type: "video_call",
+        message: { type: "call-rejected", from: userId, to: from, reason: "busy" },
+      });
+      return;
+    }
+
+    setPendingCall(from);
+    setVideoCallState("incoming");
+  };
+
+  const handleCallAccepted = ({ from }) => {
+    if (from === pendingCall) {
+      setPendingCall(null);
+      startCall(from);
+    }
+  };
+
+  const handleCallRejected = (msg) => {
+    const { from } = msg;
+   
+    if (from === pendingCall) {
+      setPendingCall(null);
+      setVideoCallState("idle");
+    }
+  };
+
+  const requestCall = (remoteUserId) => {
+    sendMessageWebSocket({
+      type: "video_call",
+      message: {
+        type: "call-request",
+        from: userId,
+        to: remoteUserId,
+      },
+    });
+    setPendingCall(remoteUserId);
+    setVideoCallState("outgoing");
+  };
+
+  const acceptCall = () => {
+    if (pendingCall) {
+      setPendingCall(null);
+      startCall(pendingCall);
+    }
+  };
+
+  const rejectCall = () => {
+
+    if (pendingCall) {
+      sendMessageWebSocket({
+        type: "video_call",
+        message: {
+          type: "call-rejected",
+          from: userId,
+          to: pendingCall,
+        },
+      });
+      setPendingCall(null);
+      setVideoCallState("idle");
     }
   };
 
@@ -307,6 +417,47 @@ useEffect(() => {
     };
   }, []);
 
+  const toggleVideo = () => {
+    if (localStreamRef.current) {
+      const videoTrack = localStreamRef.current.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled;
+        setIsVideoEnabled(videoTrack.enabled);
+      }
+    }
+  };
+
+  const toggleAudio = () => {
+    if (localStreamRef.current) {
+      const audioTrack = localStreamRef.current.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled;
+        setIsAudioEnabled(audioTrack.enabled);
+      }
+    }
+  };
+
+  useEffect(() => {
+    console.log("useEffect: isRemoteVideoEnabled", isRemoteVideoEnabled);
+  }, [isRemoteVideoEnabled]);
+
+
+  useEffect(() => {
+   
+      const stream = remoteVideoRef.current?.srcObject;
+      if (stream) {
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack) {
+          setIsRemoteVideoEnabled(videoTrack.enabled);
+          videoTrack.onmute = () => setIsRemoteVideoEnabled(false);
+          videoTrack.onunmute = () => setIsRemoteVideoEnabled(true);
+        }
+      }
+    
+  }, [remoteVideoRef.current?.srcObject]);
+  
+
+
   return {
     localVideoRef,
     remoteVideoRef,
@@ -315,5 +466,14 @@ useEffect(() => {
     endCall,
     currentCall,
     videoCallState, // Expose the video call state
+    pendingCall,
+    requestCall,
+    acceptCall,
+    rejectCall,
+    toggleVideo,
+    toggleAudio,
+    isVideoEnabled,
+    isAudioEnabled,
+    isRemoteVideoEnabled,
   };
 };

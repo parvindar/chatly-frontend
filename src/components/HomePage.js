@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback,forwardRef,memo } from 'react';
 import GroupList from './GroupList';
 import ChatBox from './ChatBox';
+import VideoCallComponent from './VideoCallComponent';
 import styled from 'styled-components';
 import colors from '../styles/colors'
 
@@ -343,16 +344,13 @@ const OnlineStatusIndicator = styled.div`
   right: 0;
   width: 10px;
   height: 10px;
-  background-color: ${props => props.isOnline ? '#43b581' : '#747f8d'};
+  background-color: ${props => {
+    if (props.status === 'video_call') return '#f04747'; // Red for video call
+    return props.status === 'online' ? '#43b581' : '#747f8d';
+  }};
   border-radius: 50%;
   border: 1px solid #23272a;
-  display: ${props => props.isOnline ? 'block' : 'none'};
-  // box-shadow: 0 0 0 2px ${props => props.isOnline ? '#43b581' : '#747f8d'};
-  // transition: all 0.2s ease-in-out;
-
-  // &:hover {
-  //   transform: scale(1.2);
-  // }
+  display: ${props =>  (props.status && (props.status !== 'offline')) ? 'block' : 'none'};
 `;
 
 const UserName = styled.span`
@@ -555,133 +553,14 @@ const Tab = styled.div`
   }
 `;
 
-const VideoCallComponent = memo(({ localVideoRef, remoteVideoRef, endCall }) => {
-  const [isLocalVideoLarge, setIsLocalVideoLarge] = useState(false); // State to track which video is larger
-
-  const handleVideoSwap = () => {
-    setIsLocalVideoLarge((prev) => !prev); // Toggle the state to swap videos
-  };
-
-  return (
-    <div
-      style={{
-        height: '40%', // Restrict height to 40% of the parent container
-        maxWidth: '800px', // Set a maximum width for the component
-        width: '95%', // Allow it to shrink for smaller screens
-        margin: '0 auto', // Center the component horizontally
-        position: 'relative', // Enable positioning for child elements
-        borderRadius: '15px', // Add border radius for rounded corners
-        overflow: 'hidden', // Prevent content from overflowing
-        border: `2px solid ${colors.primary} `, // Add a border for styling
-        backgroundColor: '#000', // Fallback background color
-      }}
-    >
-      {/* Larger Video */}
-      <video
-        ref={remoteVideoRef}
-        autoPlay
-        playsInline
-        style={{
-          aspectRatio: '16 / 9',
-          width: '100%', // Larger video takes full width
-          height: '100%', // Larger video takes full height
-          objectFit: 'contain', // Maintain aspect ratio and cover the container
-          position: 'absolute', // Position it absolutely within the container
-          top: 0,
-          left: 0,
-          zIndex: 1, // Ensure it is behind the smaller video
-        }}
-      />
-
-      {/* Smaller Video */}
-      <video
-        ref={localVideoRef}
-        autoPlay
-        playsInline
-        muted={true} // Mute the local video when it's smaller
-        style={{
-          width: '25%', // Smaller video is smaller
-          aspectRatio: '16 / 9', // Maintain consistent aspect ratio
-          position: 'absolute', // Position it in the bottom-right corner
-          bottom: '10px',
-          right: '10px',
-          borderRadius: '8px', // Add border radius for rounded corners
-          border: '2px solid #fff', // Add a white border for better visibility
-          zIndex: 2, // Ensure it is above the larger video
-          transition: 'transform 0.3s ease', // Smooth zoom-in effect
-          cursor: 'pointer', // Indicate interactivity
-        }}
-        onMouseEnter={(e) => {
-          e.target.style.transform = 'scale(1.1)'; // Zoom in on hover
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.transform = 'scale(1)'; // Reset zoom on hover out
-        }}
-      />
-
-  
-      {/* <EndCallButton
-        onClick={endCall} 
-      >
-        <EndCallIcon /> 
-      </EndCallButton> */}
-
-
-    </div>
-  );
-});
-
-const EndCallButton = styled.button`
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  // transform: translateX(-50%);
-  background-color: #f04747; /* Red background for the button */
-  border: none;
-  border-radius: 50%; /* Make it circular */
-  width: 35px; /* Fixed size */
-  height: 35px; /* Fixed size */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 3; /* Ensure it is above the videos */
-  transition: transform 0.2s ease, background-color 0.2s ease; /* Smooth transition for hover effects */
-  transform-origin: center; /* Ensure scaling happens from the center */
-
-  &:hover {
-    transform: translateX(-50%) scale(1.1); /* Apply scale without affecting translateX */
-    background-color: #d32f2f; /* Darker red on hover */
-  }
-`;
-
-const EndCallIcon = styled(FiPhoneOff)`
-  color: white;
-  font-size: 20px;
-  pointer-events: none; /* Prevent hover events on the icon itself */
-`;
-
-const VideoCallButton = styled.button`
-  margin: 10px auto; /* Center the button horizontally with equal margins */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: ${colors.primary}; /* Use primary color */
-  color: ${colors.textPrimary}; /* Use primary text color */
-  border: none;
-  border-radius: 4px; /* Add rounded corners */
-  cursor: pointer;
-  transition: background-color 0.2s ease; /* Smooth transition for hover effects */
-  width: 90%; /* Ensure the button doesn't touch the edges */
-  padding: 10px;
-
-  &:hover {
-    background-color: ${colors.primaryHover}; /* Use primary hover color */
-  }
-
-  &:active {
-    background-color: ${colors.primaryActive}; /* Use primary active color */
-  }
+const VideoCallSection = styled.div`
+    height: 35%;
+    min-height: 210px;
+    margin-bottom: 4px;
+    padding: 4px;
+  // background-color: #23272a;
+  // border-radius: 8px;
+  // overflow: hidden;
 `;
 
 const HomePage = () => {
@@ -828,6 +707,32 @@ const {runAction, isLoading} = useApiAction();
     }
   },[])
 
+  const fetchPrivateChatss = async () => {
+    const data = await fetchPrivateChats(currentUser.id); 
+    setPrivateChats(data.list);
+  };
+
+  const loadGroups = async (firsttime = false) => {
+    const data = await fetchGroups();
+    setGroups(data.list);
+
+    if (data.list.length > 0 && firsttime) {
+      setSelectedGroup(data.list[0]); 
+    }
+
+  };
+
+  useEffect(() => {
+    if(!currentUser) return;
+    const statusMap = {...userStatusMap};
+    statusMap[currentUser.id] = currentUser.status;
+    setUserStatusMap(statusMap);
+
+    fetchPrivateChatss();
+    loadGroups(true);
+
+  }, [currentUser]);
+
   useEffect(() =>{
     if(!privateChats) return ;
 
@@ -843,10 +748,7 @@ const {runAction, isLoading} = useApiAction();
   useEffect(() => {
     if(!currentUser) return; 
     if(selectedTab !== 'privateChats') return; 
-    const fetchPrivateChatss = async () => {
-      const data = await fetchPrivateChats(currentUser.id); 
-      setPrivateChats(data.list);
-    };
+   
   
     fetchPrivateChatss();
   }, [currentUser,selectedTab]);
@@ -856,14 +758,6 @@ const {runAction, isLoading} = useApiAction();
 
     if(!currentUser) return; 
     if(selectedTab !== 'groups') return; 
-
-    const loadGroups = async () => {
-      const data = await fetchGroups();
-      setGroups(data.list);
-      if (data.list.length > 0) {
-        setSelectedGroup(data.list[0]); 
-      }
-    };
 
     loadGroups();
 
@@ -1039,16 +933,25 @@ const {runAction, isLoading} = useApiAction();
   const {
     localVideoRef,
     remoteVideoRef,
-    videoCallState,
     startCall,
     handleSignalMessage,
     endCall,
     currentCall,
-  } = useVideoCall(currentUser?.id);
+    videoCallState,
+    pendingCall,
+    requestCall,
+    acceptCall,
+    rejectCall,
+    toggleVideo,
+    toggleAudio,
+    isVideoEnabled,
+    isAudioEnabled,
+    isRemoteVideoEnabled
+  } = useVideoCall({ id: currentUser?.id });
 
   const handleVideoCall = (peerId) => {
     setTimeout(() => {
-      startCall(peerId);
+      requestCall(peerId);
     }, 0);
   };
 
@@ -1069,6 +972,18 @@ const {runAction, isLoading} = useApiAction();
     }, 1000), // Throttle to once per second
     [selectedGroup, currentUser]
   );
+
+  // Add function to get user info for video call
+  const getUserInfoForCall = () => {
+    if (videoCallState === 'incoming') {
+      // For incoming calls, find the user in privateChats
+      return privateChats.find(chat => chat.user.id === pendingCall)?.user;
+    } else if (videoCallState === 'outgoing') {
+      // For outgoing calls, find the user in privateChats
+      return privateChats.find(chat => chat.user.id === pendingCall)?.user;
+    }
+    return null;
+  };
 
   return (
     <Container>
@@ -1155,7 +1070,7 @@ const {runAction, isLoading} = useApiAction();
           src={chat.user.profile_pic || 'https://i.pravatar.cc/40'} 
           alt={chat.user.name || 'User'}
         />
-        <OnlineStatusIndicator isOnline={ userStatusMap[chat.user.id] === 'online'} />
+        <OnlineStatusIndicator status={userStatusMap[chat.user.id]} />
       </UserProfilePic>
       <UserDetails>
         <UserName>{chat.user.name || 'User Name'}</UserName> 
@@ -1196,10 +1111,25 @@ const {runAction, isLoading} = useApiAction();
         )}
       </LeftPanel>
       <RightPanel>
-       
-       { videoCallState === 'running' &&  
-          <VideoCallComponent localVideoRef={localVideoRef} remoteVideoRef={remoteVideoRef} endCall={endCall} />
-       }
+        {videoCallState !== 'idle' && (
+          <VideoCallSection>
+            <VideoCallComponent
+              localVideoRef={localVideoRef}
+              remoteVideoRef={remoteVideoRef}
+              endCall={endCall}
+              videoCallState={videoCallState}
+              pendingCall={pendingCall}
+              acceptCall={acceptCall}
+              rejectCall={rejectCall}
+              userInfo={getUserInfoForCall()}
+              toggleVideo={toggleVideo}
+              toggleAudio={toggleAudio}
+              isVideoEnabled={isVideoEnabled}
+              isAudioEnabled={isAudioEnabled}
+              isRemoteVideoEnabled={isRemoteVideoEnabled}
+            />
+          </VideoCallSection>
+        )}
         <ChatBoxContainer>
           {selectedGroup && (
             <ChatBox
@@ -1215,37 +1145,6 @@ const {runAction, isLoading} = useApiAction();
         </ChatBoxContainer>
       </RightPanel>
       <RightPanelMembers>
-
-      {videoCallState === 'running' && (
-    <ModalButton
-      onClick={() => {
-        endCall(); 
-        setIsVideoCallActive(false); 
-      }}
-      style={{
-        margin: '10px auto', 
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#f04747', 
-        color: 'white', 
-        border: 'none',
-        borderRadius: '4px', 
-        cursor: 'pointer',
-        transition: 'background-color 0.2s ease', 
-        width: '90%', 
-      }}
-      onMouseEnter={(e) => {
-        e.target.style.backgroundColor = '#d32f2f'; 
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.backgroundColor = '#f04747'; 
-      }}
-    >
-      <MdCallEnd style={{ marginRight: '8px' }} /> 
-      End Call
-    </ModalButton>
-  )}
 
   {selectedTab === 'privateChats' && selectedGroup?.user?.id && videoCallState === 'idle' && (
     <ModalButton
@@ -1279,7 +1178,7 @@ const {runAction, isLoading} = useApiAction();
                 src={member.profile_pic || 'https://i.pravatar.cc/40'}
                 alt={member.name}
               />
-              {/* <OnlineStatusIndicator isOnline={userStatusMap[member.id] === 'online'} /> */}
+              <OnlineStatusIndicator status={userStatusMap[member.id]} />
             </UserProfilePic>
             <UserName>{member.name}</UserName>
             <UserRole isAdmin={member.role === 'admin'}>

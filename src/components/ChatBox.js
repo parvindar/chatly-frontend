@@ -202,6 +202,7 @@ const TypingAnimation = styled.div`
 
 const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [] }) => {
   const [input, setInput] = useState('');
+  const [typing, setTyping] = useState(false);
   const currentUserId = localStorage.getItem('user_id');
   const messageEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -213,6 +214,15 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const handleSendMessage = async () => {
     if (input.trim()) {
@@ -228,9 +238,13 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         };
         onSendMessage(newMessage);
 
-        if (typingTimeoutRef.current) {
-          onTyping(false);
-          clearTimeout(typingTimeoutRef.current);
+        if (typing) {
+          setTyping(false);
+          
+          if(typingTimeoutRef.current){
+            clearTimeout(typingTimeoutRef.current);
+            onTyping(false);
+          }
         }
 
         setInput('');
@@ -265,10 +279,13 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    
-    onTyping(true);
-    
+    if(!typing){
+      setTyping(true);
+      onTyping(true);
+    }
+
     typingTimeoutRef.current = setTimeout(() => {
+      setTyping(false);
       onTyping(false);
     }, 2000);
   };
