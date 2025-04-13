@@ -198,6 +198,16 @@ export const editChatMessage = async (messageId, content) => {
   return response.data;
 };
 
+export const addMessageReaction = async (messageId, emoji) => {
+  const response = await apiClient.post(`/message/${messageId}/reactions`, { emoji });
+  return response.data;
+};
+
+export const deleteMessageReaction = async (messageId, emoji) => {
+  const response = await apiClient.delete(`/message/${messageId}/reactions/${emoji}`);
+  return response.data;
+};
+
 export const createGroup = async (name, description, type = 'open') => {
   const response = await apiClient.post('/channel', { name, description, type });
   return response.data;

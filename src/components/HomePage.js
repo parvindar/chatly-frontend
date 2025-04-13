@@ -564,6 +564,21 @@ const VideoCallSection = styled.div`
   // overflow: hidden;
 `;
 
+// Add the new styled component for the chat header bar
+const ChatHeaderBar = styled.div`
+  height: 20px; /* Adjust height as needed */
+  background-color: #23272a; /* Dark background */
+  color: #999999;
+  font-size: 12px;
+  display: flex;
+  align-items: center; /* Center content vertically */
+  justify-content: center; /* Center content horizontally */
+  padding: 0 15px; /* Add some padding */
+  font-weight: bold;
+  border-bottom: 1px solid #2c2f33; /* Optional border */
+  flex-shrink: 0; /* Prevent the header from shrinking */
+`;
+
 const HomePage = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [groups, setGroups] = useState([]);
@@ -834,11 +849,65 @@ const {runAction, isLoading} = useApiAction();
       }));
     };
 
+    const handleReaction = (message) => {
+      const { chat_id, message_id, emoji, user_id, is_deleted } = message; // Assuming user_id is part of the message
+      setMessagesMap((prevMap) => ({
+        ...prevMap,
+        [chat_id]: prevMap[chat_id]?.map(msg => {
+          if (msg.id === message_id) {
+            const existingReactions = msg.reactions || {};
+            const currentReaction = existingReactions[emoji] || { count: 0, me: false };
+            const reactedByMe = user_id === currentUser.id; // Check if the current user reacted
+            if(is_deleted){
+
+              if(currentReaction.count === 0){
+                return msg;
+              }
+
+              if(currentReaction.count === 1){
+                // remove emoji from msg
+                const newReactions = {...existingReactions};
+                delete newReactions[emoji];
+                return {
+                  ...msg,
+                  reactions: newReactions
+                };
+              }
+
+              return {
+                ...msg,
+                reactions: {
+                  ...existingReactions,
+                  [emoji]: {
+                    count: currentReaction.count - 1, 
+                    me: reactedByMe ? false : currentReaction.me
+                  }
+                }
+              };
+            }
+            
+            return {
+              ...msg,
+              reactions: {
+                ...existingReactions,
+                [emoji]: {
+                  count: currentReaction.count + 1,
+                  me: reactedByMe ? true : currentReaction.me
+                }
+              }
+            };
+          }
+          return msg;
+        }) || [],
+      }));
+    };
+
     addMessageListener("chat", handleMessage);
     addMessageListener("user_status", handleUserStatus);
     addMessageListener("typing_status", handleTypingStatus);
     addMessageListener("message_deleted", handleDeleteMessage);
     addMessageListener("message_edited", handleEditMessage);
+    addMessageListener("message_reaction", handleReaction);
 
     return () => {
       removeMessageListener("chat", handleMessage);
@@ -846,8 +915,9 @@ const {runAction, isLoading} = useApiAction();
       removeMessageListener("typing_status", handleTypingStatus);
       removeMessageListener("message_deleted", handleDeleteMessage);
       removeMessageListener("message_edited", handleEditMessage);
+      removeMessageListener("message_reaction", handleReaction);
     };
-  }, []);
+  }, [currentUser]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -1188,6 +1258,12 @@ const {runAction, isLoading} = useApiAction();
         )}
       </LeftPanel>
       <RightPanel>
+        {/* Add the ChatHeaderBar here */}
+        {selectedGroup && (
+          <ChatHeaderBar>
+            {selectedGroup.type === 'private' ?  selectedGroup.user?.name : selectedGroup.name }
+          </ChatHeaderBar>
+        )}
         {videoCallState !== 'idle' && (
           <VideoCallSection>
             <VideoCallComponent
