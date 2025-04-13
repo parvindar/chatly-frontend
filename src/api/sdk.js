@@ -193,6 +193,10 @@ export const deleteChatMessage = async (messageId) => {
   return response.data;
 };
 
+export const editChatMessage = async (messageId, content) => {
+  const response = await apiClient.put(`/message/${messageId}`, { content });
+  return response.data;
+};
 
 export const createGroup = async (name, description, type = 'open') => {
   const response = await apiClient.post('/channel', { name, description, type });

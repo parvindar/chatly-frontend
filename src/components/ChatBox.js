@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import colors from '../styles/colors';
 import { IoMdSend } from 'react-icons/io';
 import { BsThreeDots } from 'react-icons/bs';
-import { deleteChatMessage } from '../api/sdk';
+import { MdEdit } from 'react-icons/md';
+import { deleteChatMessage, editChatMessage } from '../api/sdk';
 
 const ChatContainer = styled.div`
   flex: 1;
@@ -45,9 +46,10 @@ const MessageItem = styled.div`
   align-items: flex-start;
   margin-bottom: 10px;
   padding: 10px;
-  background-color: ${(props) => (props.isCurrentUser ? colors.primary : '#2c2f33')};
+  background-color: ${(props) =>
+    props.isEditing ? '#2c2f33' : (props.isCurrentUser ? colors.primary : '#2c2f33')};
   border-radius: 8px;
-  color: ${(props) => (props.isCurrentUser ? colors.textPrimary : colors.textSecondary)};
+  color: ${(props) => (props.isCurrentUser && !props.isEditing ? colors.textPrimary : colors.textSecondary)};
   align-self: ${(props) => (props.isCurrentUser ? 'flex-end' : 'flex-start')};
   max-width: 100%;
   word-wrap: break-word;
@@ -65,6 +67,7 @@ const MessageContent = styled.div`
   display: flex;
   flex-direction: column;
   text-align: left;
+  flex: 1;
 `;
 
 const SenderName = styled.span`
@@ -107,6 +110,23 @@ const MessageText = styled.span`
   word-break: break-word;
   overflow-wrap: break-word;
   max-width: 100%;
+`;
+
+// New component for the persistent 'edited' indicator for the current user
+const EditedIndicator = styled.span`
+  position: absolute;
+  top: 0px;
+  right: 4px; // Adjust if needed to not overlap timestamp on hover
+  font-size: 0.6rem;
+  color: #ddd;
+  padding: 1px 3px;
+  border-radius: 3px;
+  opacity: 1;
+  transition: opacity 0.2s;
+
+  ${MessageContainer}:hover & {
+    opacity: 0;
+  }
 `;
 
 const InputContainer = styled.div`
@@ -174,8 +194,6 @@ const TypingIndicator = styled.div`
   color: #dcddde;
   font-size: 0.8rem;
   gap: 5px;
-  // background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(35,39,42,1) 100%);
-  // padding: 8px 12px;
   border-radius: 4px;
 `;
 
@@ -241,6 +259,56 @@ const MenuOption = styled.div`
   }
 `;
 
+// New styled components for editing
+const EditContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const EditTextArea = styled.textarea`
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  background-color: #23272a;
+  color: white;
+  min-height: 50px;
+  resize: none;
+  font-family: inherit;
+  font-size: 14px;
+  margin-bottom: 8px;
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 1px ${colors.primary};
+  }
+`;
+
+const EditActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+`;
+
+const EditButton = styled.button`
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background-color: #36393f;
+  color: ${colors.textSecondary};
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: #40444b;
+  }
+
+  &:first-of-type {
+    // Example: background-color: ${colors.primary}; color: white;
+    // &:hover { background-color: #3a66a1; }
+  }
+`;
+
 const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => {}, hasMoreMessages = true }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
@@ -288,7 +356,6 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     };
   }, [messages, group.id, fetchMessages]);
 
-  // Reset the user scrolling flag after messages are loaded
   useEffect(() => {
     isUserScrolling.current = false;
   }, [messages]);
@@ -421,15 +488,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
   const handleSaveEdit = async (messageId) => {
     if (editingMessageContent.trim()) {
       try {
-        const message = {
-          type: 'edit_message',
-          message: {
-            message_id: messageId,
-            content: editingMessageContent.trim(),
-            chat_id: group.id
-          }
-        };
-        sendMessageWebSocket(message);
+        await editChatMessage(messageId, editingMessageContent.trim());
         setEditingMessageId(null);
         setEditingMessageContent('');
       } catch (error) {
@@ -443,7 +502,6 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     setEditingMessageContent('');
   };
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && 
@@ -466,12 +524,24 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
       <MessageList ref={messageListRef}>
         {messages.map((message, index) => (
           <MessageContainer key={index}>
-            {message.sender_id === currentUserId && (
+            {/* Timestamp appears on hover */} 
+            {message.sender_id === currentUserId && editingMessageId !== message.id && (
               <CurrentUserTimeStamp>
                 {formatMessageTimestamp(message.timestamp)}
               </CurrentUserTimeStamp>
             )}
-            <MessageItem isCurrentUser={message.sender_id === currentUserId}>
+            {/* Persistent edited indicator */} 
+            {message.sender_id === currentUserId && message.is_edited && (
+              <EditedIndicator>
+                <span title="edited">
+                  <MdEdit />
+                </span>
+              </EditedIndicator>
+            )}
+            <MessageItem 
+              isCurrentUser={message.sender_id === currentUserId}
+              isEditing={editingMessageId === message.id}
+            >
               {message.sender_id !== currentUserId && (
                 <ProfilePic
                   src={userMap[message.sender_id]?.profile_pic || 'https://i.pravatar.cc/40'}
@@ -485,41 +555,49 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
                     {userMap[message.sender_id]?.name}
                     <OtherUserTimeStamp>
                       {formatMessageTimestamp(message.timestamp)}
+                      {/* Re-add edited indicator for other users */} 
+                      {message.is_edited && 
+                        <span style={{ fontSize: '0.65rem', marginLeft: '4px', verticalAlign: 'top' }} title="edited">
+                          <MdEdit />
+                        </span>}
                     </OtherUserTimeStamp>
                   </SenderName>
                 )}
                 
                 {editingMessageId === message.id ? (
-                  <div>
-                    <Input
-                      type="text"
+                  <EditContainer>
+                    <EditTextArea
                       value={editingMessageContent}
                       onChange={(e) => setEditingMessageContent(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
                           handleSaveEdit(message.id);
                         } else if (e.key === 'Escape') {
                           handleCancelEdit();
                         }
                       }}
                       autoFocus
+                      rows={Math.max(1, Math.min(6, editingMessageContent.split('\n').length))}
                     />
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                      <button onClick={() => handleSaveEdit(message.id)}>Save</button>
-                      <button onClick={handleCancelEdit}>Cancel</button>
-                    </div>
-                  </div>
+                    <EditActions>
+                      <EditButton onClick={() => handleSaveEdit(message.id)}>Save</EditButton>
+                      <EditButton onClick={handleCancelEdit}>Cancel</EditButton>
+                    </EditActions>
+                  </EditContainer>
                 ) : (
                   <MessageText>{message.content}</MessageText>
                 )}
               </MessageContent>
 
-              {message.sender_id === currentUserId && (
+              {message.sender_id === currentUserId && !editingMessageId && (
                 <MessageMenu ref={menuRef}>
                   <BsThreeDots onClick={() => setShowMenuForMessage(showMenuForMessage === message.id ? null : message.id)} />
                   {showMenuForMessage === message.id && (
                     <MessageMenuOptions ref={menuOptionsRef}>
-                      {/* <MenuOption onClick={() => handleEditMessage(message)}>Edit</MenuOption> */}
+                      {(!message.content.startsWith('/ai') && (Date.now() - new Date(message.timestamp).getTime()) <= 120000) && (
+                        <MenuOption onClick={() => handleEditMessage(message)}>Edit</MenuOption>
+                      )}
                       <MenuOption onClick={() => handleDeleteMessage(message.id)}>Delete</MenuOption>
                     </MessageMenuOptions>
                   )}
@@ -542,15 +620,6 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         </TypingIndicator>
       )}
 
-      {/* <TypingIndicator>
-          <span>{"Cool is typing"}</span>
-          <TypingAnimation>
-            <div className="dot" />
-            <div className="dot" />
-            <div className="dot" />
-          </TypingAnimation>
-        </TypingIndicator> */}
-      
       <InputContainer>
         <Input
           type="text"

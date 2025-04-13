@@ -826,16 +826,26 @@ const {runAction, isLoading} = useApiAction();
       }));
     };
 
+    const handleEditMessage = (message) => {
+      const { chat_id, message_id, content } = message;
+      setMessagesMap((prevMap) => ({
+        ...prevMap,
+        [chat_id]: prevMap[chat_id]?.map(msg => msg.id === message_id ? {...msg, content, is_edited : true} : msg) || [],
+      }));
+    };
+
     addMessageListener("chat", handleMessage);
     addMessageListener("user_status", handleUserStatus);
     addMessageListener("typing_status", handleTypingStatus);
     addMessageListener("message_deleted", handleDeleteMessage);
+    addMessageListener("message_edited", handleEditMessage);
 
     return () => {
       removeMessageListener("chat", handleMessage);
       removeMessageListener("user_status", handleUserStatus);
       removeMessageListener("typing_status", handleTypingStatus);
       removeMessageListener("message_deleted", handleDeleteMessage);
+      removeMessageListener("message_edited", handleEditMessage);
     };
   }, []);
 
