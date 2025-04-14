@@ -3,8 +3,8 @@ import styled, { css } from 'styled-components';
 import colors from '../styles/colors';
 import { IoMdSend } from 'react-icons/io';
 import { BsThreeDots, BsEmojiSmile } from 'react-icons/bs';
-import { MdEdit, MdOutlineAddReaction } from 'react-icons/md';
-import { deleteChatMessage, editChatMessage, addMessageReaction, deleteMessageReaction } from '../api/sdk';
+import { MdEdit, MdOutlineAddReaction, MdAttachFile, MdClose } from 'react-icons/md';
+import { deleteChatMessage, editChatMessage, addMessageReaction, deleteMessageReaction, uploadMedia, getMedia } from '../api/sdk';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 
 // Reusable CSS mixin for Emoji Picker styles (scrollbar, theme vars)
@@ -55,15 +55,37 @@ const ChatContainer = styled.div`
   height: 100%;
 `;
 
+const CustomScrollbar = css`
+  &::-webkit-scrollbar {
+    height: 4px; /* Added height for horizontal scrollbars */
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #2c2f33;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #4A7BCC;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #3a66a1;
+  }
+
+`;
+
 const MessageList = styled.div`
   flex: 1;
   padding: 10px;
   overflow-y: auto;
   padding-right: 10px;
   margin-bottom: 60px;
-
+  margin-bottom: ${(props) => (props.isAttachment ? '90px' : '60px')};
   &::-webkit-scrollbar {
-    width: 8px;
+    width: 4px;
   }
 
   &::-webkit-scrollbar-track {
@@ -191,7 +213,12 @@ const Input = styled.input`
   color: white;
   width: 100%;
   padding-right: 80px;
+  padding-left: 28px;
   position: relative;
+
+  &:focus {
+    outline: none;
+  }
 `;
 
 const SendButton = styled.button`
@@ -217,6 +244,12 @@ const SendButton = styled.button`
 
   &:active {
     background-color: #334a91;
+  }
+
+  &:disabled {
+    background-color: #4e73df;
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   svg {
@@ -420,8 +453,8 @@ const ReactionPickerWrapper = styled.div`
   position: absolute;
   bottom: 80%;
   margin-bottom: 0px;
-  right: ${(props) => (props.isCurrentUser ? '5px' : '5px')};
-  left: ${(props) => (props.isCurrentUser ? 'auto' : 'auto')};
+  top: -8px;
+  right: 5px;
   z-index: 20;
   // transform: scale(0.8); // Removed scaling to improve sharpness
   // transform-origin: ${(props) => (props.isCurrentUser ? 'bottom left' : 'bottom right')}; // Removed associated origin
@@ -467,6 +500,170 @@ const ReactionChip = styled.div`
   }
 `;
 
+// Add a new styled component for the attachment button
+const AttachmentButton = styled.label`
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #b9bbbe;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  z-index: 100;
+  &:hover {
+    color: #dcddde;
+  }
+
+  input {
+    display: none; // Hide the file input
+  }
+`;
+
+// Styled component for the attachment list
+const AttachmentList = styled.div`
+  position: absolute;
+  bottom: 46px;
+  display: flex;
+  overflow-x: auto; /* Enable horizontal scrolling */
+  background-color: #23272a;
+  border-radius: 8px 8px 0 0;
+  padding: 10px;
+  align-self: center;
+  width: auto;
+  left : 10px;
+  right: 10px;
+  z-index: 10;
+  white-space: nowrap; /* Prevent line breaks */
+  padding-bottom: 10px;
+  gap: 8px;
+  ${CustomScrollbar}
+`;
+
+// Add a styled component for the loader
+const Loader = styled.div`
+  border: 2px solid #c1c1c1; /* Light grey */
+  border-top: 2px solid ${colors.primary}; /* Blue */
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  animation: spin 1s linear infinite;
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+// Styled component for each attachment item
+const AttachmentInputItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  // margin: 10px;
+  cursor: pointer;
+  background-color:rgb(62, 67, 71);
+  font-size: 12px;
+  &:hover {
+    background-color: #40444b;
+  }
+
+  span {
+    color: #dcddde;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: ${(props) => (props.loading ? '0.5' : '1')};
+  }
+
+  button {
+    background: none;
+    border: none;
+    color: #dddddd;
+    cursor: pointer;
+    font-size: 12px;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    margin-left: 2px;
+    margin-right: -6px;
+    &:hover {
+      color: #ff3b3b;
+    }
+  }
+`;
+
+// New styled component for message attachments
+const MessageAttachments = styled.div`    
+  display: flex;
+  flex-direction: column; /* Stack attachments vertically */
+  margin-top: 4px; /* Add some space above the attachments */
+`;
+
+const ImageAttachmentItem = styled.div`
+  // display: flex;
+  // align-items: center;
+  // justify-content: center;
+  margin-top: 8px;
+   
+  img {
+    max-width: 250px;
+    max-height: 250px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const AttachmentItem = styled.div`
+  // display: flex;
+  // justify-content: space-between;
+  // align-items: center;
+  padding: 8px 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: fit-content;
+  white-space: nowrap;
+  max-width: 100%;
+  background-color:rgb(62, 67, 71);
+  font-size: 12px;
+  &:hover {
+    // background-color: #40444b;
+  }
+
+  span {
+    color: #dcddde;
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  img {
+    max-width: 250px;
+    max-height: 250px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+  }
+`;
+
+// Utility function to format file size
+const formatFileSize = (size) => {
+  if (size < 1024) return `${size} bytes`;
+  else if (size < 1048576) return `${(size / 1024).toFixed(2)} KB`; // 1024^1
+  else return `${(size / 1048576).toFixed(2)} MB`; // 1024^2
+};
+
 const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => {}, hasMoreMessages = true }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
@@ -475,6 +672,8 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
   const [showMenuForMessage, setShowMenuForMessage] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showReactionPickerForMessage, setShowReactionPickerForMessage] = useState(null);
+  const [attachments, setAttachments] = useState([]);
+  const [imageUrls, setImageUrls] = useState({});
   const currentUserId = localStorage.getItem('user_id');
   const messageEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -533,20 +732,56 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     };
   }, []);
 
+  useEffect(() => {
+    const fetchImageUrls = async () => {
+      const urls = {};
+      for (const message of messages) {
+        if(message.attachments?.length > 0){
+        for (const attachment of message.attachments) {
+          if (attachment.type.startsWith('image/')) {
+            if(urls[attachment.key]){
+              continue;
+            }
+            const response = await getMedia(attachment.key);
+            const blob = new Blob([response], { type: attachment.type });
+            urls[attachment.key] = URL.createObjectURL(blob);
+            setImageUrls(prev => ({...prev, [attachment.key]: URL.createObjectURL(blob)}));
+          }
+          }
+        }
+      }
+    };
+
+    fetchImageUrls();
+  }, [messages]);
+
+  const checkValidAttachments = () => {
+    for(const attachment of attachments){
+      if(!attachment.key){
+        return false;
+      }
+    }
+    return true;
+  }
+
   const handleSendMessage = async () => {
     if (input.trim()) {
       try {
+        if(!checkValidAttachments()){
+          return;
+        }
         const newMessage = {
           sender_id: currentUserId,
           sender_info: {
-            name: 'You',
+            name: '',
           },
           content: input.trim(),
+          attachments: attachments,
           chat_id: group.id,
           timestamp: new Date().toISOString(),
         };
         onSendMessage(newMessage);
-
+        setAttachments([]);
         if (typing) {
           setTyping(false);
           
@@ -697,6 +932,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+  
 
   const handleEmojiClick = (emojiObject) => {
     setInput(prevInput => prevInput + emojiObject.emoji);
@@ -716,11 +952,63 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     setShowReactionPickerForMessage(null); // Close the picker
   };
 
+  const handleFileUpload = async (event) => {
+    // handle multiple files
+    const files = event.target.files;
+    if (files.length > 0) {
+      try {
+        setAttachments(Array.from(files).map((file) => ({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        })));
+
+        const uploadedFiles = await Promise.all(Array.from(files).map(async (file) => {
+          const uploadedFile = await uploadMedia(file);
+          return uploadedFile;
+        }));
+
+        // attachment format : {key: 'file_key', name: 'file_name', type: 'file_type'}
+        const attachments = uploadedFiles.map((file) => ({
+          key: file.file_key,
+          name: file.file_name,
+          type: file.file_type,
+          size: file.file_size,
+        }));
+        setAttachments(attachments);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+    }
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(attachments.filter((_, i) => i !== index));
+  };
+
+  const handleAttachmentClick = async (attachment) => {
+    // download attachment through api
+    if(imageUrls[attachment.key]){
+      window.open(imageUrls[attachment.key], '_blank');
+    }else{
+      const response = await getMedia(attachment.key);
+      const blob = new Blob([response], { type: attachment.type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = attachment.name; // Set the file name for download
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+    // remove the blob from the url
+  };
+
   if(!group) return ;
 
   return (
     <ChatContainer>
-      <MessageList ref={messageListRef}>
+      <MessageList ref={messageListRef} isAttachment={attachments.length > 0}>
         {messages.map((message, index) => (
           <MessageContainer key={index}>
             {message.sender_id === currentUserId && editingMessageId !== message.id && (
@@ -735,6 +1023,27 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
                 </span>
               </EditedIndicator>
             )}
+
+
+            {(showReactionPickerForMessage === message.id) && (
+                <ReactionPickerWrapper 
+                  ref={reactionPickerRef} 
+                  isCurrentUser={message.sender_id === currentUserId}
+                >
+                  <EmojiPicker 
+                    onEmojiClick={(emojiObject) => handleSelectReaction(message.id, emojiObject.emoji, message.reactions?.[emojiObject.emoji]?.me)}
+                    theme={Theme.DARK}
+                    emojiSize={12}
+                    height={300}
+                    width={250}
+                    searchDisabled
+                    previewConfig={{ showPreview: false }}
+                    reactionsDefaultOpen={true}
+                    lazyLoadEmojis={true}
+                  />
+                </ReactionPickerWrapper>
+              )}
+
             <MessageItem 
               isCurrentUser={message.sender_id === currentUserId}
               isEditing={editingMessageId === message.id}
@@ -746,6 +1055,8 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
                   alt={userMap[message.sender_id]?.name.split(' ').map((n) => n[0]).join('')}
                 />
               )}
+
+              
               
               <MessageContent>
                 {message.sender_id !== currentUserId && (
@@ -784,6 +1095,34 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
                   </EditContainer>
                 ) : (
                   <MessageText>{message.content}</MessageText>
+                )}
+
+                {/* Display Attachments Vertically */}
+                {message.attachments && message.attachments.length > 0 && (
+                  <MessageAttachments>
+                    {message.attachments.map((attachment, index) => (
+                      attachment.type.startsWith('image/') ? (
+                  
+                        <ImageAttachmentItem key={index}>
+                          <img
+                            src={imageUrls[attachment.key]}
+                            alt={attachment.name}
+                            style={{ maxWidth: '250px', maxHeight: '250px', borderRadius: '4px' }}
+                          />
+                        </ImageAttachmentItem>
+                        
+                        ) : (
+                          <AttachmentItem key={index} onClick={() => handleAttachmentClick(attachment)} >
+                            <span 
+                              title={attachment.name}
+                          >
+                            {attachment.name.length > 30 ? `${attachment.name.slice(0, 30)}...` : attachment.name}
+                          </span>
+                          <span style={{marginLeft: '4px'}}>{`(${formatFileSize(attachment.size)})`}</span>
+                        </AttachmentItem>
+                      )
+                    ))}
+                  </MessageAttachments>
                 )}
 
                 {/* Display Reactions - Handles object structure */} 
@@ -833,32 +1172,14 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
                 </ReactionButton>
               )}
 
-              {showReactionPickerForMessage === message.id && (
-                <ReactionPickerWrapper 
-                  ref={reactionPickerRef} 
-                  isCurrentUser={message.sender_id === currentUserId}
-                >
-                  <EmojiPicker 
-                    onEmojiClick={(emojiObject) => handleSelectReaction(message.id, emojiObject.emoji, message.reactions?.[emojiObject.emoji]?.me)}
-                    theme={Theme.DARK}
-                    emojiSize={12}
-                    height={300}
-                    width={250}
-                    searchDisabled
-                    previewConfig={{ showPreview: false }}
-                    reactionsDefaultOpen={true}
-                    lazyLoadEmojis={true}
-                  />
-                </ReactionPickerWrapper>
-              )}
             </MessageItem>
           </MessageContainer>
         ))}
         <div ref={messageEndRef} />
       </MessageList>
       
-      {checkUsersTyping() && (
-        <TypingIndicator>
+      { checkUsersTyping() && (
+        <TypingIndicator isAttachment = {attachments?.length > 0}>
           <span>{getTypingUsersText()}</span>
           <TypingAnimation>
             <div className="dot" />
@@ -868,7 +1189,26 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         </TypingIndicator>
       )}
 
+      {attachments.length > 0 && (
+        <AttachmentList>
+          {attachments.map((attachment, index) => (
+            <AttachmentInputItem loading={attachment.key ? false : true} key={index}>
+              {!attachment.key && <Loader style={{ marginRight: '8px' }} />}
+              <span onClick={() => handleAttachmentClick(attachment)}>{attachment.name}</span>
+              <span style={{marginLeft: '4px'}}>{`(${formatFileSize(attachment.size)})`}</span>
+              <button onClick={() => removeAttachment(index)}>
+                <MdClose />
+              </button>
+            </AttachmentInputItem>
+          ))}
+        </AttachmentList>
+      )}
+
       <InputContainer>
+        <AttachmentButton>
+          <MdAttachFile />
+          <input type="file" accept="*" onChange={handleFileUpload} multiple />
+        </AttachmentButton>
         {showEmojiPicker && (
           <EmojiPickerContainer ref={emojiPickerRef}>
             <EmojiPicker
@@ -892,7 +1232,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         <EmojiButton ref={emojiButtonRef} onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
           <BsEmojiSmile />
         </EmojiButton>
-        <SendButton onClick={handleSendMessage}><IoMdSend></IoMdSend></SendButton>
+        <SendButton onClick={handleSendMessage} disabled={!checkValidAttachments() || !group?.id}><IoMdSend /></SendButton>
       </InputContainer>
     </ChatContainer>
   );

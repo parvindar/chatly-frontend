@@ -1301,78 +1301,96 @@ const {runAction, isLoading} = useApiAction();
         </ChatBoxContainer>
       </RightPanel>
       <RightPanelMembers>
+        {selectedGroup && selectedGroup.type === 'private' && (
+          <>
+            {/* User Profile Section for Private Chat */}
+            <MembersHeading>Profile</MembersHeading> {/* Reuse heading style */}
+            <div style={{ padding: '10px', textAlign: 'center' }}> {/* Center content */}
+              <UserProfilePic style={{ margin: '0 auto 10px auto', width: '80px', height: '80px' }}> {/* Larger profile pic */}
+                <ProfileImage
+                  src={selectedGroup.user.profile_pic || 'https://i.pravatar.cc/80'}
+                  alt={selectedGroup.user.name}
+                  style={{  border : `2px solid ${colors.primary}` }}
+                />
+                <OnlineStatusIndicator status={userStatusMap[selectedGroup.user.id]} style={{ width: '12px', height: '12px', right: '2px', bottom: '2px' }}/> {/* Adjusted indicator */}
+              </UserProfilePic>
+              <UserName style={{ fontSize: '16px', display: 'block', marginBottom: '5px' }}>{selectedGroup.user.name}</UserName>
+              <UserId style={{ fontSize: '14px' }}>@{selectedGroup.user.user_id}</UserId>
+            </div>
 
-  {selectedTab === 'privateChats' && selectedGroup?.user?.id && videoCallState === 'idle' && (
-    <ModalButton
-      onClick={() => {
-     
-          handleVideoCall(selectedGroup.user.id); 
-          setIsVideoCallActive(true); 
-        
-      }}
-      style={{
-        margin: '10px auto', 
-        width: '90%', 
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-     
-    >
-      <FiVideo style={{ marginRight: '8px' }} /> 
-      Video Call
-    </ModalButton>
-  )}
-  {selectedGroup && (
-    <>
-      <MembersHeading>Members</MembersHeading>
-      <MemberListContainer>
-        {groupMembers.map((member) => (
-          <UserItem key={member.id}>
-            <UserProfilePic>
-              <ProfileImage
-                src={member.profile_pic || 'https://i.pravatar.cc/40'}
-                alt={member.name}
-              />
-              <OnlineStatusIndicator status={userStatusMap[member.id]} />
-            </UserProfilePic>
-            <UserName>{member.name}</UserName>
-            <UserRole isAdmin={member.role === 'admin'}>
-              {member.role === 'admin' ? 'Admin' : 'Member'}
-            </UserRole>
-            {selectedGroup.role === 'admin' &&
-              member.id !== selectedGroup.created_by &&
-              member.id !== currentUser.id && (
-                <ThreeDotsMenu
-                  onClick={(e) => {
-                    e.stopPropagation(); 
-                    setVisibleMemberDropdown((prev) =>
-                      prev === member.id ? null : member.id
-                    );
-                  }}
-                >
-                   <FiMoreVertical /> 
-                </ThreeDotsMenu>
-              )}
-            {visibleMemberDropdown === member.id && (
-              <DropdownMenu
-                ref={memberDropdownRef} 
-                className="member-dropdown"
-                items={[
-                  { label: 'Remove', action: () => handleRemoveMember(member.id) },
-                  ...(member.role !== 'admin'
-                    ? [{ label: 'Make Admin', action: () => handleMakeAdmin(member.id) }]
-                    : []),
-                ]}
-                onItemClick={(action) => action()} 
-              />
+            {/* Video Call Button */}
+            {videoCallState === 'idle' && (
+              <ModalButton
+                onClick={() => {
+                  handleVideoCall(selectedGroup.user.id);
+                  setIsVideoCallActive(true);
+                }}
+                style={{
+                  margin: '10px auto',
+                  width: '60%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FiVideo style={{ marginRight: '8px' }} />
+                Video Call
+              </ModalButton>
             )}
-          </UserItem>
-        ))}
-      </MemberListContainer>
-    </>
-  )}
-</RightPanelMembers>
+          </>
+        )}
+
+        {selectedGroup && selectedGroup.type !== 'private' && (
+          <>
+            {/* Member List Section for Group Chat */}
+            <MembersHeading>Members</MembersHeading>
+            <MemberListContainer>
+              {groupMembers.map((member) => (
+                <UserItem key={member.id}>
+                  <UserProfilePic>
+                    <ProfileImage
+                      src={member.profile_pic || 'https://i.pravatar.cc/40'}
+                      alt={member.name}
+                    />
+                    <OnlineStatusIndicator status={userStatusMap[member.id]} />
+                  </UserProfilePic>
+                  <UserName>{member.name}</UserName>
+                  <UserRole isAdmin={member.role === 'admin'}>
+                    {member.role === 'admin' ? 'Admin' : 'Member'}
+                  </UserRole>
+                  {selectedGroup.role === 'admin' &&
+                    member.id !== selectedGroup.created_by &&
+                    member.id !== currentUser.id && (
+                      <ThreeDotsMenu
+                        onClick={(e) => {
+                          e.stopPropagation(); 
+                          setVisibleMemberDropdown((prev) =>
+                            prev === member.id ? null : member.id
+                          );
+                        }}
+                      >
+                         <FiMoreVertical /> 
+                      </ThreeDotsMenu>
+                    )}
+                  {visibleMemberDropdown === member.id && (
+                    <DropdownMenu
+                      ref={memberDropdownRef} 
+                      className="member-dropdown"
+                      items={[
+                        { label: 'Remove', action: () => handleRemoveMember(member.id) },
+                        ...(member.role !== 'admin'
+                          ? [{ label: 'Make Admin', action: () => handleMakeAdmin(member.id) }]
+                          : []),
+                      ]}
+                      onItemClick={(action) => action()} 
+                    />
+                  )}
+                </UserItem>
+              ))}
+            </MemberListContainer>
+          </>
+        )}
+      </RightPanelMembers>
       {isModalOpen && (
         <ModalOverlay>
           <ModalContent>

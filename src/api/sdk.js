@@ -241,9 +241,18 @@ export const makeMemberGroupAdmin = async (groupId, userId) => {
   return response.data;
 };
 
+export const uploadMedia = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await apiClient.post('/media/upload', formData);
+  return response.data.data;
+};
 
-// Send Message API
-export const sendMessage = async (chatId, message) => {
-  const response = await apiClient.post(`/chats/${chatId}/messages`, { message });
+export const getMedia = async (fileKey) => {
+  const response = await apiClient.get(`/media/${fileKey}`, { responseType: 'blob' });
   return response.data;
+};
+
+export const getMediaUrl = (fileKey) => {
+  return `${API_URL}/api/media/${fileKey}`;
 };
