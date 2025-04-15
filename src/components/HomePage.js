@@ -612,6 +612,7 @@ const [userStatusMap, setUserStatusMap] = useState({});
 const [typingUsers, setTypingUsers] = useState({});
 const [hasMoreMessages, setHasMoreMessages] = useState({});
 const [initialMessageLoaded, setInitialMessageLoaded] = useState({});
+const [newMessageCount, setNewMessageCount] = useState({});
 
 const {runAction, isLoading} = useApiAction();
 
@@ -808,7 +809,7 @@ const {runAction, isLoading} = useApiAction();
 
   }, [currentUser,selectedTab]);
 
-  const handleNewMessage = (message, local = false) => {
+  const handleNewMessage = useCallback((message, local = false) => {
     const { chat_id, sender_id, ...messageData } = message;
     if(currentUser.id === sender_id && !local){
       setMessagesMap((prevMap) => ({
@@ -821,7 +822,12 @@ const {runAction, isLoading} = useApiAction();
       ...prevMap,
       [chat_id]: [...(prevMap[chat_id] || []), message],
     }));
-  };
+    console.log("selectedGroup", selectedGroup);
+    setNewMessageCount((prevMap) => ({
+      ...prevMap,
+      [chat_id]: (prevMap[chat_id] || 0) + 1,
+    }));
+  },[selectedGroup, currentUser]);
 
   const handleReaction = (message, local = false) => {
     const { chat_id, message_id, emoji, user_id, is_deleted } = message; // Assuming user_id is part of the message
@@ -994,6 +1000,10 @@ const {runAction, isLoading} = useApiAction();
       setMessagesMap((prevMap) => ({
         ...prevMap,
         [chatId]: [...messages.list, ...(prevMap[chatId] || [])],
+      }));
+      setNewMessageCount((prevMap) => ({
+        ...prevMap,
+        [chatId]: 0,
       }));
   }
 
@@ -1315,6 +1325,7 @@ const {runAction, isLoading} = useApiAction();
               hasMoreMessages={hasMoreMessages[selectedGroup?.id]}
               handleNewMessage={handleNewMessage}
               handleReaction={handleReaction}
+              newMessageCount={newMessageCount[selectedGroup?.id]}
             />
           )}
         </ChatBoxContainer>

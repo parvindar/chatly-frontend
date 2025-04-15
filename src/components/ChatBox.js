@@ -682,7 +682,7 @@ const formatFileSize = (size) => {
   else return `${(size / 1048576).toFixed(2)} MB`; // 1024^2
 };
 
-const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => {}, hasMoreMessages = true, handleNewMessage, handleReaction }) => {
+const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => {}, hasMoreMessages = true, handleNewMessage, handleReaction, newMessageCount }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -711,8 +711,9 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
   };
 
   useEffect(() => {
+    console.log("newMessageCount", newMessageCount);
     scrollToBottom();
-  }, [messages]);
+  }, [newMessageCount]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -769,18 +770,18 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         }
       }
     };
-    const _isUserScrolling = isUserScrolling?.current;
+    // const _isUserScrolling = isUserScrolling?.current;
     await fetchImageUrls();
-    if(!_isUserScrolling){
-      setTimeout(() => {
-        scrollToBottom();
-      }, 150);
-    }
-  }, [messages]);
+    // if(!_isUserScrolling){
+    //   setTimeout(() => {
+    //     scrollToBottom();
+    //   }, 150);
+    // }
+  }, [newMessageCount]);
 
   useEffect(() => {
     isUserScrolling.current = false;
-  }, [messages]);
+  }, [newMessageCount]);
 
   const checkValidAttachments = () => {
     for(const attachment of attachments){
