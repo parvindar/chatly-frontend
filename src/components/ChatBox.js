@@ -748,19 +748,21 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
 
   useEffect(() => {
     const fetchImageUrls = async () => {
-      const urls = {};
-      for (const message of messages) {
-        if(message.attachments?.length > 0){
-        for (const attachment of message.attachments) {
-          if (attachment.type.startsWith('image/')) {
-            if(urls[attachment.key]){
-              continue;
+      const urls = {...imageUrls};
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const message = messages[i];
+        if (message.attachments?.length > 0) {
+          for (let j = 0; j < message.attachments.length; j++) {
+            const attachment = message.attachments[j];
+            if (attachment.type.startsWith('image/')) {
+              if (urls[attachment.key]) {
+                continue;
+              }
+              const response = await getMedia(attachment.key);
+              const blob = new Blob([response], { type: attachment.type });
+              urls[attachment.key] = URL.createObjectURL(blob);
+              setImageUrls(prev => ({ ...prev, [attachment.key]: URL.createObjectURL(blob) }));
             }
-            const response = await getMedia(attachment.key);
-            const blob = new Blob([response], { type: attachment.type });
-            urls[attachment.key] = URL.createObjectURL(blob);
-            setImageUrls(prev => ({...prev, [attachment.key]: URL.createObjectURL(blob)}));
-          }
           }
         }
       }
@@ -969,13 +971,29 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
   const handleFileUpload = async (event) => {
     // handle multiple files
     const files = event.target.files;
+
+    if(files.length + attachments.length > 10){
+      alert("You can only upload up to 10 files at a time");
+      return;
+    }
+
     if (files.length > 0) {
       try {
-        setAttachments(Array.from(files).map((file) => ({
+
+        for(const file of files){
+          if(file.size > 1024 * 1024 * 25){
+            alert("File size must be less than 25MB");
+            return;
+          }
+        }
+
+        const oldAttachments = [...attachments];
+
+        setAttachments(prev => [...prev, ...Array.from(files).map((file) => ({
           name: file.name,
           type: file.type,
           size: file.size,
-        })));
+        }))]);
 
         const uploadedFiles = await Promise.all(Array.from(files).map(async (file) => {
           const uploadedFile = await uploadMedia(file);
@@ -983,13 +1001,15 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         }));
 
         // attachment format : {key: 'file_key', name: 'file_name', type: 'file_type'}
-        const attachments = uploadedFiles.map((file) => ({
+        const _attachments = uploadedFiles.map((file) => ({
           key: file.file_key,
           name: file.file_name,
           type: file.file_type,
           size: file.file_size,
         }));
-        setAttachments(attachments);
+        setAttachments([...oldAttachments, ..._attachments]);
+        // remove the files from the input
+        event.target.value = '';
       } catch (error) {
         console.error('Error uploading file:', error);
       }
