@@ -200,12 +200,18 @@ export const editChatMessage = async (messageId, content) => {
 
 export const addMessageReaction = async (messageId, emoji) => {
   const response = await apiClient.post(`/message/${messageId}/reactions`, { emoji });
-  return response.data;
+  if(response.status === 200){
+    return {ok: true, data: response.data};
+  }
+  return {ok: false, data: response.data};
 };
 
 export const deleteMessageReaction = async (messageId, emoji) => {
   const response = await apiClient.delete(`/message/${messageId}/reactions/${emoji}`);
-  return response.data;
+  if(response.status === 200){
+    return {ok: true, data: response.data};
+  }
+  return {ok: false, data: response.data};
 };
 
 export const createGroup = async (name, description, type = 'open') => {

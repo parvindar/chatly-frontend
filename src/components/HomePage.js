@@ -823,6 +823,63 @@ const {runAction, isLoading} = useApiAction();
     }));
   };
 
+  const handleReaction = (message, local = false) => {
+    const { chat_id, message_id, emoji, user_id, is_deleted } = message; // Assuming user_id is part of the message
+    const reactedByMe = user_id === currentUser.id;
+    if(currentUser.id === user_id && !local){
+      return;
+    }
+    setMessagesMap((prevMap) => ({
+      ...prevMap,
+      [chat_id]: prevMap[chat_id]?.map(msg => {
+        if (msg.id === message_id) {
+          const existingReactions = msg.reactions || {};
+          const currentReaction = existingReactions[emoji] || { count: 0, me: false };
+           // Check if the current user reacted
+          if(is_deleted){
+
+            if(currentReaction.count === 0){
+              return msg;
+            }
+
+            if(currentReaction.count === 1){
+              // remove emoji from msg
+              const newReactions = {...existingReactions};
+              delete newReactions[emoji];
+              return {
+                ...msg,
+                reactions: newReactions
+              };
+            }
+
+            return {
+              ...msg,
+              reactions: {
+                ...existingReactions,
+                [emoji]: {
+                  count: currentReaction.count - 1, 
+                  me: reactedByMe ? false : currentReaction.me
+                }
+              }
+            };
+          }
+          
+          return {
+            ...msg,
+            reactions: {
+              ...existingReactions,
+              [emoji]: {
+                count: currentReaction.count + 1,
+                me: reactedByMe ? true : currentReaction.me
+              }
+            }
+          };
+        }
+        return msg;
+      }) || [],
+    }));
+  };
+
   // Initialize WebSocket connection
   useEffect(() => {
     initializeWebSocket();
@@ -859,59 +916,6 @@ const {runAction, isLoading} = useApiAction();
       setMessagesMap((prevMap) => ({
         ...prevMap,
         [chat_id]: prevMap[chat_id]?.map(msg => msg.id === message_id ? {...msg, content, is_edited : true} : msg) || [],
-      }));
-    };
-
-    const handleReaction = (message) => {
-      const { chat_id, message_id, emoji, user_id, is_deleted } = message; // Assuming user_id is part of the message
-      setMessagesMap((prevMap) => ({
-        ...prevMap,
-        [chat_id]: prevMap[chat_id]?.map(msg => {
-          if (msg.id === message_id) {
-            const existingReactions = msg.reactions || {};
-            const currentReaction = existingReactions[emoji] || { count: 0, me: false };
-            const reactedByMe = user_id === currentUser.id; // Check if the current user reacted
-            if(is_deleted){
-
-              if(currentReaction.count === 0){
-                return msg;
-              }
-
-              if(currentReaction.count === 1){
-                // remove emoji from msg
-                const newReactions = {...existingReactions};
-                delete newReactions[emoji];
-                return {
-                  ...msg,
-                  reactions: newReactions
-                };
-              }
-
-              return {
-                ...msg,
-                reactions: {
-                  ...existingReactions,
-                  [emoji]: {
-                    count: currentReaction.count - 1, 
-                    me: reactedByMe ? false : currentReaction.me
-                  }
-                }
-              };
-            }
-            
-            return {
-              ...msg,
-              reactions: {
-                ...existingReactions,
-                [emoji]: {
-                  count: currentReaction.count + 1,
-                  me: reactedByMe ? true : currentReaction.me
-                }
-              }
-            };
-          }
-          return msg;
-        }) || [],
       }));
     };
 
@@ -1310,6 +1314,7 @@ const {runAction, isLoading} = useApiAction();
               fetchMessages={fetchMessages}
               hasMoreMessages={hasMoreMessages[selectedGroup?.id]}
               handleNewMessage={handleNewMessage}
+              handleReaction={handleReaction}
             />
           )}
         </ChatBoxContainer>

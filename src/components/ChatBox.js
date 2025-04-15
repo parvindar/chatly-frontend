@@ -682,7 +682,7 @@ const formatFileSize = (size) => {
   else return `${(size / 1048576).toFixed(2)} MB`; // 1024^2
 };
 
-const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => {}, hasMoreMessages = true, handleNewMessage }) => {
+const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => {}, hasMoreMessages = true, handleNewMessage, handleReaction }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -970,13 +970,22 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     setShowReactionPickerForMessage(current => (current === messageId ? null : messageId));
   };
 
-  const handleSelectReaction = (messageId, emoji, isDelete = false) => {
+  const handleSelectReaction = async (messageId, emoji, isDelete = false) => {
     // Call the prop function passed from parent with chat_id, message_id, emoji
+    handleReaction({chat_id: group.id, message_id: messageId, emoji, user_id: currentUserId, is_deleted: isDelete},true);
+
     if(isDelete){
-      deleteMessageReaction(messageId, emoji); 
+      const res = await deleteMessageReaction(messageId, emoji); 
+      if(!res.ok){
+        handleReaction({chat_id: group.id, message_id: messageId, emoji, user_id: currentUserId, is_deleted: !isDelete},true);
+      }
     }else{
-      addMessageReaction(messageId, emoji); 
+      const res = await addMessageReaction(messageId, emoji); 
+      if(!res.ok){
+        handleReaction({chat_id: group.id, message_id: messageId, emoji, user_id: currentUserId, is_deleted: !isDelete},true);
+      }
     }
+
     setShowReactionPickerForMessage(null); // Close the picker
   };
 
