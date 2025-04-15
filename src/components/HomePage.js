@@ -192,17 +192,23 @@ const ModalTextarea = styled.textarea`
   }
 `;
 
+const ModalButtonContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+`;
+
 const ModalButton = styled.button`
   width: 100%;
   padding: 10px;
-  background-color: ${colors.primary};
+  background-color: ${props => props.secondary ? '#36393f' : colors.primary};
   color: ${colors.textPrimary};
   border: none;
   border-radius: 4px;
   cursor: pointer;
 
   &:hover {
-    background-color: ${colors.primaryHover};
+    background-color: ${props => props.secondary ? '#2c2f33' : colors.primaryHover};
   }
 
   &:disabled {
@@ -1407,7 +1413,11 @@ const {runAction, isLoading} = useApiAction();
               onChange={(e) => setNewChannelDescription(e.target.value)}
               placeholder="Enter Description"
             />
+            <ModalButtonContainer>
+            <ModalButton secondary onClick = {()=>setIsModalOpen(false)}>Cancel</ModalButton>
             <ModalButton onClick = {()=>runAction("createChannel", handleCreateChannel)} disabled = {!newChannelName || isLoading("createChannel")}>Create</ModalButton>
+            
+            </ModalButtonContainer>
           </ModalContent>
         </ModalOverlay>
       )}

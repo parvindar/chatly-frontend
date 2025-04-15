@@ -117,6 +117,10 @@ const MessageItem = styled.div`
   word-wrap: break-word;
   flex-direction: row;
   position: relative;
+
+  &:hover {
+    background-color: #1c1f21;
+  }
 `;
 
 const ProfilePic = styled.img`
@@ -733,9 +737,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     };
   }, [messages, group.id, fetchMessages]);
 
-  useEffect(() => {
-    isUserScrolling.current = false;
-  }, [messages]);
+
 
   useEffect(() => {
     return () => {
@@ -746,7 +748,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     };
   }, []);
 
-  useEffect(() => {
+  useEffect(async () => {
     const fetchImageUrls = async () => {
       const urls = {...imageUrls};
       for (let i = messages.length - 1; i >= 0; i--) {
@@ -767,8 +769,17 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         }
       }
     };
+    const _isUserScrolling = isUserScrolling?.current;
+    await fetchImageUrls();
+    if(!_isUserScrolling){
+      setTimeout(() => {
+        scrollToBottom();
+      }, 150);
+    }
+  }, [messages]);
 
-    fetchImageUrls();
+  useEffect(() => {
+    isUserScrolling.current = false;
   }, [messages]);
 
   const checkValidAttachments = () => {
