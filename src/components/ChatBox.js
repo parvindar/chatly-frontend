@@ -657,6 +657,20 @@ const AttachmentItem = styled.div`
   }
 `;
 
+
+const ImagePlaceholder = styled.div`
+  width: 200px;
+  height: 200px;
+  border-radius: 4px;
+  background: #23272a; // Blurry background color
+  backdrop-filter: blur(10px); // Apply blur effect
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #dcddde; // Optional text color
+  font-size: 16px; // Optional text size
+`;
+
 // Utility function to format file size
 const formatFileSize = (size) => {
   if (size < 1024) return `${size} bytes`;
@@ -1104,11 +1118,17 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
                       attachment.type.startsWith('image/') ? (
                   
                         <ImageAttachmentItem key={index}>
+                          {imageUrls[attachment.key] ? (
                           <img
                             src={imageUrls[attachment.key]}
                             alt={attachment.name}
                             style={{ maxWidth: '250px', maxHeight: '250px', borderRadius: '4px' }}
                           />
+                          ) : (
+                            <ImagePlaceholder>
+                              <Loader/>              
+                            </ImagePlaceholder>
+                          )}
                         </ImageAttachmentItem>
                         
                         ) : (
