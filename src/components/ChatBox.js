@@ -682,7 +682,7 @@ const formatFileSize = (size) => {
   else return `${(size / 1048576).toFixed(2)} MB`; // 1024^2
 };
 
-const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => {}, hasMoreMessages = true }) => {
+const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => {}, hasMoreMessages = true, handleNewMessage }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -808,6 +808,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
           timestamp: new Date().toISOString(),
         };
         onSendMessage(newMessage);
+        handleNewMessage(newMessage, true);
         setAttachments([]);
         if (typing) {
           setTyping(false);
@@ -1093,6 +1094,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
               isCurrentUser={message.sender_id === currentUserId}
               isEditing={editingMessageId === message.id}
               hasReactions={message.reactions && Object.keys(message.reactions).length > 0}
+              isLocal={!message.id}
             >
               {message.sender_id !== currentUserId && (
                 <ProfilePic

@@ -808,17 +808,24 @@ const {runAction, isLoading} = useApiAction();
 
   }, [currentUser,selectedTab]);
 
+  const handleNewMessage = (message, local = false) => {
+    const { chat_id, sender_id, ...messageData } = message;
+    if(currentUser.id === sender_id && !local){
+      setMessagesMap((prevMap) => ({
+        ...prevMap,
+        [chat_id]: [...prevMap[chat_id].filter(msg => !(!msg.id)), message],
+      }));
+      return;
+    }
+    setMessagesMap((prevMap) => ({
+      ...prevMap,
+      [chat_id]: [...(prevMap[chat_id] || []), message],
+    }));
+  };
+
   // Initialize WebSocket connection
   useEffect(() => {
     initializeWebSocket();
-
-    const handleMessage = (message) => {
-      const { chat_id, ...messageData } = message;
-      setMessagesMap((prevMap) => ({
-        ...prevMap,
-        [chat_id]: [...(prevMap[chat_id] || []), messageData],
-      }));
-    };
 
     const handleUserStatus = (message) => {
       const {user_id, status} = message;
@@ -908,7 +915,7 @@ const {runAction, isLoading} = useApiAction();
       }));
     };
 
-    addMessageListener("chat", handleMessage);
+    addMessageListener("chat", handleNewMessage);
     addMessageListener("user_status", handleUserStatus);
     addMessageListener("typing_status", handleTypingStatus);
     addMessageListener("message_deleted", handleDeleteMessage);
@@ -916,7 +923,7 @@ const {runAction, isLoading} = useApiAction();
     addMessageListener("message_reaction", handleReaction);
 
     return () => {
-      removeMessageListener("chat", handleMessage);
+      removeMessageListener("chat", handleNewMessage);
       removeMessageListener("user_status", handleUserStatus);
       removeMessageListener("typing_status", handleTypingStatus);
       removeMessageListener("message_deleted", handleDeleteMessage);
@@ -1302,6 +1309,7 @@ const {runAction, isLoading} = useApiAction();
               userMap={userMap}
               fetchMessages={fetchMessages}
               hasMoreMessages={hasMoreMessages[selectedGroup?.id]}
+              handleNewMessage={handleNewMessage}
             />
           )}
         </ChatBoxContainer>
