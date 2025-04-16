@@ -28,7 +28,7 @@ const maxRetryAttempts = 10; // Maximum number of retries
 const retryInterval = 2000; // Initial retry interval in milliseconds
 
 // Initialize WebSocket connection
-export const initializeWebSocket = () => {
+export const initializeWebSocket = (callback = () => {}) => {
   const token = localStorage.getItem('token');
   const userId = localStorage.getItem('user_id');
 
@@ -36,6 +36,7 @@ export const initializeWebSocket = () => {
 
   socket.onopen = () => {
     console.log('WebSocket connection established');
+    callback();
     retryAttempts = 0; // Reset retry attempts on successful connection
   };
 
@@ -170,6 +171,11 @@ export const getGroupMemberOptions = async (groupId,searchQuery) => {
 };
 
 // Fetch Groups API
+export const getGroupDetails = async (groupId) => {
+  const response = await apiClient.get(`/channel/${groupId}`);
+  return response.data.data;
+};
+
 export const fetchGroups = async () => {
   const userId = localStorage.getItem('user_id');
   const response = await apiClient.get(`/channel/user-channels?user_id=${userId}`);

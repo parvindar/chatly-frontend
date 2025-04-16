@@ -4,7 +4,7 @@ import ChatBox from './ChatBox';
 import VideoCallComponent from './VideoCallComponent';
 import styled from 'styled-components';
 import colors from '../styles/colors'
-
+import { Link } from 'react-router-dom';
 import mockData from '../mockData.json'; // Import mock data
 import {
   createGroup,
@@ -1372,7 +1372,27 @@ const {runAction, isLoading} = useApiAction();
 
         {selectedGroup && selectedGroup.type !== 'private' && (
           <>
-            {/* Member List Section for Group Chat */}
+            <Link style={{ textDecoration: 'none', textUnderlineOffset: 'none' }} to={`/meet/${selectedGroup.id}`} target="_blank" rel="noopener noreferrer">
+
+            <ModalButton
+    // onClick={() => {
+    //   window.location.href = `/meet/${selectedGroup.id}`;
+    // }}
+    style={{
+      margin: '10px auto',
+      width: '60%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textDecoration: 'none',
+      textUnderlineOffset: 'none',
+    }}
+  >
+    <FiVideo style={{ marginRight: '8px' }} />
+    Meet
+  </ModalButton>
+  </Link>
+            
             <MembersHeading>Members</MembersHeading>
             <MemberListContainer>
               {groupMembers.map((member) => (
