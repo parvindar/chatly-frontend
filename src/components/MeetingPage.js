@@ -17,26 +17,49 @@ const Container = styled.div`
 
 const VideoGrid = styled.div`
   flex: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;  /* Centers items horizontally */
+  align-content: center;    /* Centers items vertically */
   gap: 16px;
   padding: 16px;
   overflow-y: auto;
-  align-content: center;
 `;
+
+
 
 const VideoContainer = styled.div`
   position: relative;
   border-radius: 8px;
   overflow: hidden;
   background: #3c4043;
-  aspect-ratio: 16/9;
   transition: all 0.3s ease;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  aspect-ratio: 16/9;
+  
+  /* Dynamic sizing based on participant count */
+  flex: 1 1 calc(
+    clamp(250px, 100%/2 - 32px, 400px)
+  );
+  max-width: ${props => 
+    props.participantCount <= 2 ? '600px' : 
+    props.participantCount <= 4 ? '400px' : 
+    '300px'
+  };
+  min-width: 250px;
 
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  @media (max-width: 768px) {
+    flex-basis: calc(50% - 16px);
+    max-width: none;
+  }
+
+  @media (max-width: 480px) {
+    flex-basis: 100%;
   }
 `;
 
@@ -137,7 +160,7 @@ const MoreOptions = styled.div`
 const ParticipantsCount = styled.div`
   position: absolute;
   top: 16px;
-  right: 60px;
+  right: 24px;
   background: rgba(0, 0, 0, 0.6);
   padding: 8px 12px;
   border-radius: 20px;
@@ -255,12 +278,12 @@ const MeetingPage = () => {
                 <span>{participants.length + 1}</span>
             </ParticipantsCount>
 
-            <MoreOptions>
+            {/* <MoreOptions>
                 <FiMoreVertical />
-            </MoreOptions>
+            </MoreOptions> */}
 
             <VideoGrid>
-                <VideoContainer>
+                <VideoContainer participantCount={participants.length + 1}>
                     {callState !== "active" && (
                         <ProfileInfo>
                             <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
@@ -279,7 +302,7 @@ const MeetingPage = () => {
                 </VideoContainer>
 
                 {participants.map((participant) => (
-                    <VideoContainer key={participant.id}>
+                    <VideoContainer participantCount={participants.length + 1} key={participant.id}>
                         <Video
                             ref={participant.videoRef}
                             autoPlay
