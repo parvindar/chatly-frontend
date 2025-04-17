@@ -29,6 +29,10 @@ const retryInterval = 2000; // Initial retry interval in milliseconds
 
 // Initialize WebSocket connection
 export const initializeWebSocket = (callback = () => {}) => {
+  if(socket){
+    console.log('WebSocket connection already established');
+    return;
+  }
   const token = localStorage.getItem('token');
   const userId = localStorage.getItem('user_id');
 

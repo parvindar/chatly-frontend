@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { 
   addMessageListener, 
   removeMessageListener, 
-  sendMessageWebSocket ,
-  initializeWebSocket
+  sendMessageWebSocket 
 } from "../api/sdk";
 
 export const useGroupCall = (currentUser, roomId) => {

@@ -888,7 +888,9 @@ const {runAction, isLoading} = useApiAction();
 
   // Initialize WebSocket connection
   useEffect(() => {
-    initializeWebSocket();
+    if(currentUser){
+      initializeWebSocket();
+    }
 
     const handleUserStatus = (message) => {
       const {user_id, status} = message;
