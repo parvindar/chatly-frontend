@@ -48,6 +48,7 @@ export const useGroupCall = (currentUser, roomId) => {
         "group-call-ended": handleGroupCallEnded,
         "join-room": handleParticipantJoined,
         "leave-room": handleParticipantLeft,
+        "audio-video": handleParticipantAudioVideo,
       };
       if(msg.from === userId){
         return;
@@ -67,10 +68,10 @@ export const useGroupCall = (currentUser, roomId) => {
     return () => {
       removeMessageListener("group_video_call", handleSignalMessage);
     };
-  }, [userId, callState]);
+  }, [userId, callState, isVideoEnabled, isAudioEnabled,currentUser, roomId]);
 
   // Create peer connection for a participant
-  const createPeerConnection = (participantId,userInfo) => {
+  const createPeerConnection = (participantId,userInfo, video_enabled, audio_enabled) => {
     const pc = new RTCPeerConnection({
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
@@ -114,7 +115,7 @@ export const useGroupCall = (currentUser, roomId) => {
     });
 
     const videoRef = React.createRef();
-    const participant = { id: participantId, pc, videoRef, stream: null, user_info: userInfo };
+    const participant = { id: participantId, pc, videoRef, stream: null, user_info: userInfo, videoEnabled: video_enabled, audioEnabled: audio_enabled };
 
     // Store the participant
     participantsRef.current.set(participantId, participant);
@@ -186,6 +187,8 @@ export const useGroupCall = (currentUser, roomId) => {
           from: userId,
           room_id: roomId,
           sender_info: currentUser,
+          video_enabled: isVideoEnabled,
+          audio_enabled: isAudioEnabled,
         },
       });
 
@@ -197,10 +200,10 @@ export const useGroupCall = (currentUser, roomId) => {
   };
 
   // Handle new participant joining
-  const handleParticipantJoined = async ({ from: participantId, sender_info }) => {
+  const handleParticipantJoined = async ({ from: participantId, sender_info, video_enabled, audio_enabled }) => {
     if (participantsRef.current.has(participantId) || !roomId) return;
     console.log("🔴 handleParticipantJoined", participantId, sender_info);
-    const pc = createPeerConnection(participantId,sender_info);
+    const pc = createPeerConnection(participantId,sender_info, video_enabled, audio_enabled);
     const stream = localStreamRef.current;
 
     if (stream) {
@@ -219,15 +222,17 @@ export const useGroupCall = (currentUser, roomId) => {
         room_id: roomId,
         sdp: offer,
         sender_info: currentUser,
+        video_enabled: isVideoEnabled,
+        audio_enabled: isAudioEnabled,
       },
     });
   };
 
   // Handle offer from new participant
-  const handleGroupOffer = async ({ from, sdp, room_id: offerRoomId, sender_info }) => {
+  const handleGroupOffer = async ({ from, sdp, room_id: offerRoomId, sender_info, video_enabled, audio_enabled }) => {
     if (roomId !== offerRoomId || participantsRef.current.has(from)) return;
 
-    const pc = createPeerConnection(from,sender_info);
+    const pc = createPeerConnection(from,sender_info, video_enabled, audio_enabled);
     const stream = localStreamRef.current;
 
     if (stream) {
@@ -282,6 +287,17 @@ export const useGroupCall = (currentUser, roomId) => {
     }
   };
 
+  const handleParticipantAudioVideo = ({ from: participantId, video_enabled, audio_enabled, room_id }) => {
+    const participant = participantsRef.current.get(participantId);
+    console.log("🔴 handleParticipantAudioVideo", participantId, video_enabled, audio_enabled, roomId, room_id);
+    if (participant && roomId === room_id) {
+      console.log("🔴 changing audio and video state", participantId, video_enabled, audio_enabled, roomId, room_id);
+      participant.videoEnabled = video_enabled;
+      participant.audioEnabled = audio_enabled;
+      updateParticipantsList();
+    }
+  };
+
   // Leave the group call
   const leaveRoom = () => {
     if (callState !== "active" || !roomId) return;
@@ -326,6 +342,16 @@ export const useGroupCall = (currentUser, roomId) => {
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
         setIsVideoEnabled(videoTrack.enabled);
+        sendMessageWebSocket({
+          type: "group_video_call",
+          message: {
+            type: "audio-video",
+            from: userId,
+            room_id: roomId,
+            video_enabled: videoTrack.enabled,
+            audio_enabled: isAudioEnabled,
+          },
+        });
       }
     }
   };
@@ -337,6 +363,16 @@ export const useGroupCall = (currentUser, roomId) => {
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
         setIsAudioEnabled(audioTrack.enabled);
+        sendMessageWebSocket({
+          type: "group_video_call",
+          message: {
+            type: "audio-video",
+            from: userId,
+            room_id: roomId,
+            video_enabled: isVideoEnabled,
+            audio_enabled: audioTrack.enabled,
+          },
+        });
       }
     }
   };

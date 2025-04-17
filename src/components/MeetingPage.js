@@ -13,6 +13,7 @@ const Container = styled.div`
   background-color: #202124;
   color: #e8eaed;
   font-family: 'Google Sans', Roboto, Arial, sans-serif;
+  // padding-top: 48px;
 `;
 
 const VideoGrid = styled.div`
@@ -100,8 +101,8 @@ const ControlButton = styled.button`
   color: white;
   border: none;
   border-radius: 50%;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
   transition: all 0.2s ease;
   
@@ -117,7 +118,7 @@ const ControlButton = styled.button`
   }
 
   svg {
-    font-size: 20px;
+    font-size: 18px;
   }
 `;
 
@@ -187,8 +188,8 @@ const ProfileInfo = styled.div`
   font-size: 16px;
 
   img{
-    width: 100px;
-    height: 100px;
+    // width: 50%;
+    height: 40%;
     border-radius: 50%;
   }
 `;
@@ -284,14 +285,16 @@ const MeetingPage = () => {
 
             <VideoGrid>
                 <VideoContainer participantCount={participants.length + 1}>
-                    {callState !== "active" && (
+                    {(callState !== "active" || !isVideoEnabled) && (
                         <ProfileInfo>
                             <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
                             <span style={{ fontWeight: 'bold', marginTop: '12px'}}>{currentUser?.name || 'You'}</span>
+                            {!isAudioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px'}} size={14} />}
                         </ProfileInfo>
                     )}
-                    {callState !== "idle" && (<>
+                   
                     <Video ref={localVideoRef} autoPlay muted playsInline />
+                    { isVideoEnabled && (<>
                     <UserInfo>
                         <span>{currentUser?.name || 'You'}</span>
                         {!isAudioEnabled && <FiMicOff size={14} />}
@@ -303,21 +306,35 @@ const MeetingPage = () => {
 
                 {participants.map((participant) => (
                     <VideoContainer participantCount={participants.length + 1} key={participant.id}>
+                      {!participant.videoEnabled && (
+                        <ProfileInfo>
+                            <img src={participant.user_info?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
+                            <span style={{ fontWeight: 'bold', marginTop: '12px'}}>{participant.user_info?.name}</span>
+                            {!participant.audioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px'}} size={14} />}
+                        </ProfileInfo>
+                      )}
+                      
                         <Video
                             ref={participant.videoRef}
                             autoPlay
                             playsInline
                         />
+                        { participant.videoEnabled && (
+                        <>
                         <UserInfo>
                             <span>{participant.user_info.name}</span>
-                            {/* {!participant.audioEnabled && <FiMicOff size={14} />}
-                            {!participant.videoEnabled && <FiVideoOff size={14} />} */}
+                            {!participant.audioEnabled && <FiMicOff size={14} />}
+                            {!participant.videoEnabled && <FiVideoOff size={14} />}
                         </UserInfo>
+                        </>
+                      )}
                     </VideoContainer>
                 ))}
             </VideoGrid>
 
             <Controls>
+              {callState !== "idle" && (
+                <>
                 <ControlButton
                     onClick={toggleAudio}
                     active={isAudioEnabled}
@@ -333,11 +350,14 @@ const MeetingPage = () => {
                     {isVideoEnabled ? <FiVideo /> : <FiVideoOff />}
                     {/* <ButtonLabel>{isVideoEnabled ? 'Stop Video' : 'Start Video'}</ButtonLabel> */}
                 </ControlButton>
+                </>
+              )}
 
                 {callState !== "active" ? (
                     <ControlButton
                         onClick={() => joinRoom(roomId)}
                         disabled={callState !== "idle"}
+                        active={callState === "idle"}
                     >
                         <FiLogIn />
                         {/* <ButtonLabel>Join</ButtonLabel> */}

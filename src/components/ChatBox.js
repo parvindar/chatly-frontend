@@ -109,7 +109,7 @@ const MessageItem = styled.div`
   margin-bottom: ${(props) => (props.hasReactions ? '25px' : '10px')};
   padding: 10px;
   background-color: ${(props) =>
-    props.isEditing ? '#2c2f33' : (props.isCurrentUser ?  '#222222' : '#2c2f33')};
+    props.isEditing ? '#2c2f33' : (props.isCurrentUser ?  colors.currentUserMessage : '#2c2f33')};
   border-radius: 8px;
   color: ${(props) => (props.isCurrentUser && !props.isEditing ? '#cccccc' : colors.textSecondary)};
   align-self: ${(props) => (props.isCurrentUser ? 'flex-end' : 'flex-start')};
@@ -119,7 +119,7 @@ const MessageItem = styled.div`
   position: relative;
 
   &:hover {
-    background-color: #1c1f21;
+    background-color: #16181C;
   }
 `;
 
@@ -736,7 +736,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         messageList.removeEventListener('scroll', handleScroll);
       }
     };
-  }, [messages, group.id, fetchMessages]);
+  }, [messages, group]);
 
 
 
@@ -770,14 +770,14 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         }
       }
     };
-    // const _isUserScrolling = isUserScrolling?.current;
+    const _isUserScrolling = isUserScrolling?.current;
     await fetchImageUrls();
-    // if(!_isUserScrolling){
-    //   setTimeout(() => {
-    //     scrollToBottom();
-    //   }, 150);
-    // }
-  }, [newMessageCount]);
+    if(!_isUserScrolling){
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    }
+  }, [messages]);
 
   useEffect(() => {
     isUserScrolling.current = false;

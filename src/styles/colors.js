@@ -13,6 +13,7 @@ const colors = {
   inputPlaceholder: '#a0aec0', // Placeholder text color
   inputBorder: '#1e2124', // Border color for input container
   inputBackground: '#23272a', // Input container background
+  currentUserMessage : '#1E2024'
 };
 
 export default colors;
