@@ -5,7 +5,7 @@ import {
   sendMessageWebSocket 
 } from "../api/sdk";
 
-export const useGroupCall = (currentUser, roomId) => {
+export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = () => {}) => {
   const userId = currentUser?.id;
   const localVideoRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -328,11 +328,14 @@ export const useGroupCall = (currentUser, roomId) => {
     }
 
     setCallState("idle");
+    handleGroupCallEndedParam();
   };
 
   // Handle group call ended by host
   const handleGroupCallEnded = () => {
+    console.log("🔴 handleGroupCallEnded");
     leaveRoom();
+    handleGroupCallEndedParam();
   };
 
   // Toggle local video

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback,forwardRef,memo } from 
 import GroupList from './GroupList';
 import ChatBox from './ChatBox';
 import VideoCallComponent from './VideoCallComponent';
+import GroupCallComponent from './GroupCallComponent';
 import styled from 'styled-components';
 import colors from '../styles/colors'
 import { Link } from 'react-router-dom';
@@ -391,9 +392,9 @@ const MemberListContainer = styled.div`
 `;
 
 const RightPanelMembers = styled.div`
-  width: 25%; /* Same width as the LeftPanel */
+  width: ${props => props.isGroupCallActive ? '35%' : '25%'}; /* Same width as the LeftPanel */
   min-width: 180px;
-  max-width: 250px;
+  max-width: ${props => props.isGroupCallActive ? '300px' : '250px'};
   background-color: #23272a; /* Slightly darker for the right panel */
   color: white;
   display: flex;
@@ -607,7 +608,8 @@ const HomePage = () => {
 const [privateChats, setPrivateChats] = useState([]);
     const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
 const [isVideoCallActive, setIsVideoCallActive] = useState(false);
-
+const [isGroupCallActive, setIsGroupCallActive] = useState(true);
+const [isGroupCallShuttingDown, setIsGroupCallShuttingDown] = useState(false);
 const [userStatusMap, setUserStatusMap] = useState({});
 const [typingUsers, setTypingUsers] = useState({});
 const [hasMoreMessages, setHasMoreMessages] = useState({});
@@ -1022,6 +1024,11 @@ const {runAction, isLoading} = useApiAction();
     };
 
     if(selectedGroup){
+
+      if(isGroupCallActive){
+        setIsGroupCallShuttingDown(true);
+      }
+
       if(!initialMessageLoaded[selectedGroup.id]){
         fetchMessages(selectedGroup.id);
         setInitialMessageLoaded((prevMap) => ({
@@ -1312,6 +1319,19 @@ const {runAction, isLoading} = useApiAction();
             />
           </VideoCallSection>
         )}
+        {(isGroupCallActive || isGroupCallShuttingDown) && (
+          <GroupCallComponent
+            currentUser={currentUser}
+            group={selectedGroup}
+            handleGroupCallEnded={() => {
+              setIsGroupCallActive(false);
+              setIsGroupCallShuttingDown(false);
+            }}
+            isGroupCallActive={isGroupCallActive}
+            isGroupCallShuttingDown={isGroupCallShuttingDown}
+          />
+        )}
+        {!isGroupCallActive && (
         <ChatBoxContainer>
           {selectedGroup && (
             <ChatBox
@@ -1331,8 +1351,9 @@ const {runAction, isLoading} = useApiAction();
             />
           )}
         </ChatBoxContainer>
+        )}
       </RightPanel>
-      <RightPanelMembers>
+      <RightPanelMembers isGroupCallActive={isGroupCallActive}>
         {selectedGroup && selectedGroup.type === 'private' && (
           <>
             {/* User Profile Section for Private Chat */}
@@ -1372,14 +1393,36 @@ const {runAction, isLoading} = useApiAction();
           </>
         )}
 
-        {selectedGroup && selectedGroup.type !== 'private' && (
+       {isGroupCallActive && (
+        <ChatBoxContainer>
+          {selectedGroup && (
+            <ChatBox
+              messages={messagesMap[selectedGroup?.id] || []}
+              onSendMessage={sendMessage}
+              currentUser={currentUser}
+              typingUsers={typingUsers[selectedGroup?.id] || {}}
+              onTyping={sendTypingStatus}
+              groupMembers={groupMembers}
+              group={selectedGroup}
+              userMap={userMap}
+              fetchMessages={fetchMessages}
+              hasMoreMessages={hasMoreMessages[selectedGroup?.id]}
+              handleNewMessage={handleNewMessage}
+              handleReaction={handleReaction}
+              newMessageCount={newMessageCount[selectedGroup?.id]}
+            />
+          )}
+        </ChatBoxContainer>
+        )}
+
+        { !isGroupCallActive && selectedGroup && selectedGroup.type !== 'private' && (
           <>
-            <Link style={{ textDecoration: 'none', textUnderlineOffset: 'none' }} to={`/meet/${selectedGroup.id}`} target="_blank" rel="noopener noreferrer">
+            {/* <Link style={{ textDecoration: 'none', textUnderlineOffset: 'none' }} to={`/meet/${selectedGroup.id}`} target="_blank" rel="noopener noreferrer"> */}
 
             <ModalButton
-    // onClick={() => {
-    //   window.location.href = `/meet/${selectedGroup.id}`;
-    // }}
+        onClick={() => {
+          setIsGroupCallActive(true);
+        }}
     style={{
       margin: '10px auto',
       width: '60%',
@@ -1393,7 +1436,7 @@ const {runAction, isLoading} = useApiAction();
     <FiVideo style={{ marginRight: '8px' }} />
     Meet
   </ModalButton>
-  </Link>
+  {/* </Link> */}
             
             <MembersHeading>Members</MembersHeading>
             <MemberListContainer>
