@@ -608,7 +608,7 @@ const HomePage = () => {
 const [privateChats, setPrivateChats] = useState([]);
     const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
 const [isVideoCallActive, setIsVideoCallActive] = useState(false);
-const [isGroupCallActive, setIsGroupCallActive] = useState(true);
+const [isGroupCallActive, setIsGroupCallActive] = useState(false);
 const [isGroupCallShuttingDown, setIsGroupCallShuttingDown] = useState(false);
 const [userStatusMap, setUserStatusMap] = useState({});
 const [typingUsers, setTypingUsers] = useState({});

@@ -83,7 +83,7 @@ const VideoContainer = styled.div`
     clamp(250px, 100%/2 - 32px, 400px)
   );
   max-width: ${props => 
-    props.participantCount <= 2 ? '100%' : 
+    props.participantCount <= 2 ? 'clamp(400px,100%, 500px)' : 
     props.participantCount <= 4 ? '400px' : 
     '400px'
   };
