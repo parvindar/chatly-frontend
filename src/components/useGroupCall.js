@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { 
-  addMessageListener, 
-  removeMessageListener, 
-  sendMessageWebSocket 
+import {
+  addMessageListener,
+  removeMessageListener,
+  sendMessageWebSocket
 } from "../api/sdk";
 
-export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = () => {}) => {
+export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = () => { }) => {
   const userId = currentUser?.id;
   const localVideoRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -14,13 +14,15 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
   const [participants, setParticipants] = useState([]);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [participantQueue, setParticipantQueue] = useState([]);
+  const [joinTime, setJoinTime] = useState(0);
 
   const [remoteICECandidate, setRemoteICECandidate] = useState({});
 
   useEffect(() => {
 
     console.log("✅ useEffect participantsRef.current:", participantsRef.current);
-    if(participantsRef.current){
+    if (participantsRef.current) {
       console.log("✅ Peer connection established with participants:", participantsRef.current.length);
 
       // For ICE candidates
@@ -30,16 +32,23 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
           const candidate = candidates.shift();
           participant.pc.addIceCandidate(new RTCIceCandidate(candidate));
         }
-        setRemoteICECandidate((prev) => ({...prev, [participant.id]: []}));
+        setRemoteICECandidate((prev) => ({ ...prev, [participant.id]: [] }));
       });
-      
+
 
     }
   }, [participantsRef.current]);
 
+  useEffect(() => {
+    if (participantQueue.length > 0) {
+      const participant = participantQueue.shift();
+      handleParticipantJoined(participant);
+    }
+  }, [participantQueue]);
+
   // Initialize/cleanup message listeners
   useEffect(() => {
-    
+
     const handleSignalMessage = async (msg) => {
       const handlers = {
         "group-call-offer": handleGroupOffer,
@@ -50,12 +59,12 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
         "leave-room": handleParticipantLeft,
         "audio-video": handleParticipantAudioVideo,
       };
-      if(msg.from === userId){
+      if (msg.from === userId) {
         return;
       }
       console.log("🔴 handleSignalMessage", msg, callState);
 
-      if(callState === "idle"){
+      if (callState === "idle") {
         return;
       }
 
@@ -68,49 +77,49 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
     return () => {
       removeMessageListener("group_video_call", handleSignalMessage);
     };
-  }, [userId, callState, isVideoEnabled, isAudioEnabled,currentUser, roomId]);
+  }, [userId, callState, isVideoEnabled, isAudioEnabled, currentUser, roomId]);
 
   // Create peer connection for a participant
-  const createPeerConnection = (participantId,userInfo, video_enabled, audio_enabled) => {
+  const createPeerConnection = (participantId, userInfo, video_enabled, audio_enabled) => {
     const pc = new RTCPeerConnection({
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
         { urls: 'stun:stun1.l.google.com:19302' },
-       {
-        username: "8EI2VeNoMLDDpLI086s-PqgJ11zN94-7e_H5yJvmg-M3Tj1_QYP1k8PRZLPGGvRYAAAAAGf1KPpwYXJ2aW5kYXI=",
-        credential: "088e82ce-1480-11f0-bd79-0242ac140004",
-        urls: [
+        {
+          username: "8EI2VeNoMLDDpLI086s-PqgJ11zN94-7e_H5yJvmg-M3Tj1_QYP1k8PRZLPGGvRYAAAAAGf1KPpwYXJ2aW5kYXI=",
+          credential: "088e82ce-1480-11f0-bd79-0242ac140004",
+          urls: [
             "turn:ss-turn1.xirsys.com:80?transport=udp",
             "turn:ss-turn1.xirsys.com:3478?transport=udp",
             "turn:ss-turn1.xirsys.com:80?transport=tcp",
             "turn:ss-turn1.xirsys.com:3478?transport=tcp",
             "turns:ss-turn1.xirsys.com:443?transport=tcp",
             "turns:ss-turn1.xirsys.com:5349?transport=tcp"
-        ]
-     },
+          ]
+        },
 
-      {
-        urls: "turn:global.relay.metered.ca:80",
-        username: "49dcc6138b74f979af70849f",
-        credential: "qEljicolNVrA8XGY",
-      },
-      {
-        urls: "turn:global.relay.metered.ca:80?transport=tcp",
-        username: "49dcc6138b74f979af70849f",
-        credential: "qEljicolNVrA8XGY",
-      },
-      {
-        urls: "turn:global.relay.metered.ca:443",
-        username: "49dcc6138b74f979af70849f",
-        credential: "qEljicolNVrA8XGY",
-      },
-      {
-        urls: "turns:global.relay.metered.ca:443?transport=tcp",
-        username: "49dcc6138b74f979af70849f",
-        credential: "qEljicolNVrA8XGY",
-      },
-      
-       ],
+        {
+          urls: "turn:global.relay.metered.ca:80",
+          username: "49dcc6138b74f979af70849f",
+          credential: "qEljicolNVrA8XGY",
+        },
+        {
+          urls: "turn:global.relay.metered.ca:80?transport=tcp",
+          username: "49dcc6138b74f979af70849f",
+          credential: "qEljicolNVrA8XGY",
+        },
+        {
+          urls: "turn:global.relay.metered.ca:443",
+          username: "49dcc6138b74f979af70849f",
+          credential: "qEljicolNVrA8XGY",
+        },
+        {
+          urls: "turns:global.relay.metered.ca:443?transport=tcp",
+          username: "49dcc6138b74f979af70849f",
+          credential: "qEljicolNVrA8XGY",
+        },
+
+      ],
       iceCandidatePoolSize: 10,
     });
 
@@ -166,9 +175,8 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
     if (callState !== "idle") return;
 
     setCallState("joining");
-
+    setJoinTime(Date.now());
     try {
-      
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
@@ -203,7 +211,16 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
   const handleParticipantJoined = async ({ from: participantId, sender_info, video_enabled, audio_enabled }) => {
     if (participantsRef.current.has(participantId) || !roomId) return;
     console.log("🔴 handleParticipantJoined", participantId, sender_info);
-    const pc = createPeerConnection(participantId,sender_info, video_enabled, audio_enabled);
+
+    const d = Date.now();
+    const timeDiff = d - joinTime;
+    if (timeDiff < 1000) {
+      setTimeout(() => {
+        setParticipantQueue((prev) => [...prev, { from: participantId, sender_info, video_enabled, audio_enabled }]);
+      }, 1000);
+      return;
+    }
+    const pc = createPeerConnection(participantId, sender_info, video_enabled, audio_enabled);
     const stream = localStreamRef.current;
 
     if (stream) {
@@ -232,7 +249,7 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
   const handleGroupOffer = async ({ from, sdp, room_id: offerRoomId, sender_info, video_enabled, audio_enabled }) => {
     if (roomId !== offerRoomId || participantsRef.current.has(from)) return;
 
-    const pc = createPeerConnection(from,sender_info, video_enabled, audio_enabled);
+    const pc = createPeerConnection(from, sender_info, video_enabled, audio_enabled);
     const stream = localStreamRef.current;
 
     if (stream) {
@@ -271,7 +288,7 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
       try {
         await participant.pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (err) {
-        setRemoteICECandidate((prev) => ({...prev, [from]: [...(prev[from] || []), candidate]}));
+        setRemoteICECandidate((prev) => ({ ...prev, [from]: [...(prev[from] || []), candidate] }));
         console.error("Error adding ICE candidate:", err);
       }
     }
