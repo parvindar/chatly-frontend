@@ -160,6 +160,12 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
 
     pc.oniceconnectionstatechange = () => {
       console.log(`ICE connection state with ${participantId}:`, pc.iceConnectionState);
+      if (pc.iceConnectionState === "disconnected") {
+        // handleParticipantLeft({ from: participantId });
+      } else if (pc.iceConnectionState === "failed") {
+        console.log("🔴 ICE connection failed, restarting ICE");
+        pc.restartIce();
+      }
     };
 
     return pc;
@@ -217,7 +223,7 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
     if (timeDiff < 1000) {
       setTimeout(() => {
         setParticipantQueue((prev) => [...prev, { from: participantId, sender_info, video_enabled, audio_enabled }]);
-      }, 1000);
+      }, (Math.random() * 1000) + 100); //random delay to avoid race condition
       return;
     }
     const pc = createPeerConnection(participantId, sender_info, video_enabled, audio_enabled);

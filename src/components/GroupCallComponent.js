@@ -1,4 +1,4 @@
-import styled, {css} from 'styled-components';
+import styled, { css } from 'styled-components';
 import { useGroupCall } from "./useGroupCall";
 import { useParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
@@ -82,10 +82,10 @@ const VideoContainer = styled.div`
   flex: 1 1 calc(
     clamp(250px, 100%/2 - 32px, 400px)
   );
-  max-width: ${props => 
-    props.participantCount <= 2 ? 'clamp(400px,100%, 500px)' : 
-    props.participantCount <= 4 ? '400px' : 
-    '400px'
+  max-width: ${props =>
+    props.participantCount <= 2 ? 'clamp(400px,100%, 500px)' :
+      props.participantCount <= 4 ? '400px' :
+        '400px'
   };
   min-width: 250px;
 
@@ -106,7 +106,7 @@ const VideoContainer = styled.div`
 
 const Video = styled.video`
   width: 100%;
-  height: 100%;
+  height: calc(100% + 1px);
   object-fit: cover;
 `;
 
@@ -242,212 +242,212 @@ const ProfileInfo = styled.div`
   }
 `;
 
-const GroupCallComponent = ({currentUser, group, handleGroupCallEnded, isGroupCallActive, isGroupCallShuttingDown}) => {
-    if(!currentUser || !group){
-        return <></>;
+const GroupCallComponent = ({ currentUser, group, handleGroupCallEnded, isGroupCallActive, isGroupCallShuttingDown }) => {
+  if (!currentUser || !group) {
+    return <></>;
+  }
+
+  if (!isGroupCallActive) {
+    return <></>;
+  }
+
+  const roomId = group.id;
+
+  useEffect(() => {
+    if (group) {
+      joinRoom(roomId);
     }
+  }, [group]);
 
-    if(!isGroupCallActive){
-        return <></>;
+  useEffect(() => {
+    if (isGroupCallShuttingDown) {
+      leaveRoom();
+      handleGroupCallEnded();
     }
-
-    const roomId = group.id;
-
-    useEffect(() => {
-        if(group){
-            joinRoom(roomId);
-        }
-    }, [group]);
-
-    useEffect(() => {
-        if(isGroupCallShuttingDown){
-            leaveRoom();
-            handleGroupCallEnded();
-        }
-    }, [isGroupCallShuttingDown]);
+  }, [isGroupCallShuttingDown]);
 
 
 
-    useEffect(() => {
-        return () => {
-            console.log("leaving room");
-            leaveRoom();
-        }
-    }, []);
+  useEffect(() => {
+    return () => {
+      console.log("leaving room");
+      leaveRoom();
+    }
+  }, []);
 
-    const {
-        localVideoRef,
-        participants,
-        joinRoom,
-        leaveRoom,
-        callState,
-        isVideoEnabled,
-        isAudioEnabled,
-        toggleVideo,
-        toggleAudio,
-    } = useGroupCall(currentUser,roomId, handleGroupCallEnded);
+  const {
+    localVideoRef,
+    participants,
+    joinRoom,
+    leaveRoom,
+    callState,
+    isVideoEnabled,
+    isAudioEnabled,
+    toggleVideo,
+    toggleAudio,
+  } = useGroupCall(currentUser, roomId, handleGroupCallEnded);
 
-    // let participants = [
-    //     {
-    //         id: 1,
-    //         name: "John Doe",
-    //         profile_pic: "https://i.pravatar.cc/100",
-    //     },
-    //     {
-    //         id: 2,
-    //         name: "Jane Doe",
-    //         profile_pic: "https://i.pravatar.cc/100",
-    //     },
-    //     {
-    //         id: 3,
-    //         name: "John Doe",
-    //         profile_pic: "https://i.pravatar.cc/100",
-    //     },
-    //     {
-    //         id: 4,
-    //         name: "Jane Doe",
-    //         profile_pic: "https://i.pravatar.cc/100",
-    //     },
-    //     {
-    //         id: 5,
-    //         name: "John Doe",
-    //         profile_pic: "https://i.pravatar.cc/100",
-    //     },
-    //     {
-    //         id: 6,
-    //         name: "Jane Doe",
-    //         profile_pic: "https://i.pravatar.cc/100",
-    //     },
-    //     {   
-    //         id: 7,
-    //         name: "John Doe",
-    //         profile_pic: "https://i.pravatar.cc/100",
-    //     },
-    //     {
-    //         id: 8,
-    //         name: "Jane Doe",
-    //         profile_pic: "https://i.pravatar.cc/100",
-    //     },
-    //     {
-    //         id: 9,
-    //         name: "John Doe",
-    //         profile_pic: "https://i.pravatar.cc/100",
-    //     },
-    //     {
-    //         id: 10,
-    //         name: "Jane Doe",
-    //         profile_pic: "https://i.pravatar.cc/100",
-    //     }
-    // ];
+  // let participants = [
+  //     {
+  //         id: 1,
+  //         name: "John Doe",
+  //         profile_pic: "https://i.pravatar.cc/100",
+  //     },
+  //     {
+  //         id: 2,
+  //         name: "Jane Doe",
+  //         profile_pic: "https://i.pravatar.cc/100",
+  //     },
+  //     {
+  //         id: 3,
+  //         name: "John Doe",
+  //         profile_pic: "https://i.pravatar.cc/100",
+  //     },
+  //     {
+  //         id: 4,
+  //         name: "Jane Doe",
+  //         profile_pic: "https://i.pravatar.cc/100",
+  //     },
+  //     {
+  //         id: 5,
+  //         name: "John Doe",
+  //         profile_pic: "https://i.pravatar.cc/100",
+  //     },
+  //     {
+  //         id: 6,
+  //         name: "Jane Doe",
+  //         profile_pic: "https://i.pravatar.cc/100",
+  //     },
+  //     {   
+  //         id: 7,
+  //         name: "John Doe",
+  //         profile_pic: "https://i.pravatar.cc/100",
+  //     },
+  //     {
+  //         id: 8,
+  //         name: "Jane Doe",
+  //         profile_pic: "https://i.pravatar.cc/100",
+  //     },
+  //     {
+  //         id: 9,
+  //         name: "John Doe",
+  //         profile_pic: "https://i.pravatar.cc/100",
+  //     },
+  //     {
+  //         id: 10,
+  //         name: "Jane Doe",
+  //         profile_pic: "https://i.pravatar.cc/100",
+  //     }
+  // ];
 
-    // participants = participants.slice(0, 4);
+  // participants = participants.slice(0, 4);
 
-    return (
-        <Container>
-            {/* <MeetingInfo>
+  return (
+    <Container>
+      {/* <MeetingInfo>
                 <span>{group?.name}</span>
             </MeetingInfo> */}
 
-            {/* <ParticipantsCount>
+      {/* <ParticipantsCount>
                 <FiUser size={14} />
                 <span>{participants.length + 1}</span>
             </ParticipantsCount> */}
 
-            {/* <MoreOptions>
+      {/* <MoreOptions>
                 <FiMoreVertical />
             </MoreOptions> */}
 
-            <VideoGrid participantCount={participants.length + 1}>
-                <VideoContainer participantCount={participants.length + 1}>
-                    {(callState !== "active" || !isVideoEnabled) && (
-                        <ProfileInfo>
-                            <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
-                            <span style={{ fontWeight: 'bold', marginTop: '12px'}}>{currentUser?.name || 'You'}</span>
-                            {!isAudioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px'}} size={14} />}
-                        </ProfileInfo>
-                    )}
-                   
-                    <Video ref={localVideoRef} autoPlay muted playsInline />
-                    { callState === "active" && isVideoEnabled && (<>
-                    <UserInfo>
-                        <span>{currentUser?.name || 'You'}</span>
-                        {!isAudioEnabled && <FiMicOff size={14} />}
-                        {!isVideoEnabled && <FiVideoOff size={14} />}
-                    </UserInfo>
-                    </>
-                    )}
-                </VideoContainer>
+      <VideoGrid participantCount={participants.length + 1}>
+        <VideoContainer participantCount={participants.length + 1}>
+          {(callState !== "active" || !isVideoEnabled) && (
+            <ProfileInfo>
+              <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
+              <span style={{ fontWeight: 'bold', marginTop: '12px' }}>{currentUser?.name || 'You'}</span>
+              {!isAudioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px' }} size={14} />}
+            </ProfileInfo>
+          )}
 
-                {participants.map((participant) => (
-                    <VideoContainer participantCount={participants.length + 1} key={participant.id}>
-                      {!participant.videoEnabled && (
-                        <ProfileInfo>
-                            <img src={participant.user_info?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
-                            <span style={{ fontWeight: 'bold', marginTop: '12px'}}>{participant.user_info?.name}</span>
-                            {!participant.audioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px'}} size={14} />}
-                        </ProfileInfo>
-                      )}
-                      
-                        <Video
-                            ref={participant.videoRef}
-                            autoPlay
-                            playsInline
-                        />
-                        { participant.videoEnabled && (
-                        <>
-                        <UserInfo>
-                            <span>{participant.user_info.name}</span>
-                            {!participant.audioEnabled && <FiMicOff size={14} />}
-                            {!participant.videoEnabled && <FiVideoOff size={14} />}
-                        </UserInfo>
-                        </>
-                      )}
-                    </VideoContainer>
-                ))}
-            </VideoGrid>
+          <Video ref={localVideoRef} autoPlay muted playsInline />
+          {callState === "active" && isVideoEnabled && (<>
+            <UserInfo>
+              <span>{currentUser?.name || 'You'}</span>
+              {!isAudioEnabled && <FiMicOff size={14} />}
+              {!isVideoEnabled && <FiVideoOff size={14} />}
+            </UserInfo>
+          </>
+          )}
+        </VideoContainer>
 
-            <Controls>
-              {callState !== "idle" && (
-                <>
-                <ControlButton
-                    onClick={toggleAudio}
-                    active={isAudioEnabled}
-                >
-                    {isAudioEnabled ? <FiMic /> : <FiMicOff />}
-                    {/* <ButtonLabel>{isAudioEnabled ? 'Mute' : 'Unmute'}</ButtonLabel> */}
-                </ControlButton>
+        {participants.map((participant) => (
+          <VideoContainer participantCount={participants.length + 1} key={participant.id}>
+            {!participant.videoEnabled && (
+              <ProfileInfo>
+                <img src={participant.user_info?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
+                <span style={{ fontWeight: 'bold', marginTop: '12px' }}>{participant.user_info?.name}</span>
+                {!participant.audioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px' }} size={14} />}
+              </ProfileInfo>
+            )}
 
-                <ControlButton
-                    onClick={toggleVideo}
-                    active={isVideoEnabled}
-                >
-                    {isVideoEnabled ? <FiVideo /> : <FiVideoOff />}
-                    {/* <ButtonLabel>{isVideoEnabled ? 'Stop Video' : 'Start Video'}</ButtonLabel> */}
-                </ControlButton>
-                </>
-              )}
+            <Video
+              ref={participant.videoRef}
+              autoPlay
+              playsInline
+            />
+            {participant.videoEnabled && (
+              <>
+                <UserInfo>
+                  <span>{participant.user_info.name}</span>
+                  {!participant.audioEnabled && <FiMicOff size={14} />}
+                  {!participant.videoEnabled && <FiVideoOff size={14} />}
+                </UserInfo>
+              </>
+            )}
+          </VideoContainer>
+        ))}
+      </VideoGrid>
 
-                {callState !== "active" ? (
-                    <ControlButton
-                        onClick={() => joinRoom(roomId)}
-                        disabled={callState !== "idle"}
-                        active={callState === "idle"}
-                    >
-                        <FiLogIn />
-                        {/* <ButtonLabel>Join</ButtonLabel> */}
-                    </ControlButton>
-                ) : (
-                    <ControlButton
-                        onClick={leaveRoom}
-                        red
-                    >
-                        <FiPhone />
-                        {/* <ButtonLabel>Leave</ButtonLabel> */}
-                    </ControlButton>
-                )}
-            </Controls>
-        </Container>
-    );
+      <Controls>
+        {callState !== "idle" && (
+          <>
+            <ControlButton
+              onClick={toggleAudio}
+              active={isAudioEnabled}
+            >
+              {isAudioEnabled ? <FiMic /> : <FiMicOff />}
+              {/* <ButtonLabel>{isAudioEnabled ? 'Mute' : 'Unmute'}</ButtonLabel> */}
+            </ControlButton>
+
+            <ControlButton
+              onClick={toggleVideo}
+              active={isVideoEnabled}
+            >
+              {isVideoEnabled ? <FiVideo /> : <FiVideoOff />}
+              {/* <ButtonLabel>{isVideoEnabled ? 'Stop Video' : 'Start Video'}</ButtonLabel> */}
+            </ControlButton>
+          </>
+        )}
+
+        {callState !== "active" ? (
+          <ControlButton
+            onClick={() => joinRoom(roomId)}
+            disabled={callState !== "idle"}
+            active={callState === "idle"}
+          >
+            <FiLogIn />
+            {/* <ButtonLabel>Join</ButtonLabel> */}
+          </ControlButton>
+        ) : (
+          <ControlButton
+            onClick={leaveRoom}
+            red
+          >
+            <FiPhone />
+            {/* <ButtonLabel>Leave</ButtonLabel> */}
+          </ControlButton>
+        )}
+      </Controls>
+    </Container>
+  );
 };
 
 export default GroupCallComponent;
