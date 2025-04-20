@@ -181,12 +181,14 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
     if (callState !== "idle") return;
 
     setCallState("joining");
-    setJoinTime(Date.now());
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
       });
+
+
+      setJoinTime(Date.now());
 
       localStreamRef.current = stream;
       if (localVideoRef.current) {

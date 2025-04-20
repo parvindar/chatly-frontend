@@ -105,9 +105,11 @@ const VideoContainer = styled.div`
 `;
 
 const Video = styled.video`
+  position:relative;
   width: 100%;
   height: calc(100% + 1px);
   object-fit: cover;
+  z-index: 2;
 `;
 
 const UserInfo = styled.div`
@@ -122,6 +124,7 @@ const UserInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
+  z-index: 2;
 `;
 
 const Controls = styled.div`
@@ -224,6 +227,9 @@ const ProfileInfo = styled.div`
   // top: 50%;
   // left: 50%;
   // transform: translate(-50%, -50%);
+  position:absolute;
+  left:0;
+  top:0;
   width: 100%;
   height: 100%;
   display: flex;
@@ -234,7 +240,7 @@ const ProfileInfo = styled.div`
   
   border-radius: 4px;
   font-size: 16px;
-
+  z-index: ${props => props.isVideoEnabled ? 1 : 3};
   img{
     // width: 50%;
     height: 40%;
@@ -359,16 +365,16 @@ const GroupCallComponent = ({ currentUser, group, handleGroupCallEnded, isGroupC
 
       <VideoGrid participantCount={participants.length + 1}>
         <VideoContainer participantCount={participants.length + 1}>
-          {(callState !== "active" || !isVideoEnabled) && (
-            <ProfileInfo>
-              <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
-              <span style={{ fontWeight: 'bold', marginTop: '12px' }}>{currentUser?.name || 'You'}</span>
-              {!isAudioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px' }} size={14} />}
-            </ProfileInfo>
-          )}
+          {/* {(callState !== "active" || !isVideoEnabled || !localVideoRef.current?.srcObject) && ( */}
+          <ProfileInfo isVideoEnabled={isVideoEnabled}>
+            <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
+            <span style={{ fontWeight: 'bold', marginTop: '12px' }}>{currentUser?.name || 'You'}</span>
+            {!isAudioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px' }} size={14} />}
+          </ProfileInfo>
+          {/* )} */}
 
           <Video ref={localVideoRef} autoPlay muted playsInline />
-          {callState === "active" && isVideoEnabled && (<>
+          {callState === "active" && isVideoEnabled && localVideoRef.current?.srcObject && (<>
             <UserInfo>
               <span>{currentUser?.name || 'You'}</span>
               {!isAudioEnabled && <FiMicOff size={14} />}
@@ -380,20 +386,21 @@ const GroupCallComponent = ({ currentUser, group, handleGroupCallEnded, isGroupC
 
         {participants.map((participant) => (
           <VideoContainer participantCount={participants.length + 1} key={participant.id}>
-            {!participant.videoEnabled && (
-              <ProfileInfo>
-                <img src={participant.user_info?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
-                <span style={{ fontWeight: 'bold', marginTop: '12px' }}>{participant.user_info?.name}</span>
-                {!participant.audioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px' }} size={14} />}
-              </ProfileInfo>
-            )}
+
 
             <Video
               ref={participant.videoRef}
               autoPlay
               playsInline
             />
-            {participant.videoEnabled && (
+            {/* {(!participant.videoEnabled || !participant.videoRef) && ( */}
+            <ProfileInfo isVideoEnabled={participant.videoEnabled}>
+              <img src={participant.user_info?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
+              <span style={{ fontWeight: 'bold', marginTop: '12px' }}>{participant.user_info?.name}</span>
+              {!participant.audioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px' }} size={14} />}
+            </ProfileInfo>
+            {/* )} */}
+            {(participant.videoEnabled && participant.stream) && (
               <>
                 <UserInfo>
                   <span>{participant.user_info.name}</span>
