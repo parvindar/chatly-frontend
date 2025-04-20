@@ -41,8 +41,10 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
 
   useEffect(() => {
     if (participantQueue.length > 0) {
-      const participant = participantQueue.shift();
+      const queue = [...participantQueue];
+      const participant = queue.shift();
       handleParticipantJoined(participant);
+      setParticipantQueue(queue);
     }
   }, [participantQueue]);
 
@@ -62,7 +64,7 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
       if (msg.from === userId) {
         return;
       }
-      console.log("🔴 handleSignalMessage", msg, callState);
+      // console.log("🔴 handleSignalMessage", msg, callState);
 
       if (callState === "idle") {
         return;
@@ -222,7 +224,8 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
 
     const d = Date.now();
     const timeDiff = d - joinTime;
-    if (timeDiff < 1000) {
+    if (timeDiff < 1000 || callState !== "active") {
+      console.log("🔴 handleParticipantJoined delay", participantId, sender_info);
       setTimeout(() => {
         setParticipantQueue((prev) => [...prev, { from: participantId, sender_info, video_enabled, audio_enabled }]);
       }, (Math.random() * 1000) + 100); //random delay to avoid race condition

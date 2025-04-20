@@ -134,7 +134,8 @@ const Controls = styled.div`
   gap: 16px;
 //   padding: 20px;
   height: 60px;
-  background: #36393f;
+  // background: #36393f;
+  background: transparent;
   position: absolute;
   bottom: 0;
   left: 0;

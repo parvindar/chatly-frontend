@@ -28,9 +28,10 @@ const maxRetryAttempts = 10; // Maximum number of retries
 const retryInterval = 2000; // Initial retry interval in milliseconds
 
 // Initialize WebSocket connection
-export const initializeWebSocket = (callback = () => {}) => {
-  if(socket){
+export const initializeWebSocket = (callback = () => { }) => {
+  if (socket) {
     console.log('WebSocket connection already established');
+    callback(true);
     return;
   }
   const token = localStorage.getItem('token');
@@ -40,7 +41,7 @@ export const initializeWebSocket = (callback = () => {}) => {
 
   socket.onopen = () => {
     console.log('WebSocket connection established');
-    callback();
+    callback(true);
     retryAttempts = 0; // Reset retry attempts on successful connection
   };
 
@@ -60,17 +61,18 @@ export const initializeWebSocket = (callback = () => {}) => {
       if (listeners[wsmessage.type]) {
         listeners[wsmessage.type](wsmessage.message);
       }
-  }
+    }
   };
 
   socket.onclose = () => {
+    callback(false);
     console.log('WebSocket connection closed');
     if (retryAttempts < maxRetryAttempts) {
       const delay = retryInterval * Math.pow(1.2, retryAttempts); // Exponential backoff
       console.log(`Retrying WebSocket connection in ${delay / 1000} seconds...`);
       setTimeout(() => {
         retryAttempts++;
-        initializeWebSocket(); // Retry connection
+        initializeWebSocket(callback); // Retry connection
       }, delay);
     } else {
       console.error('Max retry attempts reached. WebSocket connection failed.');
@@ -83,12 +85,12 @@ export const initializeWebSocket = (callback = () => {}) => {
 };
 
 // Add a listener for incoming messages
-export const addMessageListener = (type,listener) => {
+export const addMessageListener = (type, listener) => {
   listeners[type] = listener;
 };
 
 // Remove a listener
-export const removeMessageListener = (type,listener) => {
+export const removeMessageListener = (type, listener) => {
   listeners[type] = null;
   // const index = listeners.indexOf(listener);
   // if (index !== -1) {
@@ -169,7 +171,7 @@ export const fetchPrivateChats = async (currentUserId) => {
   return response.data.data;
 };
 
-export const getGroupMemberOptions = async (groupId,searchQuery) => {
+export const getGroupMemberOptions = async (groupId, searchQuery) => {
   const response = await apiClient.get(`/user/options/${groupId}?search=${searchQuery}`);
   return response.data.data;
 };
@@ -193,7 +195,7 @@ export const fetchAllGroups = async () => {
 };
 
 
-export const getMessagesByChatId = async (chatId, lastMessageId=0) => {
+export const getMessagesByChatId = async (chatId, lastMessageId = 0) => {
   const response = await apiClient.get(`/message/${chatId}?last_message_id=${lastMessageId}&limit=20`);
   return response.data.data;
 };
@@ -210,18 +212,18 @@ export const editChatMessage = async (messageId, content) => {
 
 export const addMessageReaction = async (messageId, emoji) => {
   const response = await apiClient.post(`/message/${messageId}/reactions`, { emoji });
-  if(response.status === 200){
-    return {ok: true, data: response.data};
+  if (response.status === 200) {
+    return { ok: true, data: response.data };
   }
-  return {ok: false, data: response.data};
+  return { ok: false, data: response.data };
 };
 
 export const deleteMessageReaction = async (messageId, emoji) => {
   const response = await apiClient.delete(`/message/${messageId}/reactions/${emoji}`);
-  if(response.status === 200){
-    return {ok: true, data: response.data};
+  if (response.status === 200) {
+    return { ok: true, data: response.data };
   }
-  return {ok: false, data: response.data};
+  return { ok: false, data: response.data };
 };
 
 export const createGroup = async (name, description, type = 'open') => {

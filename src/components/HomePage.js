@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback,forwardRef,memo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, forwardRef, memo } from 'react';
 import GroupList from './GroupList';
 import ChatBox from './ChatBox';
 import VideoCallComponent from './VideoCallComponent';
@@ -29,8 +29,9 @@ import {
 import { useVideoCall } from '../components/useVideoCall'; // Import the custom hook for video call
 import { useApiAction } from './useAPIAction';
 import _ from 'lodash'; // Import lodash for throttling
-import { FiLogOut,FiVideo, FiPhoneOff , FiMoreVertical } from 'react-icons/fi'; // Import the logout icon from react-icons
+import { FiLogOut, FiVideo, FiPhoneOff, FiMoreVertical, FiAlertCircle } from 'react-icons/fi'; // Import the logout icon from react-icons
 import { MdCallEnd } from 'react-icons/md';
+import LoadingComponent from './LoadingComponent';
 
 const Container = styled.div`
   display: flex;
@@ -233,7 +234,7 @@ const GroupItem = styled.div`
 
   &:hover {
     background-color: ${(props) =>
-      props.isSelected ? '#414a53' : '#34363c'}; /* Hover color, a bit darker */
+    props.isSelected ? '#414a53' : '#34363c'}; /* Hover color, a bit darker */
     color: ${colors.textPrimary};
   }
 `;
@@ -327,7 +328,7 @@ const UserItem = styled.div`
 
   &:hover {
     background-color: ${(props) =>
-      props.isSelected ? '#414a53' : '#34363c'}; /* Hover color, a bit darker */
+    props.isSelected ? '#414a53' : '#34363c'}; /* Hover color, a bit darker */
     color: ${colors.textPrimary};
   }
 `;
@@ -358,7 +359,7 @@ const OnlineStatusIndicator = styled.div`
   }};
   border-radius: 50%;
   border: 1px solid #23272a;
-  display: ${props =>  (props.status && (props.status !== 'offline')) ? 'block' : 'none'};
+  display: ${props => (props.status && (props.status !== 'offline')) ? 'block' : 'none'};
 `;
 
 const UserName = styled.span`
@@ -556,7 +557,7 @@ const Tab = styled.div`
 
   &:hover {
     background-color: ${(props) =>
-      props.isActive ? '#414a53' : '#34363c'}; /* Hover color, a bit darker */
+    props.isActive ? '#414a53' : '#34363c'}; /* Hover color, a bit darker */
     color: ${colors.textPrimary};
   }
 `;
@@ -586,9 +587,25 @@ const ChatHeaderBar = styled.div`
   flex-shrink: 0; /* Prevent the header from shrinking */
 `;
 
+const TopWarningBar = styled.div`
+  height: 20px; /* Adjust height as needed */
+  background-color: rgb(116, 67, 67); /* Dark background */
+  color: white;
+  font-size: 12px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
 const HomePage = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [groups, setGroups] = useState([]);
+  const [isPageLoading, setIsPageLoading] = useState(true);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [messagesMap, setMessagesMap] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -600,31 +617,32 @@ const HomePage = () => {
   const [visibleDropdown, setVisibleDropdown] = useState(null);
   const dropdownRef = useRef(null);
   const [groupMembers, setGroupMembers] = useState([]);
-  const [userMap, setUserMap] = useState({"a0000000-0000-0000-0000-000000000000" : { id : "a0000000-0000-0000-0000-000000000000", name : "AI", user_id : "ai", status : "online" }});
+  const [userMap, setUserMap] = useState({ "a0000000-0000-0000-0000-000000000000": { id: "a0000000-0000-0000-0000-000000000000", name: "AI", user_id: "ai", status: "online" } });
   const [selectedTab, setSelectedTab] = useState('groups');
   const [visibleMemberDropdown, setVisibleMemberDropdown] = useState(null);
   const groupDropdownRef = useRef(null);
   const memberDropdownRef = useRef(null);
-const [privateChats, setPrivateChats] = useState([]);
-    const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
-const [isVideoCallActive, setIsVideoCallActive] = useState(false);
-const [isGroupCallActive, setIsGroupCallActive] = useState(false);
-const [isGroupCallShuttingDown, setIsGroupCallShuttingDown] = useState(false);
-const [userStatusMap, setUserStatusMap] = useState({});
-const [typingUsers, setTypingUsers] = useState({});
-const [hasMoreMessages, setHasMoreMessages] = useState({});
-const [initialMessageLoaded, setInitialMessageLoaded] = useState({});
-const [newMessageCount, setNewMessageCount] = useState({});
+  const [privateChats, setPrivateChats] = useState([]);
+  const [isCreateChatModalOpen, setIsCreateChatModalOpen] = useState(false);
+  const [isVideoCallActive, setIsVideoCallActive] = useState(false);
+  const [isGroupCallActive, setIsGroupCallActive] = useState(false);
+  const [isGroupCallShuttingDown, setIsGroupCallShuttingDown] = useState(false);
+  const [userStatusMap, setUserStatusMap] = useState({});
+  const [typingUsers, setTypingUsers] = useState({});
+  const [hasMoreMessages, setHasMoreMessages] = useState({});
+  const [initialMessageLoaded, setInitialMessageLoaded] = useState({});
+  const [newMessageCount, setNewMessageCount] = useState({});
+  const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
 
-const {runAction, isLoading} = useApiAction();
+  const { runAction, isLoading } = useApiAction();
 
-       // Reference for the RTCPeerConnection
-// Throttled function to fetch users
+  // Reference for the RTCPeerConnection
+  // Throttled function to fetch users
   const fetchGroupMemberOptions = useCallback(
     _.throttle(async (term) => {
       if (selectedGroup?.id && term.trim()) {
         try {
-          const results = await getGroupMemberOptions(selectedGroup.id,term);
+          const results = await getGroupMemberOptions(selectedGroup.id, term);
           setSearchResults(results);
         } catch (error) {
           console.error('Error fetching users:', error);
@@ -677,7 +695,7 @@ const {runAction, isLoading} = useApiAction();
 
         const updatedMembers = await getGroupMembers(selectedGroup.id);
         setGroupMembers(updatedMembers.list);
-      } catch (error) { 
+      } catch (error) {
         console.error('Error adding member:', error);
       }
     }
@@ -714,7 +732,7 @@ const {runAction, isLoading} = useApiAction();
   // Handle leaving a channel
   const handleLeaveChannel = async (groupId) => {
     try {
-      
+
       await removeMemberFromGroup(groupId, currentUser.id);
       console.log('Left the channel successfully!');
       setGroups((prevGroups) => prevGroups.filter((group) => group.id !== groupId));
@@ -724,19 +742,19 @@ const {runAction, isLoading} = useApiAction();
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     const currentUserId = localStorage.getItem('user_id');
     const token = localStorage.getItem('token');
-    if(!currentUserId || !token){
-      window.location.href = '/login'; 
-    }else{
+    if (!currentUserId || !token) {
+      window.location.href = '/login';
+    } else {
       const user = JSON.parse(localStorage.getItem('user'));
       setCurrentUser(user);
     }
-  },[])
+  }, [])
 
   const fetchPrivateChatss = async () => {
-    const data = await fetchPrivateChats(currentUser.id); 
+    const data = await fetchPrivateChats(currentUser.id);
     setPrivateChats(data.list);
   };
 
@@ -745,14 +763,15 @@ const {runAction, isLoading} = useApiAction();
     setGroups(data.list);
 
     if (data.list.length > 0 && firsttime) {
-      setSelectedGroup(data.list[0]); 
+      setSelectedGroup(data.list[0]);
+      setIsPageLoading(false);
     }
 
   };
 
   useEffect(() => {
-    if(!currentUser) return;
-    const statusMap = {...userStatusMap};
+    if (!currentUser) return;
+    const statusMap = { ...userStatusMap };
     statusMap[currentUser.id] = currentUser.status;
     setUserStatusMap(statusMap);
 
@@ -761,59 +780,59 @@ const {runAction, isLoading} = useApiAction();
 
   }, [currentUser]);
 
-  useEffect(() =>{
-    if(!privateChats) return ;
+  useEffect(() => {
+    if (!privateChats) return;
 
-    const statusMap = {...userStatusMap};
+    const statusMap = { ...userStatusMap };
 
-    for(const chat of privateChats){
+    for (const chat of privateChats) {
       statusMap[chat.user.id] = chat.user.status;
     }
     setUserStatusMap(statusMap);
 
     setUserMap(prev => {
-      const newMap = {...prev};
-      for(const chat of privateChats){
+      const newMap = { ...prev };
+      for (const chat of privateChats) {
         newMap[chat.user.id] = chat.user;
       }
       return newMap;
     })
 
-  },[privateChats])
+  }, [privateChats])
 
-  useEffect(()=>{
-    if(groupMembers?.length){
+  useEffect(() => {
+    if (groupMembers?.length) {
       setUserMap(prev => {
-        const newMap = {...prev};
-        for(const member of groupMembers){
+        const newMap = { ...prev };
+        for (const member of groupMembers) {
           newMap[member.id] = member;
         }
         return newMap;
       })
     }
-  },[groupMembers])
+  }, [groupMembers])
 
   useEffect(() => {
-    if(!currentUser) return; 
-    if(selectedTab !== 'privateChats') return; 
-   
-  
+    if (!currentUser) return;
+    if (selectedTab !== 'privateChats') return;
+
+
     fetchPrivateChatss();
-  }, [currentUser,selectedTab]);
+  }, [currentUser, selectedTab]);
 
   // Load groups on component mount
   useEffect(() => {
 
-    if(!currentUser) return; 
-    if(selectedTab !== 'groups') return; 
+    if (!currentUser) return;
+    if (selectedTab !== 'groups') return;
 
     loadGroups();
 
-  }, [currentUser,selectedTab]);
+  }, [currentUser, selectedTab]);
 
   const handleNewMessage = useCallback((message, local = false) => {
     const { chat_id, sender_id, ...messageData } = message;
-    if(currentUser.id === sender_id && !local){
+    if (currentUser.id === sender_id && !local) {
       setMessagesMap((prevMap) => ({
         ...prevMap,
         [chat_id]: [...prevMap[chat_id].filter(msg => !(!msg.id)), message],
@@ -829,12 +848,12 @@ const {runAction, isLoading} = useApiAction();
       ...prevMap,
       [chat_id]: (prevMap[chat_id] || 0) + 1,
     }));
-  },[selectedGroup, currentUser]);
+  }, [selectedGroup, currentUser]);
 
   const handleReaction = (message, local = false) => {
     const { chat_id, message_id, emoji, user_id, is_deleted } = message; // Assuming user_id is part of the message
     const reactedByMe = user_id === currentUser.id;
-    if(currentUser.id === user_id && !local){
+    if (currentUser.id === user_id && !local) {
       return;
     }
     setMessagesMap((prevMap) => ({
@@ -843,16 +862,16 @@ const {runAction, isLoading} = useApiAction();
         if (msg.id === message_id) {
           const existingReactions = msg.reactions || {};
           const currentReaction = existingReactions[emoji] || { count: 0, me: false };
-           // Check if the current user reacted
-          if(is_deleted){
+          // Check if the current user reacted
+          if (is_deleted) {
 
-            if(currentReaction.count === 0){
+            if (currentReaction.count === 0) {
               return msg;
             }
 
-            if(currentReaction.count === 1){
+            if (currentReaction.count === 1) {
               // remove emoji from msg
-              const newReactions = {...existingReactions};
+              const newReactions = { ...existingReactions };
               delete newReactions[emoji];
               return {
                 ...msg,
@@ -865,13 +884,13 @@ const {runAction, isLoading} = useApiAction();
               reactions: {
                 ...existingReactions,
                 [emoji]: {
-                  count: currentReaction.count - 1, 
+                  count: currentReaction.count - 1,
                   me: reactedByMe ? false : currentReaction.me
                 }
               }
             };
           }
-          
+
           return {
             ...msg,
             reactions: {
@@ -890,12 +909,14 @@ const {runAction, isLoading} = useApiAction();
 
   // Initialize WebSocket connection
   useEffect(() => {
-    if(currentUser){
-      initializeWebSocket();
+    if (currentUser) {
+      initializeWebSocket((connected) => {
+        setIsWebSocketConnected(connected);
+      });
     }
 
     const handleUserStatus = (message) => {
-      const {user_id, status} = message;
+      const { user_id, status } = message;
       setUserStatusMap((prevMap) => ({
         ...prevMap,
         [user_id]: status,
@@ -925,7 +946,7 @@ const {runAction, isLoading} = useApiAction();
       const { chat_id, message_id, content } = message;
       setMessagesMap((prevMap) => ({
         ...prevMap,
-        [chat_id]: prevMap[chat_id]?.map(msg => msg.id === message_id ? {...msg, content, is_edited : true} : msg) || [],
+        [chat_id]: prevMap[chat_id]?.map(msg => msg.id === message_id ? { ...msg, content, is_edited: true } : msg) || [],
       }));
     };
 
@@ -950,7 +971,7 @@ const {runAction, isLoading} = useApiAction();
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setVisibleDropdown(null); 
+        setVisibleDropdown(null);
       }
     };
 
@@ -985,37 +1006,37 @@ const {runAction, isLoading} = useApiAction();
   // Fetch members of the selected group
 
   const fetchMessages = async (chatId) => {
-      const messages = await getMessagesByChatId(chatId, messagesMap[chatId]?.[0]?.id);
+    const messages = await getMessagesByChatId(chatId, messagesMap[chatId]?.[0]?.id);
 
-      if(!messages?.list?.length){
+    if (!messages?.list?.length) {
+      setHasMoreMessages((prevMap) => ({
+        ...prevMap,
+        [chatId]: false,
+      }));
+    } else {
+      if (!hasMoreMessages[chatId]) {
         setHasMoreMessages((prevMap) => ({
           ...prevMap,
-          [chatId]: false,
+          [chatId]: true,
         }));
-      }else{
-        if(!hasMoreMessages[chatId]){
-          setHasMoreMessages((prevMap) => ({
-            ...prevMap,
-            [chatId]: true,
-          }));
-        }
       }
+    }
 
-      setMessagesMap((prevMap) => ({
-        ...prevMap,
-        [chatId]: [...messages.list, ...(prevMap[chatId] || [])],
-      }));
-      setNewMessageCount((prevMap) => ({
-        ...prevMap,
-        [chatId]: 0,
-      }));
+    setMessagesMap((prevMap) => ({
+      ...prevMap,
+      [chatId]: [...messages.list, ...(prevMap[chatId] || [])],
+    }));
+    setNewMessageCount((prevMap) => ({
+      ...prevMap,
+      [chatId]: 0,
+    }));
   }
 
   useEffect(() => {
     const fetchGroupMembers = async () => {
       if (selectedGroup) {
         try {
-          const members = await getGroupMembers(selectedGroup.id); 
+          const members = await getGroupMembers(selectedGroup.id);
           setGroupMembers(members.list);
         } catch (error) {
           console.error('Error fetching group members:', error);
@@ -1023,13 +1044,13 @@ const {runAction, isLoading} = useApiAction();
       }
     };
 
-    if(selectedGroup){
+    if (selectedGroup) {
 
-      if(isGroupCallActive){
+      if (isGroupCallActive) {
         setIsGroupCallShuttingDown(true);
       }
 
-      if(!initialMessageLoaded[selectedGroup.id]){
+      if (!initialMessageLoaded[selectedGroup.id]) {
         fetchMessages(selectedGroup.id);
         setInitialMessageLoaded((prevMap) => ({
           ...prevMap,
@@ -1044,10 +1065,10 @@ const {runAction, isLoading} = useApiAction();
   const sendMessage = (message) => {
     if (selectedGroup) {
       const wsmessage = {
-        type : 'chat',
-        message : message
+        type: 'chat',
+        message: message
       }
-      sendMessageWebSocket(wsmessage); 
+      sendMessageWebSocket(wsmessage);
     }
   };
 
@@ -1069,36 +1090,36 @@ const {runAction, isLoading} = useApiAction();
         setGroups((prevGroups) => [...prevGroups, newGroup]);
         setMessagesMap((prevMap) => ({
           ...prevMap,
-          [newGroup.id]: [], 
+          [newGroup.id]: [],
         }));
-        setSelectedGroup(newGroup); 
-        setNewChannelName(''); 
-        setNewChannelDescription(''); 
-        setIsModalOpen(false); 
-        console.log('Channel created successfully!'); 
+        setSelectedGroup(newGroup);
+        setNewChannelName('');
+        setNewChannelDescription('');
+        setIsModalOpen(false);
+        console.log('Channel created successfully!');
       } catch (error) {
         console.error('Error creating channel:', error);
       }
-    }  
+    }
   };
 
   const handleCreateChat = async (userId) => {
     try {
-      const response = await createPrivateChat( userId); 
+      const response = await createPrivateChat(userId);
       const newChat = response;
-  
+
       setPrivateChats((prevChats) => [...prevChats, newChat]);
-  
-      setIsCreateChatModalOpen(false); 
+
+      setIsCreateChatModalOpen(false);
       console.log('Private chat created successfully!');
     } catch (error) {
       console.error('Error creating private chat:', error);
     }
   };
-  
-    const handleDeleteChat = async (chatId) => {
+
+  const handleDeleteChat = async (chatId) => {
     try {
-      await deleteChat(chatId); 
+      await deleteChat(chatId);
       console.log('Chat deleted successfully!');
       setPrivateChats((prevChats) => prevChats.filter((chat) => chat.id !== chatId));
       if (selectedGroup?.id === chatId) {
@@ -1110,7 +1131,7 @@ const {runAction, isLoading} = useApiAction();
   };
 
   const toggleDropdown = (groupId) => {
-    setVisibleDropdown((prev) => (prev === groupId ? null : groupId)); 
+    setVisibleDropdown((prev) => (prev === groupId ? null : groupId));
   };
 
   const {
@@ -1168,8 +1189,17 @@ const {runAction, isLoading} = useApiAction();
     return null;
   };
 
+  // if (isPageLoading) {
+  //   return <LoadingComponent />;
+  // }
+
   return (
     <Container>
+      {/* {!isWebSocketConnected && (
+        <TopWarningBar>
+          <span>Connecting...</span>
+        </TopWarningBar>
+      )} */}
       <LeftPanel>
         {/* Current User Info */}
         <CurrentUserContainer>
@@ -1183,8 +1213,8 @@ const {runAction, isLoading} = useApiAction();
           </CurrentUserDetails>
           <LogoutIcon
             onClick={() => {
-              localStorage.clear(); 
-              window.location.href = '/login'; 
+              localStorage.clear();
+              window.location.href = '/login';
             }}
           />
         </CurrentUserContainer>
@@ -1206,7 +1236,7 @@ const {runAction, isLoading} = useApiAction();
         </TabsContainer>
 
         {/* Channels Heading */}
-        
+
 
         {/* Group or Private Chat List */}
         <GroupListContainer>
@@ -1221,11 +1251,11 @@ const {runAction, isLoading} = useApiAction();
                 <ThreeDotsMenu
                   className="menu"
                   onClick={(e) => {
-                    e.stopPropagation(); 
+                    e.stopPropagation();
                     toggleDropdown(group.id);
                   }}
                 >
-                   <FiMoreVertical /> 
+                  <FiMoreVertical />
                 </ThreeDotsMenu>
                 {visibleDropdown === group.id && (
                   <DropdownMenu
@@ -1242,43 +1272,43 @@ const {runAction, isLoading} = useApiAction();
               </GroupItem>
             ))}
           {selectedTab === 'privateChats' &&
-  privateChats.map((chat) => (
-    <UserItem
-      key={chat.id}
-      isSelected={selectedGroup && selectedGroup.id === chat.id} 
-      onClick={() => setSelectedGroup(chat)} 
-    >
-      <UserProfilePic>
-        <ProfileImage
-          src={chat.user.profile_pic || 'https://i.pravatar.cc/40'} 
-          alt={chat.user.name || 'User'}
-        />
-        <OnlineStatusIndicator status={userStatusMap[chat.user.id]} />
-      </UserProfilePic>
-      <UserDetails>
-        <UserName>{chat.user.name || 'User Name'}</UserName> 
-        <UserId>{chat.user.user_id || 'user_id'}</UserId> 
-      </UserDetails>
-      <ThreeDotsMenu
-        className="menu"
-        onClick={(e) => {
-          e.stopPropagation(); 
-          toggleDropdown(chat.id); 
-        }}
-      >
-        <FiMoreVertical /> 
-      </ThreeDotsMenu>
-      {visibleDropdown === chat.id && (
-        <DropdownMenu
-          ref={groupDropdownRef}
-          items={[
-            { label: 'Delete Chat', action: () => handleDeleteChat(chat.id) }, 
-          ]}
-          onItemClick={(action) => action()} 
-        />
-      )}
-    </UserItem>
-  ))}
+            privateChats.map((chat) => (
+              <UserItem
+                key={chat.id}
+                isSelected={selectedGroup && selectedGroup.id === chat.id}
+                onClick={() => setSelectedGroup(chat)}
+              >
+                <UserProfilePic>
+                  <ProfileImage
+                    src={chat.user.profile_pic || 'https://i.pravatar.cc/40'}
+                    alt={chat.user.name || 'User'}
+                  />
+                  <OnlineStatusIndicator status={userStatusMap[chat.user.id]} />
+                </UserProfilePic>
+                <UserDetails>
+                  <UserName>{chat.user.name || 'User Name'}</UserName>
+                  <UserId>{chat.user.user_id || 'user_id'}</UserId>
+                </UserDetails>
+                <ThreeDotsMenu
+                  className="menu"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleDropdown(chat.id);
+                  }}
+                >
+                  <FiMoreVertical />
+                </ThreeDotsMenu>
+                {visibleDropdown === chat.id && (
+                  <DropdownMenu
+                    ref={groupDropdownRef}
+                    items={[
+                      { label: 'Delete Chat', action: () => handleDeleteChat(chat.id) },
+                    ]}
+                    onItemClick={(action) => action()}
+                  />
+                )}
+              </UserItem>
+            ))}
         </GroupListContainer>
 
         {/* Create New Channel Button */}
@@ -1297,7 +1327,7 @@ const {runAction, isLoading} = useApiAction();
         {/* Add the ChatHeaderBar here */}
         {selectedGroup && (
           <ChatHeaderBar>
-            {selectedGroup.type === 'private' ?  selectedGroup.user?.name : selectedGroup.name }
+            {selectedGroup.type === 'private' ? selectedGroup.user?.name : selectedGroup.name}
           </ChatHeaderBar>
         )}
         {videoCallState !== 'idle' && (
@@ -1332,25 +1362,25 @@ const {runAction, isLoading} = useApiAction();
           />
         )}
         {!isGroupCallActive && (
-        <ChatBoxContainer>
-          {selectedGroup && (
-            <ChatBox
-              messages={messagesMap[selectedGroup?.id] || []}
-              onSendMessage={sendMessage}
-              currentUser={currentUser}
-              typingUsers={typingUsers[selectedGroup?.id] || {}}
-              onTyping={sendTypingStatus}
-              groupMembers={groupMembers}
-              group={selectedGroup}
-              userMap={userMap}
-              fetchMessages={fetchMessages}
-              hasMoreMessages={hasMoreMessages[selectedGroup?.id]}
-              handleNewMessage={handleNewMessage}
-              handleReaction={handleReaction}
-              newMessageCount={newMessageCount[selectedGroup?.id]}
-            />
-          )}
-        </ChatBoxContainer>
+          <ChatBoxContainer>
+            {selectedGroup && (
+              <ChatBox
+                messages={messagesMap[selectedGroup?.id] || []}
+                onSendMessage={sendMessage}
+                currentUser={currentUser}
+                typingUsers={typingUsers[selectedGroup?.id] || {}}
+                onTyping={sendTypingStatus}
+                groupMembers={groupMembers}
+                group={selectedGroup}
+                userMap={userMap}
+                fetchMessages={fetchMessages}
+                hasMoreMessages={hasMoreMessages[selectedGroup?.id]}
+                handleNewMessage={handleNewMessage}
+                handleReaction={handleReaction}
+                newMessageCount={newMessageCount[selectedGroup?.id]}
+              />
+            )}
+          </ChatBoxContainer>
         )}
       </RightPanel>
       <RightPanelMembers isGroupCallActive={isGroupCallActive}>
@@ -1363,9 +1393,9 @@ const {runAction, isLoading} = useApiAction();
                 <ProfileImage
                   src={selectedGroup.user.profile_pic || 'https://i.pravatar.cc/80'}
                   alt={selectedGroup.user.name}
-                  style={{  border : `2px solid ${colors.primary}` }}
+                  style={{ border: `2px solid ${colors.primary}` }}
                 />
-                <OnlineStatusIndicator status={userStatusMap[selectedGroup.user.id]} style={{ width: '12px', height: '12px', right: '2px', bottom: '2px' }}/> {/* Adjusted indicator */}
+                <OnlineStatusIndicator status={userStatusMap[selectedGroup.user.id]} style={{ width: '12px', height: '12px', right: '2px', bottom: '2px' }} /> {/* Adjusted indicator */}
               </UserProfilePic>
               <UserName style={{ fontSize: '16px', display: 'block', marginBottom: '5px' }}>{selectedGroup.user.name}</UserName>
               <UserId style={{ fontSize: '14px' }}>@{selectedGroup.user.user_id}</UserId>
@@ -1393,51 +1423,51 @@ const {runAction, isLoading} = useApiAction();
           </>
         )}
 
-       {isGroupCallActive && (
-        <ChatBoxContainer>
-          {selectedGroup && (
-            <ChatBox
-              messages={messagesMap[selectedGroup?.id] || []}
-              onSendMessage={sendMessage}
-              currentUser={currentUser}
-              typingUsers={typingUsers[selectedGroup?.id] || {}}
-              onTyping={sendTypingStatus}
-              groupMembers={groupMembers}
-              group={selectedGroup}
-              userMap={userMap}
-              fetchMessages={fetchMessages}
-              hasMoreMessages={hasMoreMessages[selectedGroup?.id]}
-              handleNewMessage={handleNewMessage}
-              handleReaction={handleReaction}
-              newMessageCount={newMessageCount[selectedGroup?.id]}
-            />
-          )}
-        </ChatBoxContainer>
+        {isGroupCallActive && (
+          <ChatBoxContainer>
+            {selectedGroup && (
+              <ChatBox
+                messages={messagesMap[selectedGroup?.id] || []}
+                onSendMessage={sendMessage}
+                currentUser={currentUser}
+                typingUsers={typingUsers[selectedGroup?.id] || {}}
+                onTyping={sendTypingStatus}
+                groupMembers={groupMembers}
+                group={selectedGroup}
+                userMap={userMap}
+                fetchMessages={fetchMessages}
+                hasMoreMessages={hasMoreMessages[selectedGroup?.id]}
+                handleNewMessage={handleNewMessage}
+                handleReaction={handleReaction}
+                newMessageCount={newMessageCount[selectedGroup?.id]}
+              />
+            )}
+          </ChatBoxContainer>
         )}
 
-        { !isGroupCallActive && selectedGroup && selectedGroup.type !== 'private' && (
+        {!isGroupCallActive && selectedGroup && selectedGroup.type !== 'private' && (
           <>
             {/* <Link style={{ textDecoration: 'none', textUnderlineOffset: 'none' }} to={`/meet/${selectedGroup.id}`} target="_blank" rel="noopener noreferrer"> */}
 
             <ModalButton
-        onClick={() => {
-          setIsGroupCallActive(true);
-        }}
-    style={{
-      margin: '10px auto',
-      width: '60%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      textDecoration: 'none',
-      textUnderlineOffset: 'none',
-    }}
-  >
-    <FiVideo style={{ marginRight: '8px' }} />
-    Meet
-  </ModalButton>
-  {/* </Link> */}
-            
+              onClick={() => {
+                setIsGroupCallActive(true);
+              }}
+              style={{
+                margin: '10px auto',
+                width: '60%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textDecoration: 'none',
+                textUnderlineOffset: 'none',
+              }}
+            >
+              <FiVideo style={{ marginRight: '8px' }} />
+              Meet
+            </ModalButton>
+            {/* </Link> */}
+
             <MembersHeading>Members</MembersHeading>
             <MemberListContainer>
               {groupMembers.map((member) => (
@@ -1458,18 +1488,18 @@ const {runAction, isLoading} = useApiAction();
                     member.id !== currentUser.id && (
                       <ThreeDotsMenu
                         onClick={(e) => {
-                          e.stopPropagation(); 
+                          e.stopPropagation();
                           setVisibleMemberDropdown((prev) =>
                             prev === member.id ? null : member.id
                           );
                         }}
                       >
-                         <FiMoreVertical /> 
+                        <FiMoreVertical />
                       </ThreeDotsMenu>
                     )}
                   {visibleMemberDropdown === member.id && (
                     <DropdownMenu
-                      ref={memberDropdownRef} 
+                      ref={memberDropdownRef}
                       className="member-dropdown"
                       items={[
                         { label: 'Remove', action: () => handleRemoveMember(member.id) },
@@ -1477,7 +1507,7 @@ const {runAction, isLoading} = useApiAction();
                           ? [{ label: 'Make Admin', action: () => handleMakeAdmin(member.id) }]
                           : []),
                       ]}
-                      onItemClick={(action) => action()} 
+                      onItemClick={(action) => action()}
                     />
                   )}
                 </UserItem>
@@ -1503,9 +1533,9 @@ const {runAction, isLoading} = useApiAction();
               placeholder="Enter Description"
             />
             <ModalButtonContainer>
-            <ModalButton secondary onClick = {()=>setIsModalOpen(false)}>Cancel</ModalButton>
-            <ModalButton onClick = {()=>runAction("createChannel", handleCreateChannel)} disabled = {!newChannelName || isLoading("createChannel")}>Create</ModalButton>
-            
+              <ModalButton secondary onClick={() => setIsModalOpen(false)}>Cancel</ModalButton>
+              <ModalButton onClick={() => runAction("createChannel", handleCreateChannel)} disabled={!newChannelName || isLoading("createChannel")}>Create</ModalButton>
+
             </ModalButtonContainer>
           </ModalContent>
         </ModalOverlay>
@@ -1524,8 +1554,8 @@ const {runAction, isLoading} = useApiAction();
               {searchResults.map((user) => (
                 <UserItem
                   key={user.id}
-                  isMember={user.is_member || isLoading("addMember")} 
-                  onClick = {()=>{ if(!user.is_member && !isLoading("addMember" )) runAction("addMember", ()=>handleAddMember(user.id))}}
+                  isMember={user.is_member || isLoading("addMember")}
+                  onClick={() => { if (!user.is_member && !isLoading("addMember")) runAction("addMember", () => handleAddMember(user.id)) }}
                 >
                   <UserProfilePic>
                     <ProfileImage
@@ -1551,42 +1581,42 @@ const {runAction, isLoading} = useApiAction();
         </ModalOverlay>
       )}
       {isCreateChatModalOpen && (
-  <ModalOverlay>
-    <ModalContent>
-      <h3>New Chat</h3>
-      <ModalInput
-        type="text"
-        value={searchTerm}
-        onChange={(e) => handleCreateChatSearch(e.target.value)}
-        placeholder="Search for a user..."
-      />
-      <UserList>
-        {searchResults.map((user) => (
-          <UserItem
-            key={user.id}
-            isMember={isLoading("createChat")} 
-            onClick = {()=>{ if(!isLoading("createChat")) runAction("createChat", ()=>handleCreateChat(user.id))}}
-          >
-            <UserProfilePic>
-              <ProfileImage
-                src={user.profile_pic || 'https://i.pravatar.cc/40'}
-                alt={user.name}
-              />
-              {/* <OnlineStatusIndicator isOnline={user.is_member} /> */}
-            </UserProfilePic>
-            <UserDetails>
-              <UserName>{user.name}</UserName>
-              <UserId>{user.user_id}</UserId>
-            </UserDetails>
-          </UserItem>
-        ))}
-      </UserList>
-      <ModalButton onClick={() => setIsCreateChatModalOpen(false)}>
-        Close
-      </ModalButton>
-    </ModalContent>
-  </ModalOverlay>
-)}
+        <ModalOverlay>
+          <ModalContent>
+            <h3>New Chat</h3>
+            <ModalInput
+              type="text"
+              value={searchTerm}
+              onChange={(e) => handleCreateChatSearch(e.target.value)}
+              placeholder="Search for a user..."
+            />
+            <UserList>
+              {searchResults.map((user) => (
+                <UserItem
+                  key={user.id}
+                  isMember={isLoading("createChat")}
+                  onClick={() => { if (!isLoading("createChat")) runAction("createChat", () => handleCreateChat(user.id)) }}
+                >
+                  <UserProfilePic>
+                    <ProfileImage
+                      src={user.profile_pic || 'https://i.pravatar.cc/40'}
+                      alt={user.name}
+                    />
+                    {/* <OnlineStatusIndicator isOnline={user.is_member} /> */}
+                  </UserProfilePic>
+                  <UserDetails>
+                    <UserName>{user.name}</UserName>
+                    <UserId>{user.user_id}</UserId>
+                  </UserDetails>
+                </UserItem>
+              ))}
+            </UserList>
+            <ModalButton onClick={() => setIsCreateChatModalOpen(false)}>
+              Close
+            </ModalButton>
+          </ModalContent>
+        </ModalOverlay>
+      )}
     </Container>
   );
 };

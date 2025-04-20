@@ -53,6 +53,7 @@ const ChatContainer = styled.div`
   padding: 0px;
   position: relative;
   height: 100%;
+  background :  #36393f;
 `;
 
 const CustomScrollbar = css`
@@ -109,7 +110,7 @@ const MessageItem = styled.div`
   margin-bottom: ${(props) => (props.hasReactions ? '25px' : '10px')};
   padding: 10px;
   background-color: ${(props) =>
-    props.isEditing ? '#2c2f33' : (props.isCurrentUser ?  colors.currentUserMessage : '#2c2f33')};
+    props.isEditing ? '#2c2f33' : (props.isCurrentUser ? colors.currentUserMessage : '#2c2f33')};
   border-radius: 8px;
   color: ${(props) => (props.isCurrentUser && !props.isEditing ? '#cccccc' : colors.textSecondary)};
   align-self: ${(props) => (props.isCurrentUser ? 'flex-end' : 'flex-start')};
@@ -619,7 +620,7 @@ const ImageAttachmentItem = styled.div`
   margin-top: 8px;
    
   img {
-    max-width: 250px;
+    max-width: min(250px, 100%);
     max-height: 250px;
     border-radius: 8px;
     cursor: pointer;
@@ -682,7 +683,7 @@ const formatFileSize = (size) => {
   else return `${(size / 1048576).toFixed(2)} MB`; // 1024^2
 };
 
-const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => {}, hasMoreMessages = true, handleNewMessage, handleReaction, newMessageCount }) => {
+const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => { }, hasMoreMessages = true, handleNewMessage, handleReaction, newMessageCount }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -751,7 +752,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
 
   useEffect(async () => {
     const fetchImageUrls = async () => {
-      const urls = {...imageUrls};
+      const urls = { ...imageUrls };
       for (let i = messages.length - 1; i >= 0; i--) {
         const message = messages[i];
         if (message.attachments?.length > 0) {
@@ -772,7 +773,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     };
     const _isUserScrolling = isUserScrolling?.current;
     await fetchImageUrls();
-    if(!_isUserScrolling){
+    if (!_isUserScrolling) {
       setTimeout(() => {
         scrollToBottom();
       }, 100);
@@ -784,8 +785,8 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
   }, [newMessageCount]);
 
   const checkValidAttachments = () => {
-    for(const attachment of attachments){
-      if(!attachment.key){
+    for (const attachment of attachments) {
+      if (!attachment.key) {
         return false;
       }
     }
@@ -795,7 +796,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
   const handleSendMessage = async () => {
     if (input.trim()) {
       try {
-        if(!checkValidAttachments()){
+        if (!checkValidAttachments()) {
           return;
         }
         const newMessage = {
@@ -813,8 +814,8 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         setAttachments([]);
         if (typing) {
           setTyping(false);
-          
-          if(typingTimeoutRef.current){
+
+          if (typingTimeoutRef.current) {
             clearTimeout(typingTimeoutRef.current);
             onTyping(false);
           }
@@ -837,22 +838,22 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
   const formatMessageTimestamp = (timestamp) => {
     const now = new Date();
     const messageDate = new Date(timestamp);
-    
+
     if (now.toDateString() === messageDate.toDateString()) {
-      return messageDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      return messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else {
-      return messageDate.toLocaleDateString([], {month: 'short', day: 'numeric'}) + ', ' + 
-             messageDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      return messageDate.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', ' +
+        messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
   };
 
   const handleInputChange = (e) => {
     setInput(e.target.value);
-    
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    if(!typing){
+    if (!typing) {
       setTyping(true);
       onTyping(true);
     }
@@ -867,7 +868,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     const typingUserIds = Object.entries(typingUsers)
       .filter(([userId, isTyping]) => isTyping && userId !== currentUserId)
       .map(([userId]) => userId);
-   
+
     return typingUserIds.length > 0 ? true : false;
   }
 
@@ -878,7 +879,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
 
     if (typingUserIds.length === 0) return null;
 
-    if(group.type === 'private'){
+    if (group.type === 'private') {
       return '';
     }
 
@@ -932,9 +933,9 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (menuRef.current && 
-          !menuRef.current.contains(event.target) && 
-          (!menuOptionsRef.current || !menuOptionsRef.current.contains(event.target))) {
+      if (menuRef.current &&
+        !menuRef.current.contains(event.target) &&
+        (!menuOptionsRef.current || !menuOptionsRef.current.contains(event.target))) {
         setShowMenuForMessage(null);
       }
 
@@ -950,9 +951,9 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
       if (
         reactionPickerRef.current &&
         !reactionPickerRef.current.contains(event.target) &&
-        !event.target.closest('[data-reaction-button="true"]') 
+        !event.target.closest('[data-reaction-button="true"]')
       ) {
-          setShowReactionPickerForMessage(null);
+        setShowReactionPickerForMessage(null);
       }
     };
 
@@ -961,7 +962,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-  
+
 
   const handleEmojiClick = (emojiObject) => {
     setInput(prevInput => prevInput + emojiObject.emoji);
@@ -973,17 +974,17 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
 
   const handleSelectReaction = async (messageId, emoji, isDelete = false) => {
     // Call the prop function passed from parent with chat_id, message_id, emoji
-    handleReaction({chat_id: group.id, message_id: messageId, emoji, user_id: currentUserId, is_deleted: isDelete},true);
+    handleReaction({ chat_id: group.id, message_id: messageId, emoji, user_id: currentUserId, is_deleted: isDelete }, true);
 
-    if(isDelete){
-      const res = await deleteMessageReaction(messageId, emoji); 
-      if(!res.ok){
-        handleReaction({chat_id: group.id, message_id: messageId, emoji, user_id: currentUserId, is_deleted: !isDelete},true);
+    if (isDelete) {
+      const res = await deleteMessageReaction(messageId, emoji);
+      if (!res.ok) {
+        handleReaction({ chat_id: group.id, message_id: messageId, emoji, user_id: currentUserId, is_deleted: !isDelete }, true);
       }
-    }else{
-      const res = await addMessageReaction(messageId, emoji); 
-      if(!res.ok){
-        handleReaction({chat_id: group.id, message_id: messageId, emoji, user_id: currentUserId, is_deleted: !isDelete},true);
+    } else {
+      const res = await addMessageReaction(messageId, emoji);
+      if (!res.ok) {
+        handleReaction({ chat_id: group.id, message_id: messageId, emoji, user_id: currentUserId, is_deleted: !isDelete }, true);
       }
     }
 
@@ -994,7 +995,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     // handle multiple files
     const files = event.target.files;
 
-    if(files.length + attachments.length > 10){
+    if (files.length + attachments.length > 10) {
       alert("You can only upload up to 10 files at a time");
       return;
     }
@@ -1002,8 +1003,8 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     if (files.length > 0) {
       try {
 
-        for(const file of files){
-          if(file.size > 1024 * 1024 * 25){
+        for (const file of files) {
+          if (file.size > 1024 * 1024 * 25) {
             alert("File size must be less than 25MB");
             return;
           }
@@ -1044,9 +1045,9 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
 
   const handleAttachmentClick = async (attachment) => {
     // download attachment through api
-    if(imageUrls[attachment.key]){
+    if (imageUrls[attachment.key]) {
       window.open(imageUrls[attachment.key], '_blank');
-    }else{
+    } else {
       const response = await getMedia(attachment.key);
       const blob = new Blob([response], { type: attachment.type });
       const url = URL.createObjectURL(blob);
@@ -1060,7 +1061,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     // remove the blob from the url
   };
 
-  if(!group) return ;
+  if (!group) return;
 
   return (
     <ChatContainer>
@@ -1082,25 +1083,25 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
 
 
             {(showReactionPickerForMessage === message.id) && (
-                <ReactionPickerWrapper 
-                  ref={reactionPickerRef} 
-                  isCurrentUser={message.sender_id === currentUserId}
-                >
-                  <EmojiPicker 
-                    onEmojiClick={(emojiObject) => handleSelectReaction(message.id, emojiObject.emoji, message.reactions?.[emojiObject.emoji]?.me)}
-                    theme={Theme.DARK}
-                    emojiSize={12}
-                    height={300}
-                    width={250}
-                    searchDisabled
-                    previewConfig={{ showPreview: false }}
-                    reactionsDefaultOpen={true}
-                    lazyLoadEmojis={true}
-                  />
-                </ReactionPickerWrapper>
-              )}
+              <ReactionPickerWrapper
+                ref={reactionPickerRef}
+                isCurrentUser={message.sender_id === currentUserId}
+              >
+                <EmojiPicker
+                  onEmojiClick={(emojiObject) => handleSelectReaction(message.id, emojiObject.emoji, message.reactions?.[emojiObject.emoji]?.me)}
+                  theme={Theme.DARK}
+                  emojiSize={12}
+                  height={300}
+                  width={250}
+                  searchDisabled
+                  previewConfig={{ showPreview: false }}
+                  reactionsDefaultOpen={true}
+                  lazyLoadEmojis={true}
+                />
+              </ReactionPickerWrapper>
+            )}
 
-            <MessageItem 
+            <MessageItem
               isCurrentUser={message.sender_id === currentUserId}
               isEditing={editingMessageId === message.id}
               hasReactions={message.reactions && Object.keys(message.reactions).length > 0}
@@ -1113,22 +1114,22 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
                 />
               )}
 
-              
-              
+
+
               <MessageContent>
                 {message.sender_id !== currentUserId && (
                   <SenderName isCurrentUser={message.sender_id === currentUserId}>
                     {userMap[message.sender_id]?.name}
                     <OtherUserTimeStamp>
                       {formatMessageTimestamp(message.timestamp)}
-                      {message.is_edited && 
+                      {message.is_edited &&
                         <span style={{ fontSize: '0.65rem', marginLeft: '4px', verticalAlign: 'top' }} title="edited">
                           <MdEdit />
                         </span>}
                     </OtherUserTimeStamp>
                   </SenderName>
                 )}
-                
+
                 {editingMessageId === message.id ? (
                   <EditContainer>
                     <EditTextArea
@@ -1159,41 +1160,40 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
                   <MessageAttachments>
                     {message.attachments.map((attachment, index) => (
                       attachment.type.startsWith('image/') ? (
-                  
+
                         <ImageAttachmentItem key={index}>
                           {imageUrls[attachment.key] ? (
-                          <img
-                            src={imageUrls[attachment.key]}
-                            alt={attachment.name}
-                            style={{ maxWidth: '250px', maxHeight: '250px', borderRadius: '4px' }}
-                          />
+                            <img
+                              src={imageUrls[attachment.key]}
+                              alt={attachment.name}
+                            />
                           ) : (
                             <ImagePlaceholder>
-                              <Loader/>              
+                              <Loader />
                             </ImagePlaceholder>
                           )}
                         </ImageAttachmentItem>
-                        
-                        ) : (
-                          <AttachmentItem key={index} onClick={() => handleAttachmentClick(attachment)} >
-                            <span 
-                              title={attachment.name}
+
+                      ) : (
+                        <AttachmentItem key={index} onClick={() => handleAttachmentClick(attachment)} >
+                          <span
+                            title={attachment.name}
                           >
                             {attachment.name.length > 30 ? `${attachment.name.slice(0, 30)}...` : attachment.name}
                           </span>
-                          <span style={{marginLeft: '4px'}}>{`(${formatFileSize(attachment.size)})`}</span>
+                          <span style={{ marginLeft: '4px' }}>{`(${formatFileSize(attachment.size)})`}</span>
                         </AttachmentItem>
                       )
                     ))}
                   </MessageAttachments>
                 )}
 
-                {/* Display Reactions - Handles object structure */} 
+                {/* Display Reactions - Handles object structure */}
                 {message.reactions && Object.keys(message.reactions).length > 0 && (
                   <ReactionsContainer>
                     {Object.entries(message.reactions).map(([emoji, reactionData]) => (
-                      <ReactionChip 
-                        key={emoji} 
+                      <ReactionChip
+                        key={emoji}
                         title={reactionData.users?.join('\n') || ''}
                         reactedByMe={reactionData.me}
                         onClick={() => handleSelectReaction(message.id, emoji, reactionData?.me)}
@@ -1221,8 +1221,8 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
               </>)}
 
               {!editingMessageId && !showReactionPickerForMessage && (
-                <ReactionButton 
-                  onClick={(e) => { 
+                <ReactionButton
+                  onClick={(e) => {
                     e.stopPropagation();
                     toggleReactionPicker(message.id);
                   }}
@@ -1240,9 +1240,9 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         ))}
         <div ref={messageEndRef} />
       </MessageList>
-      
-      { checkUsersTyping() && (
-        <TypingIndicator isAttachment = {attachments?.length > 0}>
+
+      {checkUsersTyping() && (
+        <TypingIndicator isAttachment={attachments?.length > 0}>
           <span>{getTypingUsersText()}</span>
           <TypingAnimation>
             <div className="dot" />
@@ -1258,7 +1258,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
             <AttachmentInputItem loading={attachment.key ? false : true} key={index}>
               {!attachment.key && <Loader style={{ marginRight: '8px' }} />}
               <span onClick={() => handleAttachmentClick(attachment)}>{attachment.name}</span>
-              <span style={{marginLeft: '4px'}}>{`(${formatFileSize(attachment.size)})`}</span>
+              <span style={{ marginLeft: '4px' }}>{`(${formatFileSize(attachment.size)})`}</span>
               <button onClick={() => removeAttachment(index)}>
                 <MdClose />
               </button>
@@ -1289,7 +1289,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
           type="text"
           value={input}
           onChange={handleInputChange}
-          onKeyDown={handleKeyDown} 
+          onKeyDown={handleKeyDown}
           placeholder="Type a message..."
         />
         <EmojiButton ref={emojiButtonRef} onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
