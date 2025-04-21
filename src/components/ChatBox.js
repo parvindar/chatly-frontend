@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, memo, useCallback, useMemo } from 'react';
 import styled, { css } from 'styled-components';
 import colors from '../styles/colors';
 import { IoMdSend } from 'react-icons/io';
 import { BsThreeDots, BsEmojiSmile } from 'react-icons/bs';
 import { MdEdit, MdOutlineAddReaction, MdAttachFile, MdClose } from 'react-icons/md';
 import { deleteChatMessage, editChatMessage, addMessageReaction, deleteMessageReaction, uploadMedia, getMedia } from '../api/sdk';
+import { parseMessage } from '../utils/common';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
+import MentionList from './MentionList';
 
 // Reusable CSS mixin for Emoji Picker styles (scrollbar, theme vars)
 const emojiPickerStyles = css`
@@ -129,6 +131,7 @@ const ProfilePic = styled.img`
   height: 40px;
   border-radius: 50%;
   margin: ${(props) => (props.isCurrentUser ? '0 0 0 10px' : '0 10px 0 0')};
+  cursor: pointer;
 `;
 
 const MessageContent = styled.div`
@@ -196,6 +199,27 @@ const MessageText = styled.span`
   word-break: break-word;
   overflow-wrap: break-word;
   max-width: 100%;
+`;
+
+const MentionText = styled.span`
+  color: ${colors.textSecondary};
+  background-color: ${colors.mentionBackground}; // translucent
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  ${props => props.isCurrentUserMention && css`
+    // color: #6D8EFF;
+    color: ${colors.mentionText};
+    background-color: ${colors.mentionBackground}; // translucent
+  `}
+
+  &:hover {
+    background-color: ${colors.mentionBackgroundHover};
+    color:${colors.mentionTextHover};
+  }   
 `;
 
 const InputContainer = styled.div`
@@ -683,7 +707,7 @@ const formatFileSize = (size) => {
   else return `${(size / 1048576).toFixed(2)} MB`; // 1024^2
 };
 
-const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => { }, hasMoreMessages = true, handleNewMessage, handleReaction, newMessageCount }) => {
+const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => { }, hasMoreMessages = true, handleNewMessage, handleReaction, newMessageCount }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -693,7 +717,8 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
   const [showReactionPickerForMessage, setShowReactionPickerForMessage] = useState(null);
   const [attachments, setAttachments] = useState([]);
   const [imageUrls, setImageUrls] = useState({});
-  const currentUserId = localStorage.getItem('user_id');
+  const [showMentionOptions, setShowMentionOptions] = useState(false);
+  const currentUserId = currentUser?.id;
   const messageEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messageListRef = useRef(null);
@@ -704,6 +729,14 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
   const emojiButtonRef = useRef(null);
   const reactionPickerRef = useRef(null);
   const reactionButtonRef = useRef(null);
+
+  const groupMembersMap = useMemo(() => {
+    if (!groupMembers) return {};
+    return groupMembers.reduce((acc, member) => {
+      acc[member.user_id] = member;
+      return acc;
+    }, {});
+  }, [groupMembers]);
 
   const scrollToBottom = () => {
     if (!isUserScrolling.current) {
@@ -830,6 +863,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
+      if (showMentionOptions) { return; }
       e.preventDefault();
       handleSendMessage();
     }
@@ -847,8 +881,54 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
     }
   };
 
+  const [mentionQuery, setMentionQuery] = useState('');
+
+  useEffect(() => {
+    if (showMentionOptions) {
+      setMentionQuery('');
+    }
+  }, [showMentionOptions]);
+
+  const handleMentionOptionSelect = (option) => {
+    setMentionQuery('');
+    if (!option) {
+      setShowMentionOptions(false);
+      return;
+    }
+
+    const lastAtIndex = input.lastIndexOf('@');
+    const newInput = input.slice(0, lastAtIndex + 1) + option.user_id;
+    setInput(newInput);
+    setShowMentionOptions(false);
+  };
+
   const handleInputChange = (e) => {
     setInput(e.target.value);
+    if (e.target.value.endsWith('@')) {
+      const lastAtIndex = e.target.value.lastIndexOf('@');
+      if (lastAtIndex === 0 || e.target.value[lastAtIndex - 1] === ' ') {
+        setShowMentionOptions(true);
+      }
+    }
+
+    if (showMentionOptions) {
+      if (e.target.value.includes('@')) {
+        const lastAtIndex = e.target.value.lastIndexOf('@');
+        for (let i = lastAtIndex + 1; i < e.target.value.length; i++) {
+          if (e.target.value[i] === ' ') {
+
+            setShowMentionOptions(false);
+            break;
+          }
+        }
+      } else {
+        setShowMentionOptions(false);
+      }
+    }
+
+    if (showMentionOptions) {
+      setMentionQuery(e.target.value.slice(e.target.value.lastIndexOf('@') + 1));
+    }
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -1119,7 +1199,7 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
               <MessageContent>
                 {message.sender_id !== currentUserId && (
                   <SenderName isCurrentUser={message.sender_id === currentUserId}>
-                    {userMap[message.sender_id]?.name}
+                    <span style={{ cursor: 'pointer' }} >{userMap[message.sender_id]?.name}</span>
                     <OtherUserTimeStamp>
                       {formatMessageTimestamp(message.timestamp)}
                       {message.is_edited &&
@@ -1152,7 +1232,14 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
                     </EditActions>
                   </EditContainer>
                 ) : (
-                  <MessageText>{message.content}</MessageText>
+
+                  <MessageText>{parseMessage(message.content).map((part, index) => (
+                    part.type === 'mention' && groupMembersMap[part.username] ? (
+                      <MentionText isCurrentUserMention={part.username === currentUser.user_id} key={index}>{part.content}</MentionText>
+                    ) : (
+                      <span key={index}>{part.content}</span>
+                    )
+                  ))}</MessageText>
                 )}
 
                 {/* Display Attachments Vertically */}
@@ -1267,6 +1354,11 @@ const ChatBox = ({ group, messages, onSendMessage, typingUsers = {}, onTyping, g
         </AttachmentList>
       )}
 
+      {showMentionOptions && (
+        <MentionList options={groupMembers.filter(
+          (member) => member.name.toLowerCase().includes(mentionQuery.toLowerCase()) || member.user_id.toString().includes(mentionQuery)
+        )} onSelect={handleMentionOptionSelect} />
+      )}
       <InputContainer>
         <AttachmentButton>
           <MdAttachFile />

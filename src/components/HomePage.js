@@ -589,7 +589,7 @@ const ChatHeaderBar = styled.div`
 
 const TopWarningBar = styled.div`
   height: 20px; /* Adjust height as needed */
-  background-color: rgb(116, 67, 67); /* Dark background */
+  background-color: rgb(78, 6, 6); /* Dark background */
   color: white;
   font-size: 12px;
   position: fixed;
@@ -837,13 +837,17 @@ const HomePage = () => {
         ...prevMap,
         [chat_id]: [...prevMap[chat_id].filter(msg => !(!msg.id)), message],
       }));
+      setNewMessageCount((prevMap) => ({
+        ...prevMap,
+        [chat_id]: (prevMap[chat_id] || 0) + 1,
+      }));
       return;
     }
     setMessagesMap((prevMap) => ({
       ...prevMap,
       [chat_id]: [...(prevMap[chat_id] || []), message],
     }));
-    console.log("selectedGroup", selectedGroup);
+
     setNewMessageCount((prevMap) => ({
       ...prevMap,
       [chat_id]: (prevMap[chat_id] || 0) + 1,
@@ -1028,7 +1032,7 @@ const HomePage = () => {
     }));
     setNewMessageCount((prevMap) => ({
       ...prevMap,
-      [chatId]: 0,
+      [chatId]: prevMap[chatId] + messages.list.length,
     }));
   }
 

@@ -81,6 +81,7 @@ export const initializeWebSocket = (callback = () => { }) => {
 
   socket.onerror = (error) => {
     console.error('WebSocket error:', error);
+    callback(false);
   };
 };
 
