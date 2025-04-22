@@ -3,7 +3,6 @@ export function parseMessage(text) {
     const parts = [];
     let lastIndex = 0;
     let match;
-
     while ((match = mentionRegex.exec(text)) !== null) {
 
         if (match.index > lastIndex) {
@@ -16,7 +15,9 @@ export function parseMessage(text) {
         parts.push({
             type: 'mention',
             username: match[1],
-            content: match[0]
+            content: match[0],
+            start_index: match.index,
+            end_index: match.index + match[0].length
         });
 
         lastIndex = match.index + match[0].length;

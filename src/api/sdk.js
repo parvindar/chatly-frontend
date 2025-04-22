@@ -206,8 +206,8 @@ export const deleteChatMessage = async (messageId) => {
   return response.data;
 };
 
-export const editChatMessage = async (messageId, content) => {
-  const response = await apiClient.put(`/message/${messageId}`, { content });
+export const editChatMessage = async (messageId, { content, mentions }) => {
+  const response = await apiClient.put(`/message/${messageId}`, { content, mentions });
   return response.data;
 };
 

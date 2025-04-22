@@ -13,7 +13,7 @@ const colors = {
   inputPlaceholder: '#a0aec0', // Placeholder text color
   inputBorder: '#1e2124', // Border color for input container
   inputBackground: '#23272a', // Input container background
-  currentUserMessage: '#1E2024',
+  currentUserMessage: '#16181C', // '#1E2024',
   mentionBackground: '#36393f',
   mentionText: '#95A4EB',
   mentionBackgroundHover: '#36393f',

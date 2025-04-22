@@ -112,7 +112,7 @@ const MessageItem = styled.div`
   margin-bottom: ${(props) => (props.hasReactions ? '25px' : '10px')};
   padding: 10px;
   background-color: ${(props) =>
-    props.isEditing ? '#2c2f33' : (props.isCurrentUser ? colors.currentUserMessage : '#2c2f33')};
+    props.isEditing ? '#2c2f33' : (props.isCurrentUser ? colors.currentUserMessage : '#24262A')};
   border-radius: 8px;
   color: ${(props) => (props.isCurrentUser && !props.isEditing ? '#cccccc' : colors.textSecondary)};
   align-self: ${(props) => (props.isCurrentUser ? 'flex-end' : 'flex-start')};
@@ -120,9 +120,9 @@ const MessageItem = styled.div`
   word-wrap: break-word;
   flex-direction: row;
   position: relative;
-
+  transition: background-color 0.2s ease;
   &:hover {
-    background-color: #16181C;
+    background-color: ${props => props.isCurrentUser ? '#1E2024' : '#2c2f33'};
   }
 `;
 
@@ -207,7 +207,7 @@ const MentionText = styled.span`
   padding: 2px 4px;
   border-radius: 4px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 400;
   cursor: pointer;
 
   ${props => props.isCurrentUserMention && css`
@@ -707,7 +707,7 @@ const formatFileSize = (size) => {
   else return `${(size / 1048576).toFixed(2)} MB`; // 1024^2
 };
 
-const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => { }, hasMoreMessages = true, handleNewMessage, handleReaction, newMessageCount }) => {
+const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => { }, hasMoreMessages = true, handleNewMessage, handleReaction, newMessageCount, newMessageEdit }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -718,6 +718,7 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
   const [attachments, setAttachments] = useState([]);
   const [imageUrls, setImageUrls] = useState({});
   const [showMentionOptions, setShowMentionOptions] = useState(false);
+  const [parsedMessage, setParsedMessage] = useState({});
   const currentUserId = currentUser?.id;
   const messageEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -748,6 +749,16 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
     console.log("newMessageCount", newMessageCount);
     scrollToBottom();
   }, [newMessageCount]);
+
+  useEffect(() => {
+    if (newMessageEdit) {
+      setParsedMessage(prev => ({ ...prev, [newMessageEdit.message_id]: parseMessage(newMessageEdit.content) }));
+    }
+  }, [newMessageEdit]);
+
+  useEffect(() => {
+    console.log("parsedMessage", parsedMessage);
+  }, [parsedMessage]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -826,18 +837,56 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
     return true;
   }
 
+  useEffect(() => {
+    if (messages.length > 0) {
+      for (let i = messages.length - 1; i >= 0; i--) {
+        const message = messages[i];
+        if (message.mentions?.length > 0 && !parsedMessage[message.id]) {
+          setParsedMessage(prev => ({ ...prev, [message.id]: parseMessage(message.content) }));
+        }
+      }
+    }
+  }, [messages]);
+
+
   const handleSendMessage = async () => {
     if (input.trim()) {
       try {
         if (!checkValidAttachments()) {
           return;
         }
+
+        const parts = parseMessage(input.trim());
+        const mentions = [];
+        for (const part of parts) {
+          if (part.type === 'mention') {
+            if (groupMembersMap[part.username]) {
+              mentions.push({
+                user_id: groupMembersMap[part.username].id,
+                username: part.username,
+                start_index: part.start_index,
+                end_index: part.end_index,
+                is_everyone: part.username === 'everyone',
+              });
+            } else if (part.username === 'everyone') {
+              mentions.push({
+                user_id: '1',
+                username: 'everyone',
+                start_index: part.start_index,
+                end_index: part.end_index,
+                is_everyone: true,
+              });
+            }
+          }
+        }
+
         const newMessage = {
           sender_id: currentUserId,
           sender_info: {
             name: '',
           },
           content: input.trim(),
+          mentions: mentions,
           attachments: attachments,
           chat_id: group.id,
           timestamp: new Date().toISOString(),
@@ -902,16 +951,14 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
     setShowMentionOptions(false);
   };
 
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
-    if (e.target.value.endsWith('@')) {
+  const checkMentionInInput = (e) => {
+    if (!showMentionOptions && e.target.value.endsWith('@')) {
       const lastAtIndex = e.target.value.lastIndexOf('@');
       if (lastAtIndex === 0 || e.target.value[lastAtIndex - 1] === ' ') {
         setShowMentionOptions(true);
       }
-    }
-
-    if (showMentionOptions) {
+    } else if (showMentionOptions) {
+      setMentionQuery(e.target.value.slice(e.target.value.lastIndexOf('@') + 1));
       if (e.target.value.includes('@')) {
         const lastAtIndex = e.target.value.lastIndexOf('@');
         for (let i = lastAtIndex + 1; i < e.target.value.length; i++) {
@@ -925,10 +972,11 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
         setShowMentionOptions(false);
       }
     }
+  }
 
-    if (showMentionOptions) {
-      setMentionQuery(e.target.value.slice(e.target.value.lastIndexOf('@') + 1));
-    }
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+    checkMentionInInput(e);
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -997,7 +1045,30 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
   const handleSaveEdit = async (messageId) => {
     if (editingMessageContent.trim()) {
       try {
-        await editChatMessage(messageId, editingMessageContent.trim());
+        const parts = parseMessage(editingMessageContent.trim());
+        const mentions = [];
+        for (const part of parts) {
+          if (part.type === 'mention') {
+            if (groupMembersMap[part.username]) {
+              mentions.push({
+                user_id: groupMembersMap[part.username].id,
+                username: part.username,
+                start_index: part.start_index,
+                end_index: part.end_index,
+                is_everyone: false,
+              });
+            } else if (part.username === 'everyone') {
+              mentions.push({
+                user_id: '1',
+                username: 'everyone',
+                start_index: part.start_index,
+                end_index: part.end_index,
+                is_everyone: true,
+              });
+            }
+          }
+        }
+        await editChatMessage(messageId, { content: editingMessageContent.trim(), mentions: mentions });
         setEditingMessageId(null);
         setEditingMessageContent('');
       } catch (error) {
@@ -1233,13 +1304,13 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
                   </EditContainer>
                 ) : (
 
-                  <MessageText>{parseMessage(message.content).map((part, index) => (
+                  <MessageText>{(message.mentions?.length > 0) ? (parsedMessage[message.id] || parseMessage(message.content, 'render')).map((part, index) => (
                     part.type === 'mention' && groupMembersMap[part.username] ? (
                       <MentionText isCurrentUserMention={part.username === currentUser.user_id} key={index}>{part.content}</MentionText>
                     ) : (
                       <span key={index}>{part.content}</span>
                     )
-                  ))}</MessageText>
+                  )) : message.content}</MessageText>
                 )}
 
                 {/* Display Attachments Vertically */}

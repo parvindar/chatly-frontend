@@ -632,6 +632,7 @@ const HomePage = () => {
   const [hasMoreMessages, setHasMoreMessages] = useState({});
   const [initialMessageLoaded, setInitialMessageLoaded] = useState({});
   const [newMessageCount, setNewMessageCount] = useState({});
+  const [newMessageEdit, setNewMessageEdit] = useState(null);
   const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
 
   const { runAction, isLoading } = useApiAction();
@@ -948,9 +949,10 @@ const HomePage = () => {
 
     const handleEditMessage = (message) => {
       const { chat_id, message_id, content } = message;
+      setNewMessageEdit(message);
       setMessagesMap((prevMap) => ({
         ...prevMap,
-        [chat_id]: prevMap[chat_id]?.map(msg => msg.id === message_id ? { ...msg, content, is_edited: true } : msg) || [],
+        [chat_id]: prevMap[chat_id]?.map(msg => msg.id === message_id ? { ...msg, content, mentions: message.mentions, is_edited: true } : msg) || [],
       }));
     };
 
@@ -1382,6 +1384,7 @@ const HomePage = () => {
                 handleNewMessage={handleNewMessage}
                 handleReaction={handleReaction}
                 newMessageCount={newMessageCount[selectedGroup?.id]}
+                newMessageEdit={newMessageEdit}
               />
             )}
           </ChatBoxContainer>
