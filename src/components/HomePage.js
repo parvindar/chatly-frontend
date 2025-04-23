@@ -617,7 +617,7 @@ const HomePage = () => {
   const [visibleDropdown, setVisibleDropdown] = useState(null);
   const dropdownRef = useRef(null);
   const [groupMembers, setGroupMembers] = useState([]);
-  const [userMap, setUserMap] = useState({ "a0000000-0000-0000-0000-000000000000": { id: "a0000000-0000-0000-0000-000000000000", name: "AI", user_id: "ai", status: "online" } });
+  const [userMap, setUserMap] = useState({ "11": { id: "11", name: "AI", user_id: "ai", status: "online" } });
   const [selectedTab, setSelectedTab] = useState('groups');
   const [visibleMemberDropdown, setVisibleMemberDropdown] = useState(null);
   const groupDropdownRef = useRef(null);
