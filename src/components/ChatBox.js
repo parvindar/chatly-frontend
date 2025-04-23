@@ -118,12 +118,20 @@ const MessageItem = styled.div`
   align-self: ${(props) => (props.isCurrentUser ? 'flex-end' : 'flex-start')};
   max-width: 100%;
   word-wrap: break-word;
-  flex-direction: row;
+  flex-direction: column;
   position: relative;
   transition: background-color 0.2s ease;
+  font-size: 14px;
   &:hover {
     background-color: ${props => props.isCurrentUser ? '#1E2024' : '#2c2f33'};
   }
+`;
+
+const MessageItemContent = styled.div`
+  display: flex;
+  align-items: flex-start;
+  flex-direction: row;
+  width: 100%;
 `;
 
 const ProfilePic = styled.img`
@@ -132,6 +140,7 @@ const ProfilePic = styled.img`
   border-radius: 50%;
   margin: ${(props) => (props.isCurrentUser ? '0 0 0 10px' : '0 10px 0 0')};
   cursor: pointer;
+  flex-shrink: 0;
 `;
 
 const MessageContent = styled.div`
@@ -139,6 +148,7 @@ const MessageContent = styled.div`
   flex-direction: column;
   text-align: left;
   flex: 1;
+  width: 100%;
 `;
 
 const SenderName = styled.span`
@@ -195,10 +205,11 @@ const EditedIndicator = styled.span`
 `;
 
 const MessageText = styled.span`
-  font-size: 14px;
+  // font-size: 14px;
   word-break: break-word;
   overflow-wrap: break-word;
   max-width: 100%;
+
 `;
 
 const MentionText = styled.span`
@@ -342,7 +353,7 @@ const MessageMenu = styled.div`
 const MessageMenuOptions = styled.div`
   position: absolute;
   right: 0;
-  top: 32px;
+  bottom: -16px;
   background-color: #2c2f33;
   border-radius: 4px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
@@ -700,6 +711,160 @@ const ImagePlaceholder = styled.div`
   font-size: 16px; // Optional text size
 `;
 
+
+const ReplyToMessageItem = styled.div`
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  padding: 10px;
+  // margin-right : 10px;
+  background-color: #24262A;
+  border-radius: 8px;
+  color: ${colors.textSecondary};
+  // align-self: flex-start;
+  width: calc(100% - 20px);
+  word-wrap: break-word;
+  // flex-direction: row;
+  position: relative;
+  transition: background-color 0.2s ease;
+  background-color: #2c2f33;
+  &:hover {
+    background-color: #2c2f33;
+  }  
+  font-size: 13px;
+  overflow: hidden;
+`;
+
+const ReplyToMessage = styled.div`
+  position: absolute;
+  bottom: 46px;
+  display: flex;
+  background-color: #23272a;
+  border-radius: 8px 8px 0 0;
+  padding: 10px;
+  
+  padding-top: 24px;
+  align-self: center;
+  width: auto;
+  left : 10px;
+  right: 10px;
+  z-index: 10;
+`;
+
+const ReplyToMessageContent = styled.span`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0; /* Allows text truncation in flex children */
+  width: 80%;
+  `;
+
+const ReplyToHeader = styled.div`
+  display: flex;
+  position: absolute;
+  padding-top: 6px;
+  padding-left: 10px;
+  padding-right: 0px;
+  margin-right: 10px;
+  top: 0;
+  left: 0;
+  
+  color: ${colors.textSecondary};
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 12px;
+  // height: 20px;
+  // border: 1px solid red;
+
+  .cancel-reply {
+    cursor: pointer;
+    color: ${colors.textSecondary};
+    font-size: 14px;
+    height: 20px;
+    width: 20px;
+    border: 1px solid ${colors.textSecondary};
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 10px;
+    top: 0;
+    
+  }
+`;
+
+
+
+
+export const ReplyContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 0.875rem;
+  color: ${colors.textSecondary};
+  position: relative;
+  padding-left: 10px;
+
+  cursor: pointer;
+  width: calc(100% - 10px);
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: ${colors.primary};
+    border-radius: 0 2px 2px 0; // only set right side
+  }
+
+  &:hover {
+    background-color: rgba(4, 4, 5, 0.07);
+  }
+`;
+
+export const ReplyProfilePic = styled.img`
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 6px;
+  flex-shrink: 0;
+  object-fit: cover;
+`;
+
+export const ReplyAuthor = styled.span`
+  font-weight: 400;
+  font-size: 12px;
+  color: ${colors.textPrimary};
+  margin-right: 6px;
+`;
+
+export const ReplyContent = styled.div`
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+  color: ${colors.textSecondary};
+`;
+
+
+const ParentMessage = ({ parentMessage, currentUser }) => (
+  <ReplyContainer>
+    <ReplyProfilePic src={parentMessage.sender_info.profile_pic || 'https://i.pravatar.cc/40'} alt={parentMessage.sender_info.name} />
+    <ReplyAuthor>{parentMessage.sender_info.name == currentUser?.name ? 'You' : parentMessage.sender_info.name}</ReplyAuthor>
+    <ReplyContent>
+      {parentMessage.content}
+      {/* {parentMessage.attachments && parentMessage.attachments.length > 0 && <ReplyAttachmentIcon>📎</ReplyAttachmentIcon>} */}
+    </ReplyContent>
+    {/* <JumpButton>Jump</JumpButton> */}
+  </ReplyContainer>
+);
+
+
 // Utility function to format file size
 const formatFileSize = (size) => {
   if (size < 1024) return `${size} bytes`;
@@ -719,6 +884,7 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
   const [imageUrls, setImageUrls] = useState({});
   const [showMentionOptions, setShowMentionOptions] = useState(false);
   const [parsedMessage, setParsedMessage] = useState({});
+  const [replyingToMessage, setReplyingToMessage] = useState(null);
   const currentUserId = currentUser?.id;
   const messageEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -730,6 +896,7 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
   const emojiButtonRef = useRef(null);
   const reactionPickerRef = useRef(null);
   const reactionButtonRef = useRef(null);
+  const inputBoxRef = useRef(null);
 
   const groupMembersMap = useMemo(() => {
     if (!groupMembers) return {};
@@ -848,6 +1015,13 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
     }
   }, [messages]);
 
+  const handleReplyMessage = (message) => {
+    setReplyingToMessage(message);
+    setShowMenuForMessage(null);
+    setTimeout(() => {
+      inputBoxRef.current.focus();
+    }, 0);
+  }
 
   const handleSendMessage = async () => {
     if (input.trim()) {
@@ -891,9 +1065,27 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
           chat_id: group.id,
           timestamp: new Date().toISOString(),
         };
+
+        if (replyingToMessage) {
+          newMessage.parent_id = replyingToMessage.id;
+          newMessage.parent_message = {
+            id: replyingToMessage.id,
+            content: replyingToMessage.content,
+            sender_id: replyingToMessage.sender_id,
+            sender_info: {
+              id: replyingToMessage.sender_id,
+              name: userMap[replyingToMessage.sender_id]?.name,
+              profile_pic: userMap[replyingToMessage.sender_id]?.profile_pic,
+            },
+          };
+        }
+
         onSendMessage(newMessage);
         handleNewMessage(newMessage, true);
         setAttachments([]);
+        if (replyingToMessage) {
+          setReplyingToMessage(null);
+        }
         if (typing) {
           setTyping(false);
 
@@ -1252,128 +1444,142 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
               </ReactionPickerWrapper>
             )}
 
+
+
             <MessageItem
               isCurrentUser={message.sender_id === currentUserId}
               isEditing={editingMessageId === message.id}
               hasReactions={message.reactions && Object.keys(message.reactions).length > 0}
               isLocal={!message.id}
             >
-              {message.sender_id !== currentUserId && (
-                <ProfilePic
-                  src={userMap[message.sender_id]?.profile_pic || 'https://i.pravatar.cc/40'}
-                  alt={userMap[message.sender_id]?.name.split(' ').map((n) => n[0]).join('')}
-                />
+              {message.parent_message?.id && (
+                <ParentMessage parentMessage={message.parent_message} currentUser={currentUser} />
               )}
 
-
-
-              <MessageContent>
+              <MessageItemContent>
                 {message.sender_id !== currentUserId && (
-                  <SenderName isCurrentUser={message.sender_id === currentUserId}>
-                    <span style={{ cursor: 'pointer' }} >{userMap[message.sender_id]?.name}</span>
-                    <OtherUserTimeStamp>
-                      {formatMessageTimestamp(message.timestamp)}
-                      {message.is_edited &&
-                        <span style={{ fontSize: '0.65rem', marginLeft: '4px', verticalAlign: 'top' }} title="edited">
-                          <MdEdit />
-                        </span>}
-                    </OtherUserTimeStamp>
-                  </SenderName>
+                  <ProfilePic
+                    src={userMap[message.sender_id]?.profile_pic || 'https://i.pravatar.cc/40'}
+                    alt={userMap[message.sender_id]?.name.split(' ').map((n) => n[0]).join('')}
+                  />
                 )}
 
-                {editingMessageId === message.id ? (
-                  <EditContainer>
-                    <EditTextArea
-                      value={editingMessageContent}
-                      onChange={(e) => setEditingMessageContent(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSaveEdit(message.id);
-                        } else if (e.key === 'Escape') {
-                          handleCancelEdit();
-                        }
-                      }}
-                      autoFocus
-                      rows={Math.max(1, Math.min(6, editingMessageContent.split('\n').length))}
-                    />
-                    <EditActions>
-                      <EditButton onClick={() => handleSaveEdit(message.id)}>Save</EditButton>
-                      <EditButton onClick={handleCancelEdit}>Cancel</EditButton>
-                    </EditActions>
-                  </EditContainer>
-                ) : (
 
-                  <MessageText>{(message.mentions?.length > 0) ? (parsedMessage[message.id] || parseMessage(message.content, 'render')).map((part, index) => (
-                    part.type === 'mention' && groupMembersMap[part.username] ? (
-                      <MentionText isCurrentUserMention={part.username === currentUser.user_id} key={index}>{part.content}</MentionText>
-                    ) : (
-                      <span key={index}>{part.content}</span>
-                    )
-                  )) : message.content}</MessageText>
-                )}
 
-                {/* Display Attachments Vertically */}
-                {message.attachments && message.attachments.length > 0 && (
-                  <MessageAttachments>
-                    {message.attachments.map((attachment, index) => (
-                      attachment.type.startsWith('image/') ? (
+                <MessageContent>
+                  {message.sender_id !== currentUserId && (
+                    <SenderName isCurrentUser={message.sender_id === currentUserId}>
+                      <span style={{ cursor: 'pointer' }} >{userMap[message.sender_id]?.name}</span>
+                      <OtherUserTimeStamp>
+                        {formatMessageTimestamp(message.timestamp)}
+                        {message.is_edited &&
+                          <span style={{ fontSize: '0.65rem', marginLeft: '4px', verticalAlign: 'top' }} title="edited">
+                            <MdEdit />
+                          </span>}
+                      </OtherUserTimeStamp>
+                    </SenderName>
+                  )}
 
-                        <ImageAttachmentItem key={index}>
-                          {imageUrls[attachment.key] ? (
-                            <img
-                              src={imageUrls[attachment.key]}
-                              alt={attachment.name}
-                            />
-                          ) : (
-                            <ImagePlaceholder>
-                              <Loader />
-                            </ImagePlaceholder>
-                          )}
-                        </ImageAttachmentItem>
+                  {editingMessageId === message.id ? (
+                    <EditContainer>
+                      <EditTextArea
+                        value={editingMessageContent}
+                        onChange={(e) => setEditingMessageContent(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSaveEdit(message.id);
+                          } else if (e.key === 'Escape') {
+                            handleCancelEdit();
+                          }
+                        }}
+                        autoFocus
+                        rows={Math.max(1, Math.min(6, editingMessageContent.split('\n').length))}
+                      />
+                      <EditActions>
+                        <EditButton onClick={() => handleSaveEdit(message.id)}>Save</EditButton>
+                        <EditButton onClick={handleCancelEdit}>Cancel</EditButton>
+                      </EditActions>
+                    </EditContainer>
+                  ) : (
 
+                    <MessageText>{(message.mentions?.length > 0) ? (parsedMessage[message.id] || parseMessage(message.content, 'render')).map((part, index) => (
+                      part.type === 'mention' && groupMembersMap[part.username] ? (
+                        <MentionText isCurrentUserMention={part.username === currentUser.user_id} key={index}>{part.content}</MentionText>
                       ) : (
-                        <AttachmentItem key={index} onClick={() => handleAttachmentClick(attachment)} >
-                          <span
-                            title={attachment.name}
-                          >
-                            {attachment.name.length > 30 ? `${attachment.name.slice(0, 30)}...` : attachment.name}
-                          </span>
-                          <span style={{ marginLeft: '4px' }}>{`(${formatFileSize(attachment.size)})`}</span>
-                        </AttachmentItem>
+                        <span key={index}>{part.content}</span>
                       )
-                    ))}
-                  </MessageAttachments>
-                )}
+                    )) : message.content}</MessageText>
+                  )}
 
-                {/* Display Reactions - Handles object structure */}
-                {message.reactions && Object.keys(message.reactions).length > 0 && (
-                  <ReactionsContainer>
-                    {Object.entries(message.reactions).map(([emoji, reactionData]) => (
-                      <ReactionChip
-                        key={emoji}
-                        title={reactionData.users?.join('\n') || ''}
-                        reactedByMe={reactionData.me}
-                        onClick={() => handleSelectReaction(message.id, emoji, reactionData?.me)}
-                      >
-                        <span>{emoji}</span>
-                        <span>{reactionData.count}</span>
-                      </ReactionChip>
-                    ))}
-                  </ReactionsContainer>
-                )}
-              </MessageContent>
+                  {/* Display Attachments Vertically */}
+                  {message.attachments && message.attachments.length > 0 && (
+                    <MessageAttachments>
+                      {message.attachments.map((attachment, index) => (
+                        attachment.type.startsWith('image/') ? (
 
-              {message.sender_id === currentUserId && !editingMessageId && (<>
+                          <ImageAttachmentItem key={index}>
+                            {imageUrls[attachment.key] ? (
+                              <img
+                                src={imageUrls[attachment.key]}
+                                alt={attachment.name}
+                              />
+                            ) : (
+                              <ImagePlaceholder>
+                                <Loader />
+                              </ImagePlaceholder>
+                            )}
+                          </ImageAttachmentItem>
+
+                        ) : (
+                          <AttachmentItem key={index} onClick={() => handleAttachmentClick(attachment)} >
+                            <span
+                              title={attachment.name}
+                            >
+                              {attachment.name.length > 30 ? `${attachment.name.slice(0, 30)}...` : attachment.name}
+                            </span>
+                            <span style={{ marginLeft: '4px' }}>{`(${formatFileSize(attachment.size)})`}</span>
+                          </AttachmentItem>
+                        )
+                      ))}
+                    </MessageAttachments>
+                  )}
+
+                  {/* Display Reactions - Handles object structure */}
+                  {message.reactions && Object.keys(message.reactions).length > 0 && (
+                    <ReactionsContainer>
+                      {Object.entries(message.reactions).map(([emoji, reactionData]) => (
+                        <ReactionChip
+                          key={emoji}
+                          title={reactionData.users?.join('\n') || ''}
+                          reactedByMe={reactionData.me}
+                          onClick={() => handleSelectReaction(message.id, emoji, reactionData?.me)}
+                        >
+                          <span>{emoji}</span>
+                          <span>{reactionData.count}</span>
+                        </ReactionChip>
+                      ))}
+                    </ReactionsContainer>
+                  )}
+                </MessageContent>
+              </MessageItemContent>
+              {!editingMessageId && (<>
                 <MessageMenu ref={menuRef}>
                   <BsThreeDots onClick={() => setShowMenuForMessage(showMenuForMessage === message.id ? null : message.id)} />
                 </MessageMenu>
                 {showMenuForMessage === message.id && (
                   <MessageMenuOptions ref={menuOptionsRef}>
-                    {(!message.content.startsWith('/ai') && (Date.now() - new Date(message.timestamp).getTime()) <= 120000) && (
-                      <MenuOption onClick={() => handleEditMessage(message)}>Edit</MenuOption>
+                    {message.sender_id === currentUserId && (
+                      <>
+                        {(!message.content.startsWith('/ai') && (Date.now() - new Date(message.timestamp).getTime()) <= 120000) && (
+                          <MenuOption onClick={() => handleEditMessage(message)}>Edit</MenuOption>
+                        )}
+                        <MenuOption onClick={() => handleDeleteMessage(message.id)}>Delete</MenuOption>
+                      </>
                     )}
-                    <MenuOption onClick={() => handleDeleteMessage(message.id)}>Delete</MenuOption>
+                    {message.sender_id !== currentUserId && (
+                      <MenuOption onClick={() => handleReplyMessage(message)}>Reply</MenuOption>
+                    )}
                   </MessageMenuOptions>
                 )}
               </>)}
@@ -1430,6 +1636,25 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
           (member) => member.name.toLowerCase().includes(mentionQuery.toLowerCase()) || member.user_id.toString().includes(mentionQuery)
         )} onSelect={handleMentionOptionSelect} />
       )}
+      {replyingToMessage && (
+        <ReplyToMessage>
+          <ReplyToHeader>
+            <span>Replying to</span>
+            <span className="cancel-reply" onClick={() => setReplyingToMessage(null)}>
+              <MdClose />
+            </span>
+          </ReplyToHeader>
+          <ReplyToMessageItem>
+            <ProfilePic src={userMap[replyingToMessage.sender_id]?.profile_pic || 'https://i.pravatar.cc/40'} alt={userMap[replyingToMessage.sender_id]?.name.split(' ').map((n) => n[0]).join('')} />
+            <MessageContent>
+              <SenderName>
+                <span>{userMap[replyingToMessage.sender_id]?.name}</span>
+              </SenderName>
+              <ReplyToMessageContent className="single-line">{replyingToMessage.content}</ReplyToMessageContent>
+            </MessageContent>
+          </ReplyToMessageItem>
+        </ReplyToMessage>
+      )}
       <InputContainer>
         <AttachmentButton>
           <MdAttachFile />
@@ -1454,6 +1679,7 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           placeholder="Type a message..."
+          ref={inputBoxRef}
         />
         <EmojiButton ref={emojiButtonRef} onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
           <BsEmojiSmile />
