@@ -26,6 +26,7 @@ import {
   getMessagesByChatId,
   sendFriendRequest,
   getFriendRequests,
+  getFriendRequestsSent,
   removeFriend
 } from '../api/sdk';
 
@@ -604,6 +605,7 @@ const HeaderMenu = styled.div`
       &:hover{
         color : ${colors.textPrimary}
       }
+      ${(props) => props.selected && `color: ${colors.primary};`}
 `
 
 const TopWarningBar = styled.div`
@@ -653,8 +655,9 @@ const HomePage = () => {
   const [newMessageCount, setNewMessageCount] = useState({});
   const [newMessageEdit, setNewMessageEdit] = useState(null);
   const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
-  const [middleSection, setMiddleSection] = useState('chat'); //chat , fr
+  const [friendRequestsModal, setFriendRequestsModal] = useState(false);
   const [friendRequests, setFriendRequests] = useState([]);
+  const [friendRequestsSent, setFriendRequestsSent] = useState([]);
   const [friendRequestChange, setFriendRequestChange] = useState(1);
   const { runAction, isLoading } = useApiAction();
 
@@ -796,6 +799,11 @@ const HomePage = () => {
     setFriendRequests(data || []);
   };
 
+  const fetchFriendRequestsSent = async () => {
+    const data = await getFriendRequestsSent();
+    setFriendRequestsSent(data || []);
+  };
+
   useEffect(async () => {
     if (!currentUser) return;
     const statusMap = { ...userStatusMap };
@@ -806,6 +814,7 @@ const HomePage = () => {
     loadGroups(true);
 
     fetchFriendRequests();
+    fetchFriendRequestsSent();
 
   }, [currentUser]);
 
@@ -1076,14 +1085,6 @@ const HomePage = () => {
     }));
   }
 
-  useEffect(() => {
-    if (middleSection === 'chat') {
-    } else if (middleSection === 'fr') {
-      if (selectedGroup) {
-        setSelectedGroup(null);
-      }
-    }
-  }, [middleSection])
 
   useEffect(() => {
     const fetchGroupMembers = async () => {
@@ -1103,9 +1104,6 @@ const HomePage = () => {
         setIsGroupCallShuttingDown(true);
       }
 
-      if (middleSection != 'chat') {
-        setMiddleSection('chat');
-      }
 
       if (!initialMessageLoaded[selectedGroup.id]) {
         fetchMessages(selectedGroup.id);
@@ -1417,12 +1415,7 @@ const HomePage = () => {
           </VideoCallSection>
         )}
 
-        {middleSection == 'fr' && <>
-          <ChatHeaderBar>
-            Friends
-          </ChatHeaderBar>
-          <FriendsComponent friendRequestChange={friendRequestChange} /></>}
-        {middleSection == 'chat' && <>
+        {<>
           {(isGroupCallActive || isGroupCallShuttingDown) && (
             <GroupCallComponent
               currentUser={currentUser}
@@ -1461,8 +1454,8 @@ const HomePage = () => {
       </RightPanel>
       <RightPanelMembers isGroupCallActive={isGroupCallActive}>
         <ChatHeaderBar style={{ justifyContent: 'space-between', gap: '8px' }}>
-          <HeaderMenu>
-            <FaUserFriends onClick={() => setMiddleSection('fr')} />
+          <HeaderMenu selected={friendRequestsModal} onClick={() => setFriendRequestsModal(true)}>
+            <FaUserFriends />
             {friendRequests?.length > 0 &&
               <div style={{ height: '8px', width: '8px', background: 'red', borderRadius: '50%' }}></div>
             }
@@ -1706,6 +1699,18 @@ const HomePage = () => {
               Close
             </ModalButton>
           </ModalContent>
+        </ModalOverlay>
+      )}
+
+      {friendRequestsModal && (
+        <ModalOverlay>
+          <ModalContent style={{ height: '80vh' }}>
+            <FriendsComponent friendRequests={friendRequests} friendRequestsSent={friendRequestsSent} />
+            <ModalButton secondary onClick={() => setFriendRequestsModal(false)}>
+              Close
+            </ModalButton>
+          </ModalContent>
+
         </ModalOverlay>
       )}
     </Container>

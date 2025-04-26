@@ -172,33 +172,9 @@ const ActionItem = styled.div`
   
 `
 
-const FriendsComponent = ({ currentUser, friendRequestChange }) => {
+const FriendsComponent = ({ currentUser, friendRequests, friendRequestsSent, setFriendRequests, setFriendRequestsSent }) => {
     const [selectedTab, setSelectedTab] = useState('received');
-    const [friendRequests, setFriendRequests] = useState([]);
-    const [friendRequestsSent, setFriendRequestsSent] = useState([]);
 
-    const fetchFriendRequests = async () => {
-        const res = await getFriendRequests();
-        setFriendRequests(res || []);
-    }
-
-    const fetchFriendRequestsSent = async () => {
-        const res = await getFriendRequestsSent();
-        setFriendRequestsSent(res || []);
-    }
-
-    useEffect(async () => {
-        if (selectedTab == 'received') {
-            fetchFriendRequests();
-        } else if (selectedTab == 'sent') {
-            fetchFriendRequestsSent();
-        }
-    }, [selectedTab])
-
-    useEffect(() => {
-        fetchFriendRequests();
-        fetchFriendRequestsSent();
-    }, [friendRequestChange])
 
     const handleAcceptFriendRequest = async (requestId) => {
         const res = await actOnFriendRequest(requestId, 'accept');
