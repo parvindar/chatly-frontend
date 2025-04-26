@@ -260,6 +260,31 @@ export const makeMemberGroupAdmin = async (groupId, userId) => {
   return response.data;
 };
 
+export const getFriendRequests = async () => {
+  const response = await apiClient.get(`/friend/request/list`);
+  return response.data.data;
+};
+
+export const getFriendRequestsSent = async () => {
+  const response = await apiClient.get(`/friend/request/list/sent`);
+  return response.data.data;
+};
+
+export const sendFriendRequest = async (requested_id) => {
+  const response = await apiClient.post(`/friend/request`, { requested_id });
+  return response.data.data;
+};
+
+export const actOnFriendRequest = async (friend_request_id, status) => {
+  const response = await apiClient.post(`/friend/request/${status}`, { friend_request_id });
+  return response.data.data;
+};
+
+export const removeFriend = async (user_id) => {
+  const response = await apiClient.delete(`/friend/${user_id}`);
+  return response.data;
+};
+
 export const uploadMedia = async (file) => {
   const formData = new FormData();
   formData.append('file', file);

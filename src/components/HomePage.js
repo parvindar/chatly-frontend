@@ -23,15 +23,20 @@ import {
   fetchPrivateChats,
   createPrivateChat,
   deleteChat,
-  getMessagesByChatId
+  getMessagesByChatId,
+  sendFriendRequest,
+  getFriendRequests,
+  removeFriend
 } from '../api/sdk';
 
 import { useVideoCall } from '../components/useVideoCall'; // Import the custom hook for video call
 import { useApiAction } from './useAPIAction';
 import _ from 'lodash'; // Import lodash for throttling
 import { FiLogOut, FiVideo, FiPhoneOff, FiMoreVertical, FiAlertCircle } from 'react-icons/fi'; // Import the logout icon from react-icons
+import { FaUserFriends } from 'react-icons/fa';
 import { MdCallEnd } from 'react-icons/md';
 import LoadingComponent from './LoadingComponent';
+import FriendsComponent from './FriendsComponent';
 
 const Container = styled.div`
   display: flex;
@@ -149,16 +154,21 @@ const ModalOverlay = styled.div`
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1000;
 `;
 
 const ModalContent = styled.div`
+  display: flex;
+  flex-direction: column;
   background-color: #23272a;
   padding: 20px;
   border-radius: 8px;
-  width: 300px;
+  width: 350px;
+  max-height : 75vh;
   color: white;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
@@ -288,7 +298,7 @@ const DropdownMenu = forwardRef(({ items, onItemClick }, ref) => {
 });
 
 const UserList = styled.div`
-  max-height: 80vh; /* Limit the height of the user list */
+  max-height: 50%; /* Limit the height of the user list */
   overflow-y: auto; /* Enable vertical scrolling when the height is exceeded */
   margin-top: 10px;
   margin-bottom: 10px;
@@ -520,7 +530,7 @@ const UserDetails = styled.div`
 `;
 
 const LogoutIcon = styled(FiLogOut)`
-  font-size: 20px;
+  font-size: 16px;
   color: #99aab5; /* Subtle gray color */
   cursor: pointer;
   margin-left: auto; /* Push the icon to the right */
@@ -535,14 +545,14 @@ const TabsContainer = styled.div`
   display: flex;
   justify-content: space-between; /* Distribute tabs evenly */
   background-color: #23272a; /* Match the left panel background */
-  padding: 8px;
+  padding: px;
   border-bottom: 1px solid #2c2f33; /* Subtle border below the tabs */
 `;
 
 const Tab = styled.div`
   flex: 1; /* Make all tabs take equal width */
   text-align: center; /* Center the text inside the tab */
-  font-size: 14px;
+  font-size: 12px;
   font-weight: bold;
   color: ${(props) => (props.isActive ? colors.textPrimary : colors.textSecondary)}; /* Highlight active tab */
   cursor: pointer;
@@ -574,7 +584,7 @@ const VideoCallSection = styled.div`
 
 // Add the new styled component for the chat header bar
 const ChatHeaderBar = styled.div`
-  height: 20px; /* Adjust height as needed */
+  height: 28px; /* Adjust height as needed */
   background-color: #23272a; /* Dark background */
   color: #999999;
   font-size: 12px;
@@ -586,6 +596,15 @@ const ChatHeaderBar = styled.div`
   border-bottom: 1px solid #2c2f33; /* Optional border */
   flex-shrink: 0; /* Prevent the header from shrinking */
 `;
+
+const HeaderMenu = styled.div`
+      display:flex;
+      font-size : 16px;
+      cursor: pointer;
+      &:hover{
+        color : ${colors.textPrimary}
+      }
+`
 
 const TopWarningBar = styled.div`
   height: 20px; /* Adjust height as needed */
@@ -634,7 +653,9 @@ const HomePage = () => {
   const [newMessageCount, setNewMessageCount] = useState({});
   const [newMessageEdit, setNewMessageEdit] = useState(null);
   const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
-
+  const [middleSection, setMiddleSection] = useState('chat'); //chat , fr
+  const [friendRequests, setFriendRequests] = useState([]);
+  const [friendRequestChange, setFriendRequestChange] = useState(1);
   const { runAction, isLoading } = useApiAction();
 
   // Reference for the RTCPeerConnection
@@ -770,7 +791,12 @@ const HomePage = () => {
 
   };
 
-  useEffect(() => {
+  const fetchFriendRequests = async () => {
+    const data = await getFriendRequests();
+    setFriendRequests(data || []);
+  };
+
+  useEffect(async () => {
     if (!currentUser) return;
     const statusMap = { ...userStatusMap };
     statusMap[currentUser.id] = currentUser.status;
@@ -778,6 +804,8 @@ const HomePage = () => {
 
     fetchPrivateChatss();
     loadGroups(true);
+
+    fetchFriendRequests();
 
   }, [currentUser]);
 
@@ -912,6 +940,12 @@ const HomePage = () => {
     }));
   };
 
+  const handleFriendRequestUpdate = (message) => {
+    fetchFriendRequests();
+    fetchPrivateChatss();
+    setFriendRequestChange(prev => prev + 1);
+  };
+
   // Initialize WebSocket connection
   useEffect(() => {
     if (currentUser) {
@@ -962,6 +996,7 @@ const HomePage = () => {
     addMessageListener("message_deleted", handleDeleteMessage);
     addMessageListener("message_edited", handleEditMessage);
     addMessageListener("message_reaction", handleReaction);
+    addMessageListener("friend_request", handleFriendRequestUpdate);
 
     return () => {
       removeMessageListener("chat", handleNewMessage);
@@ -970,6 +1005,7 @@ const HomePage = () => {
       removeMessageListener("message_deleted", handleDeleteMessage);
       removeMessageListener("message_edited", handleEditMessage);
       removeMessageListener("message_reaction", handleReaction);
+      removeMessageListener("friend_request", handleFriendRequestUpdate);
     };
   }, [currentUser]);
 
@@ -1003,6 +1039,8 @@ const HomePage = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+
 
   // useEffect(() => {
   //   setSelectedGroup(null);
@@ -1039,6 +1077,15 @@ const HomePage = () => {
   }
 
   useEffect(() => {
+    if (middleSection === 'chat') {
+    } else if (middleSection === 'fr') {
+      if (selectedGroup) {
+        setSelectedGroup(null);
+      }
+    }
+  }, [middleSection])
+
+  useEffect(() => {
     const fetchGroupMembers = async () => {
       if (selectedGroup) {
         try {
@@ -1054,6 +1101,10 @@ const HomePage = () => {
 
       if (isGroupCallActive) {
         setIsGroupCallShuttingDown(true);
+      }
+
+      if (middleSection != 'chat') {
+        setMiddleSection('chat');
       }
 
       if (!initialMessageLoaded[selectedGroup.id]) {
@@ -1111,10 +1162,10 @@ const HomePage = () => {
 
   const handleCreateChat = async (userId) => {
     try {
-      const response = await createPrivateChat(userId);
-      const newChat = response;
+      const response = await sendFriendRequest(userId)
+      // const newChat = response;
 
-      setPrivateChats((prevChats) => [...prevChats, newChat]);
+      // setPrivateChats((prevChats) => [...prevChats, newChat]);
 
       setIsCreateChatModalOpen(false);
       console.log('Private chat created successfully!');
@@ -1131,6 +1182,20 @@ const HomePage = () => {
       if (selectedGroup?.id === chatId) {
         setSelectedGroup(null);
       }
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    }
+  };
+
+  const handleUnfriend = async (user_id) => {
+    try {
+      const res = await removeFriend(user_id);
+      console.log(res);
+      console.log('Chat deleted successfully!');
+      setPrivateChats((prevChats) => prevChats.filter((chat) => chat.user.id !== user_id));
+      // if (selectedGroup?.id === chatId) {
+      //   setSelectedGroup(null);
+      // }
     } catch (error) {
       console.error('Error deleting chat:', error);
     }
@@ -1217,12 +1282,7 @@ const HomePage = () => {
             <CurrentUserName>{currentUser?.name || 'User Name'}</CurrentUserName>
             <CurrentUserId>{currentUser?.user_id || 'user_id'}</CurrentUserId>
           </CurrentUserDetails>
-          <LogoutIcon
-            onClick={() => {
-              localStorage.clear();
-              window.location.href = '/login';
-            }}
-          />
+
         </CurrentUserContainer>
 
         {/* Tabs for Groups and Private Chats */}
@@ -1237,7 +1297,7 @@ const HomePage = () => {
             isActive={selectedTab === 'privateChats'}
             onClick={() => setSelectedTab('privateChats')}
           >
-            Private
+            DMs
           </Tab>
         </TabsContainer>
 
@@ -1308,7 +1368,8 @@ const HomePage = () => {
                   <DropdownMenu
                     ref={groupDropdownRef}
                     items={[
-                      { label: 'Delete Chat', action: () => handleDeleteChat(chat.id) },
+                      // { label: 'Delete Chat', action: () => handleDeleteChat(chat.id) },
+                      { label: 'Remove Friend', action: () => handleUnfriend(chat.user.id) },
                     ]}
                     onItemClick={(action) => action()}
                   />
@@ -1355,42 +1416,65 @@ const HomePage = () => {
             />
           </VideoCallSection>
         )}
-        {(isGroupCallActive || isGroupCallShuttingDown) && (
-          <GroupCallComponent
-            currentUser={currentUser}
-            group={selectedGroup}
-            handleGroupCallEnded={() => {
-              setIsGroupCallActive(false);
-              setIsGroupCallShuttingDown(false);
-            }}
-            isGroupCallActive={isGroupCallActive}
-            isGroupCallShuttingDown={isGroupCallShuttingDown}
-          />
-        )}
-        {!isGroupCallActive && (
-          <ChatBoxContainer>
-            {selectedGroup && (
-              <ChatBox
-                messages={messagesMap[selectedGroup?.id] || []}
-                onSendMessage={sendMessage}
-                currentUser={currentUser}
-                typingUsers={typingUsers[selectedGroup?.id] || {}}
-                onTyping={sendTypingStatus}
-                groupMembers={groupMembers}
-                group={selectedGroup}
-                userMap={userMap}
-                fetchMessages={fetchMessages}
-                hasMoreMessages={hasMoreMessages[selectedGroup?.id]}
-                handleNewMessage={handleNewMessage}
-                handleReaction={handleReaction}
-                newMessageCount={newMessageCount[selectedGroup?.id]}
-                newMessageEdit={newMessageEdit}
-              />
-            )}
-          </ChatBoxContainer>
-        )}
+
+        {middleSection == 'fr' && <>
+          <ChatHeaderBar>
+            Friends
+          </ChatHeaderBar>
+          <FriendsComponent friendRequestChange={friendRequestChange} /></>}
+        {middleSection == 'chat' && <>
+          {(isGroupCallActive || isGroupCallShuttingDown) && (
+            <GroupCallComponent
+              currentUser={currentUser}
+              group={selectedGroup}
+              handleGroupCallEnded={() => {
+                setIsGroupCallActive(false);
+                setIsGroupCallShuttingDown(false);
+              }}
+              isGroupCallActive={isGroupCallActive}
+              isGroupCallShuttingDown={isGroupCallShuttingDown}
+            />
+          )}
+          {!isGroupCallActive && (
+            <ChatBoxContainer>
+              {selectedGroup && (
+                <ChatBox
+                  messages={messagesMap[selectedGroup?.id] || []}
+                  onSendMessage={sendMessage}
+                  currentUser={currentUser}
+                  typingUsers={typingUsers[selectedGroup?.id] || {}}
+                  onTyping={sendTypingStatus}
+                  groupMembers={groupMembers}
+                  group={selectedGroup}
+                  userMap={userMap}
+                  fetchMessages={fetchMessages}
+                  hasMoreMessages={hasMoreMessages[selectedGroup?.id]}
+                  handleNewMessage={handleNewMessage}
+                  handleReaction={handleReaction}
+                  newMessageCount={newMessageCount[selectedGroup?.id]}
+                  newMessageEdit={newMessageEdit}
+                />
+              )}
+            </ChatBoxContainer>
+          )}</>
+        }
       </RightPanel>
       <RightPanelMembers isGroupCallActive={isGroupCallActive}>
+        <ChatHeaderBar style={{ justifyContent: 'space-between', gap: '8px' }}>
+          <HeaderMenu>
+            <FaUserFriends onClick={() => setMiddleSection('fr')} />
+            {friendRequests?.length > 0 &&
+              <div style={{ height: '8px', width: '8px', background: 'red', borderRadius: '50%' }}></div>
+            }
+          </HeaderMenu>
+          <HeaderMenu>
+            <LogoutIcon onClick={() => {
+              localStorage.clear();
+              window.location.href = '/login';
+            }}
+            />
+          </HeaderMenu>
+        </ChatHeaderBar>
         {selectedGroup && selectedGroup.type === 'private' && (
           <>
             {/* User Profile Section for Private Chat */}
@@ -1590,7 +1674,7 @@ const HomePage = () => {
       {isCreateChatModalOpen && (
         <ModalOverlay>
           <ModalContent>
-            <h3>New Chat</h3>
+            <h3>Find Users</h3>
             <ModalInput
               type="text"
               value={searchTerm}
