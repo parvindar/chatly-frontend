@@ -162,6 +162,11 @@ export const getUsersList = async (searchQuery) => {
   return response.data.data;
 };
 
+export const getUserProfile = async (userId) => {
+  const response = await apiClient.get(`/user/${userId}`);
+  return response.data.data;
+};
+
 export const createPrivateChat = async (userId) => {
   const response = await apiClient.post('/channel/dm', { user_id: userId });
   return response.data.data;
@@ -227,7 +232,7 @@ export const deleteMessageReaction = async (messageId, emoji) => {
   return { ok: false, data: response.data };
 };
 
-export const createGroup = async (name, description, type = 'open') => {
+export const createGroup = async (name, description, type = 'group') => {
   const response = await apiClient.post('/channel', { name, description, type });
   return response.data;
 };

@@ -32,12 +32,13 @@ import {
 
 import { useVideoCall } from '../components/useVideoCall'; // Import the custom hook for video call
 import { useApiAction } from './useAPIAction';
-import _ from 'lodash'; // Import lodash for throttling
+import _, { set } from 'lodash'; // Import lodash for throttling
 import { FiLogOut, FiVideo, FiPhoneOff, FiMoreVertical, FiAlertCircle } from 'react-icons/fi'; // Import the logout icon from react-icons
 import { FaUserFriends } from 'react-icons/fa';
 import { MdCallEnd } from 'react-icons/md';
 import LoadingComponent from './LoadingComponent';
 import FriendsComponent from './FriendsComponent';
+import UserProfilePopup from './UserProfilePopup';
 
 const Container = styled.div`
   display: flex;
@@ -659,6 +660,7 @@ const HomePage = () => {
   const [friendRequests, setFriendRequests] = useState([]);
   const [friendRequestsSent, setFriendRequestsSent] = useState([]);
   const [friendRequestChange, setFriendRequestChange] = useState(1);
+  const [showUserProfilePopup, setShowUserProfilePopup] = useState(null);
   const { runAction, isLoading } = useApiAction();
 
   // Reference for the RTCPeerConnection
@@ -952,8 +954,18 @@ const HomePage = () => {
   const handleFriendRequestUpdate = (message) => {
     fetchFriendRequests();
     fetchPrivateChatss();
-    setFriendRequestChange(prev => prev + 1);
+    setFriendRequestChange(message);
   };
+
+  const onClickSendMessage = (user_id) => {
+    const privateChat = privateChats.find((chat) => chat.user.id === user_id);
+    if (privateChat) {
+      setSelectedTab('privateChats');
+      setSelectedGroup(privateChat);
+    } else {
+      handleCreateChat(user_id);
+    }
+  }
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -1160,12 +1172,14 @@ const HomePage = () => {
 
   const handleCreateChat = async (userId) => {
     try {
-      const response = await sendFriendRequest(userId)
-      // const newChat = response;
+      const response = await createPrivateChat(userId)
+      const newChat = response;
 
-      // setPrivateChats((prevChats) => [...prevChats, newChat]);
+      setPrivateChats((prevChats) => [...prevChats, newChat]);
 
       setIsCreateChatModalOpen(false);
+      setSelectedTab('privateChats');
+      setSelectedGroup(newChat);
       console.log('Private chat created successfully!');
     } catch (error) {
       console.error('Error creating private chat:', error);
@@ -1258,6 +1272,13 @@ const HomePage = () => {
     return null;
   };
 
+  const handleShowUserProfilePopup = (user) => {
+    if (user.id === currentUser.id) {
+      return;
+    }
+    setShowUserProfilePopup(user);
+  }
+
   // if (isPageLoading) {
   //   return <LoadingComponent />;
   // }
@@ -1269,6 +1290,18 @@ const HomePage = () => {
           <span>Connecting...</span>
         </TopWarningBar>
       )} */}
+
+      {showUserProfilePopup && (
+        <UserProfilePopup
+          user_id={showUserProfilePopup.id}
+          onClose={() => setShowUserProfilePopup(null)}
+          onMessageClick={() => {
+            onClickSendMessage(showUserProfilePopup.id);
+            setShowUserProfilePopup(null);
+          }}
+          friendRequestChange={friendRequestChange}
+        />
+      )}
       <LeftPanel>
         {/* Current User Info */}
         <CurrentUserContainer>
@@ -1366,8 +1399,8 @@ const HomePage = () => {
                   <DropdownMenu
                     ref={groupDropdownRef}
                     items={[
-                      // { label: 'Delete Chat', action: () => handleDeleteChat(chat.id) },
-                      { label: 'Remove Friend', action: () => handleUnfriend(chat.user.id) },
+                      { label: 'Delete Chat', action: () => handleDeleteChat(chat.id) },
+                      // { label: 'Remove Friend', action: () => handleUnfriend(chat.user.id) },
                     ]}
                     onItemClick={(action) => action()}
                   />
@@ -1446,6 +1479,7 @@ const HomePage = () => {
                   handleReaction={handleReaction}
                   newMessageCount={newMessageCount[selectedGroup?.id]}
                   newMessageEdit={newMessageEdit}
+                  setShowUserProfilePopup={handleShowUserProfilePopup}
                 />
               )}
             </ChatBoxContainer>
@@ -1524,6 +1558,7 @@ const HomePage = () => {
                 handleNewMessage={handleNewMessage}
                 handleReaction={handleReaction}
                 newMessageCount={newMessageCount[selectedGroup?.id]}
+                setShowUserProfilePopup={handleShowUserProfilePopup}
               />
             )}
           </ChatBoxContainer>

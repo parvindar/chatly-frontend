@@ -872,7 +872,7 @@ const formatFileSize = (size) => {
   else return `${(size / 1048576).toFixed(2)} MB`; // 1024^2
 };
 
-const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => { }, hasMoreMessages = true, handleNewMessage, handleReaction, newMessageCount, newMessageEdit }) => {
+const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => { }, hasMoreMessages = true, handleNewMessage, handleReaction, newMessageCount, newMessageEdit, setShowUserProfilePopup }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -1461,6 +1461,7 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
                   <ProfilePic
                     src={userMap[message.sender_id]?.profile_pic || 'https://i.pravatar.cc/40'}
                     alt={userMap[message.sender_id]?.name.split(' ').map((n) => n[0]).join('')}
+                    onClick={() => setShowUserProfilePopup(userMap[message.sender_id])}
                   />
                 )}
 
@@ -1469,7 +1470,7 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
                 <MessageContent>
                   {message.sender_id !== currentUserId && (
                     <SenderName isCurrentUser={message.sender_id === currentUserId}>
-                      <span style={{ cursor: 'pointer' }} >{userMap[message.sender_id]?.name}</span>
+                      <span style={{ cursor: 'pointer' }} onClick={() => setShowUserProfilePopup(userMap[message.sender_id])} >{userMap[message.sender_id]?.name}</span>
                       <OtherUserTimeStamp>
                         {formatMessageTimestamp(message.timestamp)}
                         {message.is_edited &&
@@ -1505,7 +1506,7 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
 
                     <MessageText>{(message.mentions?.length > 0) ? (parsedMessage[message.id] || parseMessage(message.content, 'render')).map((part, index) => (
                       part.type === 'mention' && groupMembersMap[part.username] ? (
-                        <MentionText isCurrentUserMention={part.username === currentUser.user_id} key={index}>{part.content}</MentionText>
+                        <MentionText isCurrentUserMention={part.username === currentUser.user_id} key={index} onClick={() => setShowUserProfilePopup(groupMembersMap[part.username])} >{part.content}</MentionText>
                       ) : (
                         <span key={index}>{part.content}</span>
                       )
