@@ -216,7 +216,7 @@ const UserProfilePopup = ({ user_id, onClose, onMessageClick, friendRequestChang
               <Button primary loading={isLoading('accept-request')} onClick={() => runAction('accept-request', () => handleActOnFriendRequest(user.is_fr_received, 'accept'))}>
                 <FaUserCheck /> Accept
               </Button>
-              <Button primary loading={isLoading('reject-request')} onClick={() => runAction('reject-request', () => handleActOnFriendRequest(user.is_fr_received, 'reject'))}>
+              <Button loading={isLoading('reject-request')} onClick={() => runAction('reject-request', () => handleActOnFriendRequest(user.is_fr_received, 'reject'))}>
                 <FaUserTimes /> Reject
               </Button>
             </>

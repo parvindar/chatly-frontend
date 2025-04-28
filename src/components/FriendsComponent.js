@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import colors from '../styles/colors';
 import { FaCheck } from 'react-icons/fa';
 import { MdClose } from 'react-icons/md';
+import { FaUserClock, FaUserPlus, FaComment, FaUserCheck, FaUserTimes, FaTimes } from 'react-icons/fa';
+
 import { getFriendRequests, getFriendRequestsSent, actOnFriendRequest } from '../api/sdk';
 import { CustomScrollbar } from '../styles/styles';
 
@@ -153,8 +155,8 @@ width : 30%;
 }
 
 .cross {
-    font-size : 20px;
-    padding: 6px;
+    // font-size : 20px;
+    // padding: 6px;
     &:hover{
         color:rgb(245, 68, 68);
     }
@@ -227,10 +229,10 @@ const FriendsComponent = ({ currentUser, friendRequests, friendRequestsSent, set
                                 <UserInfo> <UserComponent user={fr.user} /> </UserInfo>
                                 <ActionItems>
                                     <ActionItem className='tick' onClick={() => handleAcceptFriendRequest(fr.id)}>
-                                        <FaCheck />
+                                        <FaUserCheck />
                                     </ActionItem>
                                     <ActionItem className='cross' onClick={() => handleRejectFriendRequest(fr.id)}>
-                                        <MdClose />
+                                        <FaUserTimes />
                                     </ActionItem>
 
                                 </ActionItems>
@@ -244,7 +246,7 @@ const FriendsComponent = ({ currentUser, friendRequests, friendRequestsSent, set
                             <UserInfo> <UserComponent user={fr.user} /> </UserInfo>
                             <ActionItems>
                                 <ActionItem className='cross' onClick={() => handleCancelFriendRequest(fr.id)}>
-                                    <MdClose />
+                                    <FaTimes />
                                 </ActionItem>
 
                             </ActionItems>
