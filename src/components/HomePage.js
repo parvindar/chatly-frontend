@@ -350,6 +350,7 @@ const UserProfilePic = styled.div`
   width: 40px;
   height: 40px;
   margin-right: 10px;
+  flex-shrink: 0; /* Prevent the image from shrinking */
 `;
 
 const ProfileImage = styled.img`
@@ -547,7 +548,8 @@ const TabsContainer = styled.div`
   display: flex;
   justify-content: space-between; /* Distribute tabs evenly */
   background-color: #23272a; /* Match the left panel background */
-  padding: px;
+  padding-left: 8px;
+  padding-right: 8px;
   border-bottom: 1px solid #2c2f33; /* Subtle border below the tabs */
 `;
 
@@ -1172,6 +1174,13 @@ const HomePage = () => {
 
   const handleCreateChat = async (userId) => {
     try {
+
+      const alreadyExistingChat = privateChats.find((chat) => chat.user.id === userId);
+      if (alreadyExistingChat) {
+        setSelectedGroup(alreadyExistingChat);
+        setIsCreateChatModalOpen(false);
+        return;
+      }
       const response = await createPrivateChat(userId)
       const newChat = response;
 
@@ -1590,17 +1599,17 @@ const HomePage = () => {
             <MembersHeading>Members</MembersHeading>
             <MemberListContainer>
               {groupMembers.map((member) => (
-                <UserItem key={member.id}>
+                <UserItem key={member.id} onClick={() => handleShowUserProfilePopup(member)}>
                   <UserProfilePic>
                     <ProfileImage
                       src={member.profile_pic || 'https://i.pravatar.cc/40'}
                       alt={member.name}
                     />
-                    <OnlineStatusIndicator status={userStatusMap[member.id]} />
+                    <OnlineStatusIndicator status={member.status} />
                   </UserProfilePic>
                   <UserName>{member.name}</UserName>
                   <UserRole isAdmin={member.role === 'admin'}>
-                    {member.role === 'admin' ? 'Admin' : 'Member'}
+                    {member.role === 'admin' ? 'Admin' : ''}
                   </UserRole>
                   {selectedGroup.role === 'admin' &&
                     member.id !== selectedGroup.created_by &&
@@ -1740,7 +1749,7 @@ const HomePage = () => {
       {friendRequestsModal && (
         <ModalOverlay>
           <ModalContent style={{ height: '80vh' }}>
-            <FriendsComponent friendRequests={friendRequests} friendRequestsSent={friendRequestsSent} />
+            <FriendsComponent setFriendRequests={setFriendRequests} friendRequests={friendRequests} friendRequestsSent={friendRequestsSent} />
             <ModalButton secondary onClick={() => setFriendRequestsModal(false)}>
               Close
             </ModalButton>
