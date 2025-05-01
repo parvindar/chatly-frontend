@@ -4,10 +4,11 @@ import colors from '../styles/colors';
 import { MdCallEnd, MdCall, MdCallMissed, MdVideocam, MdVideocamOff, MdMic, MdMicOff } from 'react-icons/md';
 
 const VideoCallContainer = styled.div`
-    height: 100%;
-  max-width: 500px;
-//   min-height: 220px;
-  width: 100%;
+aspect-ratio: 16 / 9;
+    // height: 100%;
+  // max-width: 500px;
+  max-height: 35vh;
+  // width: 100%;
   margin: 0 auto;
   position: relative;
   border-radius: 15px;
@@ -25,7 +26,7 @@ const VideoCallContainer = styled.div`
 `;
 
 const RemoteVideo = styled.video`
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 9;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -37,7 +38,7 @@ const RemoteVideo = styled.video`
 
 const LocalVideo = styled.video`
   width: 25%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 9;
   position: absolute;
   bottom: 10px;
   right: 10px;
@@ -165,9 +166,9 @@ const StatusText = styled.div`
   max-width: 100%;
 `;
 
-const VideoCallComponent = ({ 
-  localVideoRef, 
-  remoteVideoRef, 
+const VideoCallComponent = ({
+  localVideoRef,
+  remoteVideoRef,
   endCall,
   videoCallState,
   pendingCall,
@@ -186,15 +187,15 @@ const VideoCallComponent = ({
           <RemoteVideo ref={remoteVideoRef} autoPlay playsInline />
           <LocalVideo ref={localVideoRef} autoPlay playsInline muted />
           <CallControls isRunning={true} className="call-controls">
-            <ToggleButton 
-              enabled={isVideoEnabled} 
+            <ToggleButton
+              enabled={isVideoEnabled}
               onClick={toggleVideo}
               title={isVideoEnabled ? 'Disable Video' : 'Enable Video'}
             >
               {isVideoEnabled ? <MdVideocam /> : <MdVideocamOff />}
             </ToggleButton>
-            <ToggleButton 
-              enabled={isAudioEnabled} 
+            <ToggleButton
+              enabled={isAudioEnabled}
               onClick={toggleAudio}
               title={isAudioEnabled ? 'Disable Audio' : 'Enable Audio'}
             >
@@ -208,8 +209,8 @@ const VideoCallComponent = ({
       ) : videoCallState === 'incoming' ? (
         <>
           <CallStatusContainer>
-            <ProfileImage 
-              src={userInfo?.profile_pic || 'https://i.pravatar.cc/100'} 
+            <ProfileImage
+              src={userInfo?.profile_pic || 'https://i.pravatar.cc/100'}
               alt={userInfo?.name || 'User'}
             />
             <UserName>{userInfo?.name || 'User'}</UserName>
@@ -227,8 +228,8 @@ const VideoCallComponent = ({
       ) : videoCallState === 'outgoing' ? (
         <>
           <CallStatusContainer>
-            <ProfileImage 
-              src={userInfo?.profile_pic || 'https://i.pravatar.cc/100'} 
+            <ProfileImage
+              src={userInfo?.profile_pic || 'https://i.pravatar.cc/100'}
               alt={userInfo?.name || 'User'}
             />
             <UserName>{userInfo?.name || 'User'}</UserName>

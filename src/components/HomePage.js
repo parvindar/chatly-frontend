@@ -577,8 +577,8 @@ const Tab = styled.div`
 `;
 
 const VideoCallSection = styled.div`
-    height: 35%;
-    min-height: 210px;
+    // height: 35%;
+    // min-height: 210px;
     margin-bottom: 4px;
     padding: 4px;
   // background-color: #23272a;
