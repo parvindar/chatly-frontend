@@ -4,6 +4,7 @@ import { FaUserClock, FaUserPlus, FaComment, FaUserCheck, FaUserTimes, FaTimes }
 import { getUserProfile, sendFriendRequest, actOnFriendRequest, removeFriend } from '../api/sdk';
 import colors from '../styles/colors';
 import { useApiAction } from './useAPIAction';
+import { CustomScrollbar } from '../styles/styles';
 
 const dummyGroups = [
   {
@@ -32,13 +33,25 @@ const dummyGroups = [
   },
   {
     id: 5,
-    name: 'Group 5',
+    name: 'Group 5 ajskldf jal',
     description: 'Description for Group',
     profile_pic: 'https://i.pravatar.cc'
   },
   {
     id: 6,
-    name: 'Group 5',
+    name: 'Group 5 jskdlf ja',
+    description: 'Description for Group',
+    profile_pic: 'https://i.pravatar.cc'
+  },
+  {
+    id: 5,
+    name: 'Group 5 ajskldf jal',
+    description: 'Description for Group',
+    profile_pic: 'https://i.pravatar.cc'
+  },
+  {
+    id: 6,
+    name: 'Group 5 jskdlf ja',
     description: 'Description for Group',
     profile_pic: 'https://i.pravatar.cc'
   }
@@ -51,6 +64,7 @@ const UserProfilePopup = ({ user_id, onClose, onMessageClick, friendRequestChang
     bio: '',
     profile_pic: '',
     mutual_groups: [],
+    mutual_friends: [],
     is_friend: true,
     is_fr_sent: false,
     is_fr_received: true
@@ -74,7 +88,6 @@ const UserProfilePopup = ({ user_id, onClose, onMessageClick, friendRequestChang
   }, [user_id]);
 
   useEffect(() => {
-    console.log(friendRequestChange)
     if (friendRequestChange?.user_id == user_id) {
       getUserProfile(user_id)
         .then(response => {
@@ -161,6 +174,11 @@ const UserProfilePopup = ({ user_id, onClose, onMessageClick, friendRequestChang
   return (
     <PopupOverlay onClick={onClose}>
       <PopupContainer onClick={(e) => e.stopPropagation()}>
+        {user.is_friend &&
+          <div title='Friend' style={{ position: 'absolute', top: '10px', right: '10px', color: 'green' }}>
+            <FaUserCheck />
+          </div>
+        }
         <Header>
           <Avatar src={user.profile_pic || 'https://i.pravatar.cc/80'} alt={user.user_id} />
           <Username>
@@ -169,35 +187,52 @@ const UserProfilePopup = ({ user_id, onClose, onMessageClick, friendRequestChang
           </Username>
         </Header>
 
-        {/* <Divider /> */}
-
-        {/* <Section>
+        <ContentContainer>
+          {/* <Section>
           <SectionTitle>About</SectionTitle>
           <Bio>{user.bio || "Cool User."}</Bio>
         </Section> */}
 
-        {user.mutual_groups && user.mutual_groups.length > 0 && (
-          <>
-            <Section>
-              <SectionTitle>Mutual Groups ({user.mutual_groups.length})</SectionTitle>
-              <MutualServersList>
-                {user.mutual_groups.map((group) => (
-                  <Server key={group.id}>
-                    <ServerIcon src={group.icon || 'https://i.pravatar.cc/40'} alt={group.name} />
-                    <ServerName>{group.name}</ServerName>
-                  </Server>
-                ))}
-                {/* {user.mutual_groups.length > 3 && (
+          {user.mutual_groups && user.mutual_groups.length > 0 && (
+            <>
+              <Section>
+                <SectionTitle>Mutual Groups ({user.mutual_groups.length})</SectionTitle>
+                <MutualServersList>
+                  {user.mutual_groups.map((group) => (
+                    <Server key={group.id}>
+                      <ServerIcon src={group.icon || 'https://i.pravatar.cc/40'} alt={group.name} />
+                      <ServerName>{group.name}</ServerName>
+                    </Server>
+                  ))}
+                  {/* {user.mutual_groups.length > 3 && (
                 <MoreServers>+{user.mutual_groups.length - 3} more</MoreServers>
               )} */}
-              </MutualServersList>
-            </Section>
-            <Divider />
-          </>
-        )}
+                </MutualServersList>
+              </Section>
+              <Divider />
+            </>
+          )}
 
-
-
+          {user.mutual_friends && user.mutual_friends.length > 0 && (
+            <>
+              <Section>
+                <SectionTitle>Mutual Friends ({user.mutual_friends.length})</SectionTitle>
+                <MutualServersList>
+                  {user.mutual_friends.map((friend) => (
+                    <Server key={friend.id}>
+                      <ServerIcon src={friend.profile_pic || 'https://i.pravatar.cc/40'} alt={friend.name} />
+                      <ServerName>{friend.name}</ServerName>
+                    </Server>
+                  ))}
+                  {/* {user.mutual_groups.length > 3 && (
+                <MoreServers>+{user.mutual_groups.length - 3} more</MoreServers>
+              )} */}
+                </MutualServersList>
+              </Section>
+              <Divider />
+            </>
+          )}
+        </ContentContainer>
         <ActionButtons>
           <Button primary onClick={onMessageClick}>
             <FaComment /> Message
@@ -254,6 +289,7 @@ const PopupOverlay = styled.div`
 `;
 
 const PopupContainer = styled.div`
+  position: relative;
   background: #36393f;
   border-radius: 8px;
   width: 340px;
@@ -319,10 +355,20 @@ const Bio = styled.p`
   line-height: 1.4;
 `;
 
+const ContentContainer = styled.div`
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+  ${CustomScrollbar}
+`
+
 const MutualServersList = styled.div`
   display: flex;
   flex-wrap: wrap; 
   gap: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+
+  ${CustomScrollbar}
 `;
 
 const Server = styled.div`
