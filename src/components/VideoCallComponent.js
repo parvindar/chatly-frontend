@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import colors from '../styles/colors';
 import { MdCallEnd, MdCall, MdCallMissed, MdVideocam, MdVideocamOff, MdMic, MdMicOff } from 'react-icons/md';
+import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhone, FiLogIn, FiLogOut, FiMoreVertical, FiUser } from 'react-icons/fi';
+
 
 const VideoCallContainer = styled.div`
 aspect-ratio: 16 / 9;
@@ -23,6 +25,10 @@ aspect-ratio: 16 / 9;
   &:hover .call-controls {
     opacity: 1;
   }
+
+  &:hover .video-user-info {
+    opacity: 1;
+  }
 `;
 
 const RemoteVideo = styled.video`
@@ -36,7 +42,24 @@ const RemoteVideo = styled.video`
   z-index: 1;
 `;
 
-const LocalVideo = styled.video`
+const VideoUserInfo = styled.div`
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 2;
+  opacity: 0;
+`;
+
+
+const LocalVideoContainer = styled.div`
   width: 25%;
   aspect-ratio: 16 / 9;
   position: absolute;
@@ -44,8 +67,7 @@ const LocalVideo = styled.video`
   right: 10px;
   border-radius: 8px;
   // border: 2px solid ${colors.secondary};
-  object-fit: cover;
-  z-index: 2;
+  z-index: 3;
   transition: transform 0.3s ease;
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
@@ -55,6 +77,38 @@ const LocalVideo = styled.video`
   &:hover {
     transform: scale(1.1);
   }
+  overflow: hidden;
+`;
+
+const LocalVideo = styled.video`
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  // width: 25%;
+  // aspect-ratio: 16 / 9;
+  // position: absolute;
+  // bottom: 10px;
+  // right: 10px;
+  // border-radius: 8px;
+  // // border: 2px solid ${colors.secondary};
+  // object-fit: cover;
+  // z-index: 2;
+  // transition: transform 0.3s ease;
+  // cursor: pointer;
+  // box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
+  //             0 0 0 1px rgba(255, 255, 255, 0.1),
+  //             inset 0 0 20px rgba(0, 0, 0, 0.4);
+
+  // &:hover {
+  //   transform: scale(1.1);
+  // }
 `;
 
 const CallControls = styled.div`
@@ -133,6 +187,20 @@ const CallStatusContainer = styled.div`
   margin-bottom: 20px;
 `;
 
+const UserInfoContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    background-color: #1a1a1a;
+`
+
 const ProfileImage = styled.img`
   height: 40%;
   max-width: 120px;
@@ -146,7 +214,7 @@ margin-bottom: 2%;
 `;
 
 const UserName = styled.div`
-  font-size: clamp(1rem, 4vw, 1.25rem);
+  font-size: clamp(0.8rem, 2vw, 1rem);
   font-weight: bold;
 //   margin-bottom: 0.5rem;
   color: white;
@@ -167,6 +235,7 @@ const StatusText = styled.div`
 `;
 
 const VideoCallComponent = ({
+  currentUser,
   localVideoRef,
   remoteVideoRef,
   endCall,
@@ -177,29 +246,52 @@ const VideoCallComponent = ({
   userInfo,
   toggleVideo,
   toggleAudio,
-  isVideoEnabled,
-  isAudioEnabled
+  localAudioVideo,
+  remoteAudioVideo
 }) => {
   return (
     <VideoCallContainer>
       {videoCallState === 'running' ? (
         <>
+          {!remoteAudioVideo.video && <UserInfoContainer>
+            <ProfileImage
+              src={userInfo?.profile_pic || 'https://i.pravatar.cc/100'}
+              alt={userInfo?.name || 'User'}
+            />
+            <UserName>{userInfo?.name || 'User'}</UserName>
+
+          </UserInfoContainer>
+          }
+
           <RemoteVideo ref={remoteVideoRef} autoPlay playsInline />
-          <LocalVideo ref={localVideoRef} autoPlay playsInline muted />
+          <VideoUserInfo className="video-user-info">
+            <span>{userInfo?.name}</span>
+            {!remoteAudioVideo.audio && <FiMicOff size={14} />}
+            {!remoteAudioVideo.video && <FiVideoOff size={14} />}
+          </VideoUserInfo>
+          <LocalVideoContainer >
+            {!localAudioVideo.video && <UserInfoContainer>
+              <ProfileImage style={{ borderWidth: '1px' }}
+                src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'}
+                alt={currentUser?.name || 'User'}
+              />
+            </UserInfoContainer>}
+            <LocalVideo ref={localVideoRef} autoPlay playsInline muted />
+          </LocalVideoContainer>
           <CallControls isRunning={true} className="call-controls">
             <ToggleButton
-              enabled={isVideoEnabled}
+              enabled={localAudioVideo.video}
               onClick={toggleVideo}
-              title={isVideoEnabled ? 'Disable Video' : 'Enable Video'}
+              title={localAudioVideo.video ? 'Disable Video' : 'Enable Video'}
             >
-              {isVideoEnabled ? <MdVideocam /> : <MdVideocamOff />}
+              {localAudioVideo.video ? <MdVideocam /> : <MdVideocamOff />}
             </ToggleButton>
             <ToggleButton
-              enabled={isAudioEnabled}
+              enabled={localAudioVideo.audio}
               onClick={toggleAudio}
-              title={isAudioEnabled ? 'Disable Audio' : 'Enable Audio'}
+              title={localAudioVideo.audio ? 'Disable Audio' : 'Enable Audio'}
             >
-              {isAudioEnabled ? <MdMic /> : <MdMicOff />}
+              {localAudioVideo.audio ? <MdMic /> : <MdMicOff />}
             </ToggleButton>
             <ControlButton variant="end" onClick={endCall}>
               <MdCallEnd />

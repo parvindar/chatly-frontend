@@ -1240,9 +1240,8 @@ const HomePage = () => {
     rejectCall,
     toggleVideo,
     toggleAudio,
-    isVideoEnabled,
-    isAudioEnabled,
-    isRemoteVideoEnabled
+    localAudioVideo,
+    remoteAudioVideo
   } = useVideoCall({ id: currentUser?.id });
 
   const handleVideoCall = (peerId) => {
@@ -1278,7 +1277,7 @@ const HomePage = () => {
       // For outgoing calls, find the user in privateChats
       return privateChats.find(chat => chat.user.id === pendingCall)?.user;
     }
-    return null;
+    return privateChats.find(chat => chat.user.id === currentCall)?.user;
   };
 
   const handleShowUserProfilePopup = (user) => {
@@ -1440,6 +1439,7 @@ const HomePage = () => {
         {videoCallState !== 'idle' && (
           <VideoCallSection>
             <VideoCallComponent
+              currentUser={currentUser}
               localVideoRef={localVideoRef}
               remoteVideoRef={remoteVideoRef}
               endCall={endCall}
@@ -1450,9 +1450,8 @@ const HomePage = () => {
               userInfo={getUserInfoForCall()}
               toggleVideo={toggleVideo}
               toggleAudio={toggleAudio}
-              isVideoEnabled={isVideoEnabled}
-              isAudioEnabled={isAudioEnabled}
-              isRemoteVideoEnabled={isRemoteVideoEnabled}
+              localAudioVideo={localAudioVideo}
+              remoteAudioVideo={remoteAudioVideo}
             />
           </VideoCallSection>
         )}

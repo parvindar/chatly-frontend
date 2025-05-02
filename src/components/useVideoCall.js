@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { addMessageListener, removeMessageListener, sendMessageWebSocket } from "../api/sdk";
 
-export const useVideoCall = ({id : userId}) => {
+export const useVideoCall = ({ id: userId }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const pcRef = useRef(null);
@@ -14,6 +14,8 @@ export const useVideoCall = ({id : userId}) => {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isRemoteVideoEnabled, setIsRemoteVideoEnabled] = useState(true);
+  const [remoteAudioVideo, setRemoteAudioVideo] = useState({ audio: true, video: true });
+  const [localAudioVideo, setLocalAudioVideo] = useState({ audio: true, video: true });
   // const localVideoRef = useRef(null);
   // const remoteVideoRef = useRef(null);
   // const pcRef = useRef(null);
@@ -24,7 +26,7 @@ export const useVideoCall = ({id : userId}) => {
     return () => {
       removeMessageListener("video_call", handleSignalMessage);
     };
-  }, [userId,pendingCall,currentCall]);
+  }, [userId, pendingCall, currentCall]);
 
   useEffect(() => {
     console.log("useVideoCall userId effect triggered with:", userId);
@@ -35,7 +37,7 @@ export const useVideoCall = ({id : userId}) => {
   }, [userId]);
 
   useEffect(() => {
-    if(pcRef.current){
+    if (pcRef.current) {
       console.log("✅ Peer connection established");
 
       // For ICE candidates
@@ -56,41 +58,41 @@ export const useVideoCall = ({id : userId}) => {
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
         { urls: 'stun:stun1.l.google.com:19302' },
-       {
-        username: "8EI2VeNoMLDDpLI086s-PqgJ11zN94-7e_H5yJvmg-M3Tj1_QYP1k8PRZLPGGvRYAAAAAGf1KPpwYXJ2aW5kYXI=",
-        credential: "088e82ce-1480-11f0-bd79-0242ac140004",
-        urls: [
+        {
+          username: "8EI2VeNoMLDDpLI086s-PqgJ11zN94-7e_H5yJvmg-M3Tj1_QYP1k8PRZLPGGvRYAAAAAGf1KPpwYXJ2aW5kYXI=",
+          credential: "088e82ce-1480-11f0-bd79-0242ac140004",
+          urls: [
             "turn:ss-turn1.xirsys.com:80?transport=udp",
             "turn:ss-turn1.xirsys.com:3478?transport=udp",
             "turn:ss-turn1.xirsys.com:80?transport=tcp",
             "turn:ss-turn1.xirsys.com:3478?transport=tcp",
             "turns:ss-turn1.xirsys.com:443?transport=tcp",
             "turns:ss-turn1.xirsys.com:5349?transport=tcp"
-        ]
-     },
+          ]
+        },
 
-      {
-        urls: "turn:global.relay.metered.ca:80",
-        username: "49dcc6138b74f979af70849f",
-        credential: "qEljicolNVrA8XGY",
-      },
-      {
-        urls: "turn:global.relay.metered.ca:80?transport=tcp",
-        username: "49dcc6138b74f979af70849f",
-        credential: "qEljicolNVrA8XGY",
-      },
-      {
-        urls: "turn:global.relay.metered.ca:443",
-        username: "49dcc6138b74f979af70849f",
-        credential: "qEljicolNVrA8XGY",
-      },
-      {
-        urls: "turns:global.relay.metered.ca:443?transport=tcp",
-        username: "49dcc6138b74f979af70849f",
-        credential: "qEljicolNVrA8XGY",
-      },
-      
-       ],
+        {
+          urls: "turn:global.relay.metered.ca:80",
+          username: "49dcc6138b74f979af70849f",
+          credential: "qEljicolNVrA8XGY",
+        },
+        {
+          urls: "turn:global.relay.metered.ca:80?transport=tcp",
+          username: "49dcc6138b74f979af70849f",
+          credential: "qEljicolNVrA8XGY",
+        },
+        {
+          urls: "turn:global.relay.metered.ca:443",
+          username: "49dcc6138b74f979af70849f",
+          credential: "qEljicolNVrA8XGY",
+        },
+        {
+          urls: "turns:global.relay.metered.ca:443?transport=tcp",
+          username: "49dcc6138b74f979af70849f",
+          credential: "qEljicolNVrA8XGY",
+        },
+
+      ],
       iceCandidatePoolSize: 10,
     });
 
@@ -117,21 +119,21 @@ export const useVideoCall = ({id : userId}) => {
         remoteVideoRef.current.srcObject = event.streams[0];
 
         remoteVideoRef.current.onloadedmetadata = () => {
-            console.log("✅ Remote video metadata loaded, attempting to play");
-            remoteVideoRef.current.play().catch((e) => {
-              console.warn("⚠️ Auto-play failed for remote video:", e);
-            });
-          };
+          console.log("✅ Remote video metadata loaded, attempting to play");
+          remoteVideoRef.current.play().catch((e) => {
+            console.warn("⚠️ Auto-play failed for remote video:", e);
+          });
+        };
       }
     };
 
     pc.onconnectionstatechange = () => {
-        console.log("Connection state:", pc.connectionState);
-      };
-      
-      pc.oniceconnectionstatechange = () => {
-        console.log("ICE connection state:", pc.iceConnectionState);
-      };
+      console.log("Connection state:", pc.connectionState);
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log("ICE connection state:", pc.iceConnectionState);
+    };
 
     return pc;
   };
@@ -250,7 +252,7 @@ export const useVideoCall = ({id : userId}) => {
     if (pcRef.current) {
       console.log("Setting remote description:");
       await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
-    }else{
+    } else {
       console.error("handleAnswer: No peer connection found");
     }
   };
@@ -263,7 +265,7 @@ export const useVideoCall = ({id : userId}) => {
       } catch (err) {
         console.error("Error adding ICE candidate:", err);
       }
-    }else{
+    } else {
       console.error("handleIceCandidate: No peer connection found");
       setRemoteICECandidate(prevCandidates => [...prevCandidates, candidate]);
     }
@@ -284,14 +286,15 @@ export const useVideoCall = ({id : userId}) => {
       "call-request": handleCallRequest,
       "call-accepted": handleCallAccepted,
       "call-rejected": handleCallRejected,
+      "audio-video": handleAudioVideo,
     };
 
     if (handlers[type]) {
-      try{
+      try {
         await handlers[type](msg);
-      }catch(err){
-        console.error("Error handling signal message:", err , type, msg);
-        if(pendingCall){
+      } catch (err) {
+        console.error("Error handling signal message:", err, type, msg);
+        if (pendingCall) {
           setPendingCall(null);
         }
       }
@@ -301,21 +304,21 @@ export const useVideoCall = ({id : userId}) => {
   const handleCallRequest = ({ from }) => {
     console.log("userId:", userId);
     console.log("from:", from);
-    if(pendingCall && pendingCall !== from){
+    if (pendingCall && pendingCall !== from) {
       console.log("handleCallRequest: Pending call already exists, rejecting new request");
       sendMessageWebSocket({
         type: "video_call",
         message: {
           type: "call-rejected",
           from: userId,
-          to: from, 
+          to: from,
           reason: "busy",
         },
       });
       return;
     }
 
-    if(currentCall && currentCall !== from){
+    if (currentCall && currentCall !== from) {
       console.log("handleCallRequest: Current call already exists, rejecting new request");
       sendMessageWebSocket({
         type: "video_call",
@@ -337,12 +340,23 @@ export const useVideoCall = ({id : userId}) => {
 
   const handleCallRejected = (msg) => {
     const { from } = msg;
-   
+
     if (from === pendingCall) {
       setPendingCall(null);
       setVideoCallState("idle");
     }
   };
+
+  const handleAudioVideo = (msg) => {
+    const { from, audio_enabled, video_enabled } = msg;
+    if (from === currentCall) {
+      setRemoteAudioVideo({ audio: audio_enabled, video: video_enabled });
+    }
+  };
+
+  useEffect(() => {
+    console.log("localAudioVideo:", localAudioVideo);
+  }, [localAudioVideo])
 
   const requestCall = (remoteUserId) => {
     sendMessageWebSocket({
@@ -382,16 +396,16 @@ export const useVideoCall = ({id : userId}) => {
 
   const endCall = () => {
     sendMessageWebSocket({
-        type: "video_call",
-        message: {
-          type: "call-ended",
-          from: userId,
-          to: currentCall,
-        },
-      });
+      type: "video_call",
+      message: {
+        type: "call-ended",
+        from: userId,
+        to: currentCall,
+      },
+    });
 
     endCallProcess();
-  } 
+  }
 
   const endCallProcess = () => {
     if (pcRef.current) {
@@ -408,7 +422,7 @@ export const useVideoCall = ({id : userId}) => {
     // Reset state to idle when the call ends
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
     if (localVideoRef.current) localVideoRef.current.srcObject = null;
-    setVideoCallState("idle"); 
+    setVideoCallState("idle");
   };
 
   useEffect(() => {
@@ -422,7 +436,17 @@ export const useVideoCall = ({id : userId}) => {
       const videoTrack = localStreamRef.current.getVideoTracks()[0];
       if (videoTrack) {
         videoTrack.enabled = !videoTrack.enabled;
-        setIsVideoEnabled(videoTrack.enabled);
+        sendMessageWebSocket({
+          type: "video_call",
+          message: {
+            type: "audio-video",
+            from: userId,
+            to: currentCall,
+            audio_enabled: localAudioVideo.audio,
+            video_enabled: videoTrack.enabled,
+          },
+        });
+        setLocalAudioVideo({ video: videoTrack.enabled, audio: localAudioVideo.audio });
       }
     }
   };
@@ -432,7 +456,17 @@ export const useVideoCall = ({id : userId}) => {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
       if (audioTrack) {
         audioTrack.enabled = !audioTrack.enabled;
-        setIsAudioEnabled(audioTrack.enabled);
+        sendMessageWebSocket({
+          type: "video_call",
+          message: {
+            type: "audio-video",
+            from: userId,
+            to: currentCall,
+            audio_enabled: audioTrack.enabled,
+            video_enabled: localAudioVideo.video,
+          },
+        });
+        setLocalAudioVideo({ video: localAudioVideo.video, audio: audioTrack.enabled });
       }
     }
   };
@@ -443,19 +477,19 @@ export const useVideoCall = ({id : userId}) => {
 
 
   useEffect(() => {
-   
-      const stream = remoteVideoRef.current?.srcObject;
-      if (stream) {
-        const videoTrack = stream.getVideoTracks()[0];
-        if (videoTrack) {
-          setIsRemoteVideoEnabled(videoTrack.enabled);
-          videoTrack.onmute = () => setIsRemoteVideoEnabled(false);
-          videoTrack.onunmute = () => setIsRemoteVideoEnabled(true);
-        }
+
+    const stream = remoteVideoRef.current?.srcObject;
+    if (stream) {
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack) {
+        setIsRemoteVideoEnabled(videoTrack.enabled);
+        videoTrack.onmute = () => setIsRemoteVideoEnabled(false);
+        videoTrack.onunmute = () => setIsRemoteVideoEnabled(true);
       }
-    
+    }
+
   }, [remoteVideoRef.current?.srcObject]);
-  
+
 
 
   return {
@@ -472,8 +506,7 @@ export const useVideoCall = ({id : userId}) => {
     rejectCall,
     toggleVideo,
     toggleAudio,
-    isVideoEnabled,
-    isAudioEnabled,
-    isRemoteVideoEnabled,
+    localAudioVideo,
+    remoteAudioVideo
   };
 };
