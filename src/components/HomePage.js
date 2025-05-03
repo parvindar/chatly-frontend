@@ -40,6 +40,7 @@ import { MdCallEnd } from 'react-icons/md';
 import LoadingComponent from './LoadingComponent';
 import FriendsComponent from './FriendsComponent';
 import UserProfilePopup from './UserProfilePopup';
+import TypingAnimation from './TypingAnimation';
 
 const Container = styled.div`
   display: flex;
@@ -640,6 +641,23 @@ const UnreadMessagesIndicator = styled.div`
       transform: translate(0%, -50%);
 `
 
+const TypingAnimationContainer = styled.div`
+      position: absolute;
+      top: 50%;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: translate(0%, -50%);
+      `
+
+const UserTypingIndicatorContainer = styled.div`
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top : 10px;
+`
+
 const HomePage = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [groups, setGroups] = useState([]);
@@ -1031,6 +1049,7 @@ const HomePage = () => {
 
     const handleTypingStatus = (message) => {
       const { user_id, is_typing, chat_id } = message;
+      if (user_id === currentUser.id) return;
       setTypingUsers(prev => ({
         ...prev,
         [chat_id]: {
@@ -1437,11 +1456,14 @@ const HomePage = () => {
                 onClick={() => setSelectedGroup(group)}
               >
                 {group.name}
-                {group.last_read_message_id && BigInt(group.last_read_message_id) < BigInt(group.latest_message.id) && (
-                  <UnreadMessagesIndicator>
-                    {/* {group.unread_messages_count} */}
-                  </UnreadMessagesIndicator>
-                )}
+
+                {((group.id != selectedGroup?.id) && Object.values(typingUsers[group.id] || []).filter((isTyping) => isTyping).length > 0) ?
+                  <TypingAnimationContainer>
+                    <TypingAnimation />
+                  </TypingAnimationContainer>
+                  : group.last_read_message_id && BigInt(group.last_read_message_id) < BigInt(group.latest_message.id) && (
+                    <UnreadMessagesIndicator />)
+                }
                 <ThreeDotsMenu
                   className="menu"
                   onClick={(e) => {
@@ -1481,12 +1503,19 @@ const HomePage = () => {
                 </UserProfilePic>
                 <UserDetails>
                   <UserName>{chat.user.name || 'User Name'}</UserName>
-                  <UserId>{chat.user.user_id || 'user_id'}</UserId>
+                  <UserId>{
+                    Object.values(typingUsers[chat.id] || []).filter((isTyping) => isTyping).length > 0 ?
+                      <UserTypingIndicatorContainer >
+                        <TypingAnimation />
+                      </UserTypingIndicatorContainer> :
+
+                      (chat.user.user_id || 'user_id')}</UserId>
                 </UserDetails>
                 {chat.last_read_message_id && BigInt(chat.last_read_message_id) < BigInt(chat.latest_message.id) && (
 
                   <UnreadMessagesIndicator />
                 )}
+
                 <ThreeDotsMenu
                   className="menu"
                   onClick={(e) => {
