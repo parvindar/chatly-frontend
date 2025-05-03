@@ -222,7 +222,10 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
 
   // Handle new participant joining
   const handleParticipantJoined = async ({ from: participantId, sender_info, video_enabled, audio_enabled }) => {
-    if (participantsRef.current.has(participantId) || !roomId) return;
+    if (!roomId) return;
+    if (participantsRef.current.has(participantId)) {
+      handleParticipantLeft({ from: participantId });
+    }
     console.log("🔴 handleParticipantJoined", participantId, sender_info);
 
     const d = Date.now();
