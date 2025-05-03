@@ -658,6 +658,20 @@ const UserTypingIndicatorContainer = styled.div`
       padding-top : 10px;
 `
 
+const FriendRequestIndicator = styled.div`
+  height: 14px;
+  min-width: 14px;
+  background: red; 
+  border-radius: 50%;
+  font-size: 9px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // padding: 0px 4px;
+`
+
 const HomePage = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [groups, setGroups] = useState([]);
@@ -1622,7 +1636,7 @@ const HomePage = () => {
           <HeaderMenu selected={friendRequestsModal} onClick={() => setFriendRequestsModal(true)}>
             <FaUserFriends />
             {friendRequests?.length > 0 &&
-              <div style={{ height: '8px', width: '8px', background: 'red', borderRadius: '50%' }}></div>
+              <FriendRequestIndicator>{friendRequests.length}</FriendRequestIndicator>
             }
           </HeaderMenu>
           <HeaderMenu>
