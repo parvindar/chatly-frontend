@@ -64,6 +64,9 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
       if (msg.from === userId) {
         return;
       }
+      if (msg.room_id !== roomId) {
+        return;
+      }
       // console.log("🔴 handleSignalMessage", msg, callState);
 
       if (callState === "idle") {
