@@ -4,7 +4,7 @@ import colors from '../styles/colors';
 import { IoMdSend } from 'react-icons/io';
 import { BsThreeDots, BsEmojiSmile } from 'react-icons/bs';
 import { MdEdit, MdOutlineAddReaction, MdAttachFile, MdClose } from 'react-icons/md';
-import { deleteChatMessage, editChatMessage, addMessageReaction, deleteMessageReaction, uploadMedia, getMedia } from '../api/sdk';
+import { deleteChatMessage, editChatMessage, addMessageReaction, deleteMessageReaction, uploadMedia, getMedia, updateLatestReadMessage } from '../api/sdk';
 import { parseMessage } from '../utils/common';
 import EmojiPicker, { Theme } from 'emoji-picker-react';
 import MentionList from './MentionList';
@@ -872,7 +872,7 @@ const formatFileSize = (size) => {
   else return `${(size / 1048576).toFixed(2)} MB`; // 1024^2
 };
 
-const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => { }, hasMoreMessages = true, handleNewMessage, handleReaction, newMessageCount, newMessageEdit, setShowUserProfilePopup }) => {
+const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}, onTyping, groupMembers = [], userMap = {}, fetchMessages = () => { }, hasMoreMessages = true, handleNewMessage, handleReaction, newMessageCount, newMessageEdit, setShowUserProfilePopup, handleUpdateLatestReadMessage }) => {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -885,8 +885,11 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
   const [showMentionOptions, setShowMentionOptions] = useState(false);
   const [parsedMessage, setParsedMessage] = useState({});
   const [replyingToMessage, setReplyingToMessage] = useState(null);
+  // const [latestReadMessageId, setLatestReadMessageId] = useState(group.last_read_message_id);
   const currentUserId = currentUser?.id;
   const messageEndRef = useRef(null);
+  const observer = useRef(null);
+
   const typingTimeoutRef = useRef(null);
   const messageListRef = useRef(null);
   const isUserScrolling = useRef(false);
@@ -916,6 +919,24 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
     console.log("newMessageCount", newMessageCount);
     scrollToBottom();
   }, [newMessageCount]);
+
+  useEffect(() => {
+    if (!messages?.length) return;
+    if (messageEndRef.current) {
+      observer.current = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          const latestMessageId = messages[messages.length - 1].id;
+          if (!latestMessageId) return;
+          if (!group.last_read_message_id || BigInt(latestMessageId) > BigInt(group.last_read_message_id)) {
+            handleUpdateLatestReadMessage(group.id, latestMessageId);
+          }
+        }
+      });
+      observer.current.observe(messageEndRef.current);
+    }
+
+    return () => observer.current?.disconnect();
+  }, [group, messages]);
 
   useEffect(() => {
     if (newMessageEdit) {

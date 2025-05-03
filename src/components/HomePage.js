@@ -27,7 +27,8 @@ import {
   sendFriendRequest,
   getFriendRequests,
   getFriendRequestsSent,
-  removeFriend
+  removeFriend,
+  updateLatestReadMessage
 } from '../api/sdk';
 
 import { useVideoCall } from '../components/useVideoCall'; // Import the custom hook for video call
@@ -626,6 +627,19 @@ const TopWarningBar = styled.div`
   justify-content: center;
 `;
 
+const UnreadMessagesIndicator = styled.div`
+      position: absolute;
+      top: 50%;
+      right: 24px;
+      background-color: ${colors.primary};
+      color: white;
+      font-size: 10px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      transform: translate(0%, -50%);
+`
+
 const HomePage = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [groups, setGroups] = useState([]);
@@ -872,6 +886,32 @@ const HomePage = () => {
 
   }, [currentUser, selectedTab]);
 
+
+  const updateLatestMessageInChatList = (message) => {
+    const { chat_id } = message;
+    if (message.id) {
+      setGroups((prevGroups) => prevGroups.map((group) => {
+        if (group.id === chat_id) {
+          return {
+            ...group,
+            latest_message: message,
+          };
+        }
+        return group;
+      }))
+      setPrivateChats((prevChats) => prevChats.map((chat) => {
+        if (chat.id === chat_id) {
+          return {
+            ...chat,
+            latest_message: message,
+          };
+        }
+        return chat;
+      }))
+
+    }
+  }
+
   const handleNewMessage = useCallback((message, local = false) => {
     const { chat_id, sender_id, ...messageData } = message;
     if (currentUser.id === sender_id && !local) {
@@ -883,12 +923,16 @@ const HomePage = () => {
         ...prevMap,
         [chat_id]: (prevMap[chat_id] || 0) + 1,
       }));
+      updateLatestMessageInChatList(message);
       return;
     }
     setMessagesMap((prevMap) => ({
       ...prevMap,
       [chat_id]: [...(prevMap[chat_id] || []), message],
     }));
+
+    updateLatestMessageInChatList(message);
+
 
     setNewMessageCount((prevMap) => ({
       ...prevMap,
@@ -1099,6 +1143,44 @@ const HomePage = () => {
     }));
   }
 
+  const handleUpdateLatestReadMessage = async (chatId, messageId) => {
+    try {
+      const response = await updateLatestReadMessage(chatId, messageId);
+
+      if (selectedGroup.id === chatId) {
+        setSelectedGroup((prevGroup) => ({
+          ...prevGroup,
+          last_read_message_id: messageId,
+        }));
+
+        if (selectedGroup.type === "group") {
+          setGroups((prevGroups) => prevGroups.map((group) => {
+            if (group.id === chatId) {
+              return {
+                ...group,
+                last_read_message_id: messageId,
+              };
+            }
+            return group;
+          }));
+        } else {
+          setPrivateChats((prevChats) => prevChats.map((chat) => {
+            if (chat.id === chatId) {
+              return {
+                ...chat,
+                last_read_message_id: messageId,
+              };
+            }
+            return chat;
+          }));
+        }
+      }
+
+
+    } catch (error) {
+      console.log("error updating latest read message", error);
+    }
+  }
 
   useEffect(() => {
     const fetchGroupMembers = async () => {
@@ -1128,7 +1210,9 @@ const HomePage = () => {
       }
       fetchGroupMembers();
     }
-  }, [selectedGroup]);
+  }, [selectedGroup?.id]);
+
+
 
   // Function to send a message
   const sendMessage = (message) => {
@@ -1353,6 +1437,11 @@ const HomePage = () => {
                 onClick={() => setSelectedGroup(group)}
               >
                 {group.name}
+                {group.last_read_message_id && BigInt(group.last_read_message_id) < BigInt(group.latest_message.id) && (
+                  <UnreadMessagesIndicator>
+                    {/* {group.unread_messages_count} */}
+                  </UnreadMessagesIndicator>
+                )}
                 <ThreeDotsMenu
                   className="menu"
                   onClick={(e) => {
@@ -1394,6 +1483,10 @@ const HomePage = () => {
                   <UserName>{chat.user.name || 'User Name'}</UserName>
                   <UserId>{chat.user.user_id || 'user_id'}</UserId>
                 </UserDetails>
+                {chat.last_read_message_id && BigInt(chat.last_read_message_id) < BigInt(chat.latest_message.id) && (
+
+                  <UnreadMessagesIndicator />
+                )}
                 <ThreeDotsMenu
                   className="menu"
                   onClick={(e) => {
@@ -1488,6 +1581,7 @@ const HomePage = () => {
                   newMessageCount={newMessageCount[selectedGroup?.id]}
                   newMessageEdit={newMessageEdit}
                   setShowUserProfilePopup={handleShowUserProfilePopup}
+                  handleUpdateLatestReadMessage={handleUpdateLatestReadMessage}
                 />
               )}
             </ChatBoxContainer>
@@ -1567,6 +1661,8 @@ const HomePage = () => {
                 handleReaction={handleReaction}
                 newMessageCount={newMessageCount[selectedGroup?.id]}
                 setShowUserProfilePopup={handleShowUserProfilePopup}
+                handleUpdateLatestReadMessage={handleUpdateLatestReadMessage}
+
               />
             )}
           </ChatBoxContainer>

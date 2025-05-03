@@ -265,6 +265,11 @@ export const makeMemberGroupAdmin = async (groupId, userId) => {
   return response.data;
 };
 
+export const updateLatestReadMessage = async (chatId, messageId) => {
+  const response = await apiClient.put(`/channel/${chatId}/message/read`, { message_id: messageId });
+  return response.data;
+};
+
 export const getFriendRequests = async () => {
   const response = await apiClient.get(`/friend/request/list`);
   return response.data.data;
