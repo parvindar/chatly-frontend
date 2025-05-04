@@ -237,6 +237,11 @@ export const createGroup = async (name, description, type = 'group') => {
   return response.data;
 };
 
+export const editChat = async (chatId, chatDetails) => {
+  const response = await apiClient.put(`/channel/${chatId}`, chatDetails);
+  return response.data;
+};
+
 export const deleteChat = async (chatId) => {
   const response = await apiClient.delete(`/channel/${chatId}`);
   return response.data;

@@ -28,7 +28,8 @@ import {
   getFriendRequests,
   getFriendRequestsSent,
   removeFriend,
-  updateLatestReadMessage
+  updateLatestReadMessage,
+  editChat
 } from '../api/sdk';
 
 import { useVideoCall } from '../components/useVideoCall'; // Import the custom hook for video call
@@ -41,6 +42,7 @@ import LoadingComponent from './LoadingComponent';
 import FriendsComponent from './FriendsComponent';
 import UserProfilePopup from './UserProfilePopup';
 import TypingAnimation from './TypingAnimation';
+import EditGroupComponent from './EditGroupComponent';
 
 const Container = styled.div`
   display: flex;
@@ -681,6 +683,7 @@ const HomePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newChannelName, setNewChannelName] = useState('');
   const [newChannelDescription, setNewChannelDescription] = useState('');
+  const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -1289,6 +1292,27 @@ const HomePage = () => {
     }
   };
 
+  const handleEditGroup = async (groupId, group) => {
+    if (group.name.trim()) {
+      try {
+        const response = await editChat(groupId, group);
+        const newGroup = response.data;
+
+        setGroups((prevGroups) => prevGroups.map((group) => {
+          if (group.id === newGroup.id) {
+            return { ...group, ...newGroup };
+          }
+          return group;
+        }));
+
+        setIsEditGroupModalOpen(false);
+        console.log('Group Edit successfully!');
+      } catch (error) {
+        console.error('Error Editing Group:', error);
+      }
+    }
+  };
+
   const handleCreateChat = async (userId) => {
     try {
 
@@ -1492,7 +1516,9 @@ const HomePage = () => {
                     ref={groupDropdownRef}
                     items={[
                       ...(group.role === 'admin'
-                        ? [{ label: 'Add Member', action: () => setIsAddMemberModalOpen(true) }]
+                        ? [{ label: 'Add Member', action: () => setIsAddMemberModalOpen(true) }
+                          , { label: 'Edit', action: () => setIsEditGroupModalOpen(group) }
+                        ]
                         : []),
                       { label: 'Leave Channel', action: () => handleLeaveChannel(group.id) },
                     ]}
@@ -1805,6 +1831,9 @@ const HomePage = () => {
             </ModalButtonContainer>
           </ModalContent>
         </ModalOverlay>
+      )}
+      {isEditGroupModalOpen && (
+        <EditGroupComponent group={isEditGroupModalOpen} setIsModalOpen={setIsEditGroupModalOpen} handleEditGroup={handleEditGroup} />
       )}
       {isAddMemberModalOpen && (
         <ModalOverlay>
