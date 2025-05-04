@@ -24,12 +24,29 @@ const apiClient = axios.create({
 let socket = null;
 const listeners = { chat: null, video_call: null };
 let retryAttempts = 0; // Track the number of retry attempts
-const maxRetryAttempts = 10; // Maximum number of retries
+const maxRetryAttempts = 50; // Maximum number of retries
 const retryInterval = 2000; // Initial retry interval in milliseconds
+let pingInterval = null;
+const PING_INTERVAL_MS = 15000;
 
+const attemptReconnect = () => {
+  if (retryAttempts < maxRetryAttempts) {
+    let delay = retryInterval * Math.pow(1.2, retryAttempts);
+    if (delay > 5000) {
+      delay = 5000;
+    }
+    console.log(`WebSocket retrying in ${Math.round(delay / 1000)}s...`);
+    setTimeout(() => {
+      retryAttempts++;
+      initializeWebSocket();
+    }, delay);
+  } else {
+    console.error('WebSocket: Max retry attempts reached.');
+  }
+};
 // Initialize WebSocket connection
 export const initializeWebSocket = (callback = () => { }) => {
-  if (socket) {
+  if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
     console.log('WebSocket connection already established');
     callback(true);
     return;
@@ -43,6 +60,13 @@ export const initializeWebSocket = (callback = () => { }) => {
     console.log('WebSocket connection established');
     callback(true);
     retryAttempts = 0; // Reset retry attempts on successful connection
+
+    clearInterval(pingInterval);
+    pingInterval = setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'ping' }));
+      }
+    }, PING_INTERVAL_MS);
   };
 
   socket.onmessage = (event) => {
@@ -67,23 +91,22 @@ export const initializeWebSocket = (callback = () => { }) => {
   socket.onclose = () => {
     callback(false);
     console.log('WebSocket connection closed');
-    if (retryAttempts < maxRetryAttempts) {
-      const delay = retryInterval * Math.pow(1.2, retryAttempts); // Exponential backoff
-      console.log(`Retrying WebSocket connection in ${delay / 1000} seconds...`);
-      setTimeout(() => {
-        retryAttempts++;
-        initializeWebSocket(callback); // Retry connection
-      }, delay);
-    } else {
-      console.error('Max retry attempts reached. WebSocket connection failed.');
-    }
+    attemptReconnect();
   };
 
   socket.onerror = (error) => {
     console.error('WebSocket error:', error);
     callback(false);
+    attemptReconnect();
   };
 };
+
+window.addEventListener('online', () => {
+  if (!socket || socket.readyState === WebSocket.CLOSED) {
+    console.log('Network online. Attempting WebSocket reconnect...');
+    initializeWebSocket();
+  }
+});
 
 // Add a listener for incoming messages
 export const addMessageListener = (type, listener) => {
