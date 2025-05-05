@@ -29,7 +29,9 @@ import {
   getFriendRequestsSent,
   removeFriend,
   updateLatestReadMessage,
-  editChat
+  editChat,
+  updateUserProfile,
+  getUserProfile
 } from '../api/sdk';
 
 import { useVideoCall } from '../components/useVideoCall'; // Import the custom hook for video call
@@ -41,6 +43,7 @@ import { MdCallEnd } from 'react-icons/md';
 import LoadingComponent from './LoadingComponent';
 import FriendsComponent from './FriendsComponent';
 import UserProfilePopup from './UserProfilePopup';
+import CurrentUserProfilePopup from './CurrentUserProfilePopup';
 import TypingAnimation from './TypingAnimation';
 import EditGroupComponent from './EditGroupComponent';
 
@@ -428,13 +431,13 @@ const UserRole = styled.span`
 `;
 
 const MembersHeading = styled.h3`
-  font-size: 16px; /* Decrease the font size */
+  font-size: 14px; /* Decrease the font size */
   font-weight: bold;
   color: #99aab5; /* Subtle gray color */
   text-align: center; /* Center the heading horizontally */
-  margin: 10px 0; /* Add some vertical spacing */
-  border-bottom: 1px solid #2c2f33; /* Add a subtle bottom border */
-  padding-bottom: 10px; /* Add some padding below the text */
+  margin: 8px 0; /* Add some vertical spacing */
+  // border-bottom: 1px solid #2c2f33; /* Add a subtle bottom border */
+  // padding-bottom: 8px; /* Add some padding below the text */
 `;
 
 const MemberThreeDotsMenu = styled.div`
@@ -674,6 +677,34 @@ const FriendRequestIndicator = styled.div`
   // padding: 0px 4px;
 `
 
+const GroupInfo = styled.div`
+  padding: 8px 12px;
+`
+
+const SectionTitle = styled.div`
+  font-size: 12px;
+  font-weight: 700;
+  color: #99aab5;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  text-align: center;
+`;
+
+const GroupDescription = styled.p`
+  font-size: 12px;
+  margin: 0;
+  color: ${colors.textSecondary}
+  line-height: 1.4;
+  text-align: center;
+`;
+
+const Divider = styled.div`
+  height: 0.5px;
+  background: rgba(79, 84, 92, 0.48);
+  margin: 4px 12px;
+`;
+
+
 const HomePage = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [groups, setGroups] = useState([]);
@@ -820,14 +851,20 @@ const HomePage = () => {
     }
   };
 
-  useEffect(() => {
+  useEffect(async () => {
     const currentUserId = localStorage.getItem('user_id');
     const token = localStorage.getItem('token');
     if (!currentUserId || !token) {
       window.location.href = '/login';
     } else {
-      const user = JSON.parse(localStorage.getItem('user'));
-      setCurrentUser(user);
+      const userlocal = JSON.parse(localStorage.getItem('user'));
+      setCurrentUser(userlocal);
+      try {
+        const user = await getUserProfile(currentUserId);
+        setCurrentUser(user);
+      } catch (err) {
+        console.log(err);
+      }
     }
   }, [])
 
@@ -1272,6 +1309,14 @@ const HomePage = () => {
   // Function to create a new channel
   const handleCreateChannel = async () => {
     if (newChannelName.trim()) {
+      if (newChannelName.length > 30) {
+        alert("Group name cannot be more than 30 characters");
+        return;
+      }
+      if (newChannelDescription.length > 500) {
+        alert("Group description cannot be more than 500 characters");
+        return;
+      }
       try {
         const response = await createGroup(newChannelName.trim(), newChannelDescription.trim());
         const newGroup = response.data;
@@ -1294,6 +1339,14 @@ const HomePage = () => {
 
   const handleEditGroup = async (groupId, group) => {
     if (group.name.trim()) {
+      if (group.name.length > 30) {
+        alert("Group name cannot be more than 30 characters");
+        return;
+      }
+      if (group?.description.length > 500) {
+        alert("Group description cannot be more than 500 characters");
+        return;
+      }
       try {
         const response = await editChat(groupId, group);
         const newGroup = response.data;
@@ -1304,6 +1357,10 @@ const HomePage = () => {
           }
           return group;
         }));
+
+        if (selectedGroup.id === groupId) {
+          setSelectedGroup(prev => ({ ...prev, ...newGroup }));
+        }
 
         setIsEditGroupModalOpen(false);
         console.log('Group Edit successfully!');
@@ -1422,10 +1479,27 @@ const HomePage = () => {
   };
 
   const handleShowUserProfilePopup = (user) => {
-    if (user.id === currentUser.id) {
-      return;
-    }
+    // if (user.id === currentUser.id) {
+    //   return;
+    // }
     setShowUserProfilePopup(user);
+  }
+
+  const handleOnSaveUserProfile = async (updatedUser) => {
+    if (!updatedUser.name) {
+      return null;
+    }
+    try {
+      const response = await updateUserProfile(currentUser.id, updatedUser);
+      console.log(response);
+      setCurrentUser(response);
+      return response;
+      // setShowUserProfilePopup(null);
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+
   }
 
   // if (isPageLoading) {
@@ -1440,7 +1514,7 @@ const HomePage = () => {
         </TopWarningBar>
       )} */}
 
-      {showUserProfilePopup && (
+      {showUserProfilePopup && (showUserProfilePopup.id != currentUser.id ? (
         <UserProfilePopup
           user_id={showUserProfilePopup.id}
           onClose={() => setShowUserProfilePopup(null)}
@@ -1450,10 +1524,14 @@ const HomePage = () => {
           }}
           friendRequestChange={friendRequestChange}
         />
-      )}
+      ) : <CurrentUserProfilePopup
+        user_id={showUserProfilePopup.id}
+        onClose={() => setShowUserProfilePopup(null)}
+        onSave={handleOnSaveUserProfile}
+      />)}
       <LeftPanel>
         {/* Current User Info */}
-        <CurrentUserContainer>
+        <CurrentUserContainer onClick={() => setShowUserProfilePopup(currentUser)}>
           <CurrentUserProfilePic
             src={currentUser?.profile_pic || 'https://i.pravatar.cc/40'}
             alt={currentUser?.name || 'User'}
@@ -1520,7 +1598,7 @@ const HomePage = () => {
                           , { label: 'Edit', action: () => setIsEditGroupModalOpen(group) }
                         ]
                         : []),
-                      { label: 'Leave Channel', action: () => handleLeaveChannel(group.id) },
+                      { label: 'Leave', action: () => handleLeaveChannel(group.id) },
                     ]}
                     onItemClick={(action) => action()}
                   />
@@ -1760,7 +1838,21 @@ const HomePage = () => {
             </ModalButton>
             {/* </Link> */}
 
+            {
+              selectedGroup.description &&
+              (<>
+                <Divider />
+                <GroupInfo>
+                  <SectionTitle>{selectedGroup.name}</SectionTitle>
+                  <GroupDescription>{selectedGroup.description}</GroupDescription>
+                </GroupInfo>
+                <Divider />
+              </>
+              )
+            }
+
             <MembersHeading>Members</MembersHeading>
+            {/* <Divider /> */}
             <MemberListContainer>
               {groupMembers.map((member) => (
                 <UserItem key={member.id} onClick={() => handleShowUserProfilePopup(member)}>
@@ -1815,13 +1907,19 @@ const HomePage = () => {
             <ModalInput
               type="text"
               value={newChannelName}
-              onChange={(e) => setNewChannelName(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value.length > 30) return;
+                setNewChannelName(e.target.value)
+              }}
               placeholder="Enter Group Name"
             />
             <ModalTextarea
               rows="3"
               value={newChannelDescription}
-              onChange={(e) => setNewChannelDescription(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value.length > 500) return;
+                setNewChannelDescription(e.target.value)
+              }}
               placeholder="Enter Description"
             />
             <ModalButtonContainer>

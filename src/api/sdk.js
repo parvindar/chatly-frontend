@@ -190,6 +190,11 @@ export const getUserProfile = async (userId) => {
   return response.data.data;
 };
 
+export const updateUserProfile = async (userId, data) => {
+  const response = await apiClient.put(`/user/${userId}`, data);
+  return response.data.data;
+}
+
 export const createPrivateChat = async (userId) => {
   const response = await apiClient.post('/channel/dm', { user_id: userId });
   return response.data.data;

@@ -188,10 +188,15 @@ const UserProfilePopup = ({ user_id, onClose, onMessageClick, friendRequestChang
         </Header>
 
         <ContentContainer>
-          {/* <Section>
-          <SectionTitle>About</SectionTitle>
-          <Bio>{user.bio || "Cool User."}</Bio>
-        </Section> */}
+          {user.bio && (<>
+            <Section>
+              <SectionTitle>Bio</SectionTitle>
+              <Bio>{user.bio || "Cool User."}</Bio>
+            </Section>
+            <Divider />
+          </>
+          )
+          }
 
           {user.mutual_groups && user.mutual_groups.length > 0 && (
             <>

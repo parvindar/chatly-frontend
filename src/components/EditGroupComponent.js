@@ -2,6 +2,7 @@ import { useState } from "react";
 import styled from "styled-components";
 import colors from "../styles/colors";
 import { useApiAction } from './useAPIAction';
+import { CustomScrollbar } from "../styles/styles";
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -58,6 +59,8 @@ const ModalTextarea = styled.textarea`
   &:focus {
     border-color: #7289da;
   }
+
+  ${CustomScrollbar}
 `;
 
 const ModalButtonContainer = styled.div`
@@ -87,33 +90,41 @@ const ModalButton = styled.button`
 `;
 
 const EditGroupComponent = ({ group, handleEditGroup, setIsModalOpen }) => {
-    if (!group) return null;
+  if (!group) return null;
 
-    const { runAction, isLoading } = useApiAction();
-    const [groupName, setGroupName] = useState(group.name);
-    const [groupDescription, setGroupDescription] = useState(group.description);
+  const { runAction, isLoading } = useApiAction();
+  const [groupName, setGroupName] = useState(group.name);
+  const [groupDescription, setGroupDescription] = useState(group.description);
 
-    return <ModalOverlay>
-        <ModalContent>
-            <h3>Edit Group</h3>
-            <ModalInput
-                type="text"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                placeholder="Enter Group Name"
-            />
-            <ModalTextarea
-                rows="3"
-                value={groupDescription}
-                onChange={(e) => setGroupDescription(e.target.value)}
-                placeholder="Enter Description"
-            />
-            <ModalButtonContainer>
-                <ModalButton secondary onClick={() => setIsModalOpen(false)}>Cancel</ModalButton>
-                <ModalButton onClick={() => runAction("editGroup", () => handleEditGroup(group.id, { name: groupName, description: groupDescription }))} disabled={!groupName || isLoading("editGroup")}>Save</ModalButton>
-            </ModalButtonContainer>
-        </ModalContent>
-    </ModalOverlay>
+  return <ModalOverlay>
+    <ModalContent>
+      <h3>Edit Group</h3>
+      <ModalInput
+        type="text"
+        value={groupName}
+        onChange={(e) => {
+          if (e.target.value.length <= 30) {
+            setGroupName(e.target.value)
+          }
+        }}
+        placeholder="Enter Group Name"
+      />
+      <ModalTextarea
+        rows="3"
+        value={groupDescription}
+        onChange={(e) => {
+          if (e.target.value.length <= 500) {
+            setGroupDescription(e.target.value)
+          }
+        }}
+        placeholder="Enter Description"
+      />
+      <ModalButtonContainer>
+        <ModalButton secondary onClick={() => setIsModalOpen(false)}>Cancel</ModalButton>
+        <ModalButton onClick={() => runAction("editGroup", () => handleEditGroup(group.id, { name: groupName, description: groupDescription }))} disabled={!groupName || isLoading("editGroup")}>Save</ModalButton>
+      </ModalButtonContainer>
+    </ModalContent>
+  </ModalOverlay>
 }
 
 export default EditGroupComponent;
