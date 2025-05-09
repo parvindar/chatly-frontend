@@ -358,6 +358,7 @@ const UserProfilePic = styled.div`
   height: 40px;
   margin-right: 10px;
   flex-shrink: 0; /* Prevent the image from shrinking */
+  cursor: pointer;
 `;
 
 const ProfileImage = styled.img`
@@ -385,6 +386,7 @@ const OnlineStatusIndicator = styled.div`
 const UserName = styled.span`
   font-size: 14px;
   color: white;
+  cursor: pointer;
 `;
 
 const MemberListContainer = styled.div`
@@ -1755,8 +1757,8 @@ const HomePage = () => {
           <>
             {/* User Profile Section for Private Chat */}
             <MembersHeading>Profile</MembersHeading> {/* Reuse heading style */}
-            <div style={{ padding: '10px', textAlign: 'center' }}> {/* Center content */}
-              <UserProfilePic style={{ margin: '0 auto 10px auto', width: '80px', height: '80px' }}> {/* Larger profile pic */}
+            <div style={{ padding: '10px', textAlign: 'center' }} > {/* Center content */}
+              <UserProfilePic style={{ margin: '0 auto 10px auto', width: '80px', height: '80px' }} onClick={() => handleShowUserProfilePopup(selectedGroup.user)}> {/* Larger profile pic */}
                 <ProfileImage
                   src={selectedGroup.user.profile_pic || 'https://i.pravatar.cc/80'}
                   alt={selectedGroup.user.name}
@@ -1764,7 +1766,7 @@ const HomePage = () => {
                 />
                 <OnlineStatusIndicator status={userStatusMap[selectedGroup.user.id]} style={{ width: '12px', height: '12px', right: '2px', bottom: '2px' }} /> {/* Adjusted indicator */}
               </UserProfilePic>
-              <UserName style={{ fontSize: '16px', display: 'block', marginBottom: '5px' }}>{selectedGroup.user.name}</UserName>
+              <UserName style={{ fontSize: '16px', display: 'block', marginBottom: '5px' }} onClick={() => handleShowUserProfilePopup(selectedGroup.user)}>{selectedGroup.user.name}</UserName>
               <UserId style={{ fontSize: '14px' }}>@{selectedGroup.user.user_id}</UserId>
             </div>
 

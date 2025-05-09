@@ -18,35 +18,38 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
   const [joinTime, setJoinTime] = useState(0);
 
   const [remoteICECandidate, setRemoteICECandidate] = useState({});
+  const [participantChange, setParticipantChange] = useState(0);
 
   useEffect(() => {
 
     console.log("✅ useEffect participantsRef.current:", participantsRef.current);
-    if (participantsRef.current) {
-      console.log("✅ Peer connection established with participants:", participantsRef.current.length);
+    if (participantsRef.current.entries().length > 0) {
+      console.log("✅ Peer connection established with participants:", participantsRef.current.entries().length);
 
       // For ICE candidates
       participantsRef.current.forEach((participant) => {
-        const candidates = [...remoteICECandidate[participant.id]];
-        while (candidates.length > 0) {
-          const candidate = candidates.shift();
-          participant.pc.addIceCandidate(new RTCIceCandidate(candidate));
+        if (remoteICECandidate[participant.id]?.length > 0) {
+          const candidates = [...remoteICECandidate[participant.id]];
+          while (candidates.length > 0) {
+            const candidate = candidates.shift();
+            participant.pc.addIceCandidate(new RTCIceCandidate(candidate));
+          }
+          setRemoteICECandidate((prev) => ({ ...prev, [participant.id]: [] }));
         }
-        setRemoteICECandidate((prev) => ({ ...prev, [participant.id]: [] }));
       });
 
 
     }
-  }, [participantsRef.current]);
+  }, [participants, participantChange]);
 
   useEffect(() => {
-    if (participantQueue.length > 0) {
+    if (callState == 'active' && participantQueue.length > 0) {
       const queue = [...participantQueue];
       const participant = queue.shift();
       handleParticipantJoined(participant);
       setParticipantQueue(queue);
     }
-  }, [participantQueue]);
+  }, [callState, participantQueue]);
 
   // Initialize/cleanup message listeners
   useEffect(() => {
@@ -60,6 +63,7 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
         "join-room": handleParticipantJoined,
         "leave-room": handleParticipantLeft,
         "audio-video": handleParticipantAudioVideo,
+        "offer-me": handleOfferMe
       };
       if (msg.from === userId) {
         return;
@@ -172,7 +176,7 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
         pc.restartIce();
       }
     };
-
+    console.log("🔴 createPeerConnection", pc);
     return pc;
   };
 
@@ -185,7 +189,6 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
   const joinRoom = async (roomId) => {
     if (callState !== "idle") return;
 
-    setCallState("joining");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -194,6 +197,7 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
 
 
       setJoinTime(Date.now());
+      setCallState("joining");
 
       localStreamRef.current = stream;
       if (localVideoRef.current) {
@@ -223,19 +227,41 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
   // Handle new participant joining
   const handleParticipantJoined = async ({ from: participantId, sender_info, video_enabled, audio_enabled }) => {
     if (!roomId) return;
+    const d = Date.now();
+    const timeDiff = d - joinTime;
+
     if (participantsRef.current.has(participantId)) {
+      if (timeDiff < 2000) {
+        return;
+      }
+      console.log('participant already exists, removing it first', participantId);
+
       handleParticipantLeft({ from: participantId });
     }
     console.log("🔴 handleParticipantJoined", participantId, sender_info);
 
-    const d = Date.now();
-    const timeDiff = d - joinTime;
-    if (timeDiff < 1000 || callState !== "active") {
+    if (participantId < userId) {
+      sendMessageWebSocket({
+        type: "group_video_call",
+        message: {
+          type: "offer-me",
+          from: userId,
+          to: participantId,
+          room_id: roomId,
+          sender_info: currentUser,
+          video_enabled: isVideoEnabled,
+          audio_enabled: isAudioEnabled,
+        },
+      });
+
+      return;
+    }
+
+    if (callState !== "active") {
       console.log("🔴 handleParticipantJoined delay", participantId, sender_info);
       setTimeout(() => {
         setParticipantQueue((prev) => [...prev, { from: participantId, sender_info, video_enabled, audio_enabled }]);
       }, (Math.random() * 1000) + 100); //random delay to avoid race condition
-      return;
     }
     const pc = createPeerConnection(participantId, sender_info, video_enabled, audio_enabled);
     const stream = localStreamRef.current;
@@ -262,9 +288,45 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
     });
   };
 
+  const handleOfferMe = async ({ from: participantId, sender_info, video_enabled, audio_enabled }) => {
+    console.log("🔴 handleOfferMe", participantId, sender_info);
+    if (participantsRef.current.has(participantId)) {
+      console.log('handleOfferMe: participant already exists, returning', participantId);
+      return;
+    }
+
+    const pc = createPeerConnection(participantId, sender_info, video_enabled, audio_enabled);
+    const stream = localStreamRef.current;
+
+    if (stream) {
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+    }
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    sendMessageWebSocket({
+      type: "group_video_call",
+      message: {
+        type: "group-call-offer",
+        from: userId,
+        to: participantId,
+        room_id: roomId,
+        sdp: offer,
+        sender_info: currentUser,
+        video_enabled: isVideoEnabled,
+        audio_enabled: isAudioEnabled,
+      },
+    });
+  }
+
   // Handle offer from new participant
   const handleGroupOffer = async ({ from, sdp, room_id: offerRoomId, sender_info, video_enabled, audio_enabled }) => {
-    if (roomId !== offerRoomId || participantsRef.current.has(from)) return;
+    console.log("handleGroupOffer", from);
+    if (participantsRef.current.has(from)) {
+      console.log("handleGroupOffer: participant already exist, returning", from);
+      return;
+    }
 
     const pc = createPeerConnection(from, sender_info, video_enabled, audio_enabled);
     const stream = localStreamRef.current;
@@ -292,9 +354,14 @@ export const useGroupCall = (currentUser, roomId, handleGroupCallEndedParam = ()
 
   // Handle answer from participant
   const handleGroupAnswer = async ({ from, sdp }) => {
+    console.log("handleGroupAnswer");
+
     const participant = participantsRef.current.get(from);
-    if (participant) {
+    if (participant?.pc.signalingState !== "stable") {
+      console.log("setRemoteDescription", participant);
+      console.log('state : ', participant?.pc.signalingState)
       await participant.pc.setRemoteDescription(new RTCSessionDescription(sdp));
+      setParticipantChange(prev => prev + 1);
     }
   };
 
