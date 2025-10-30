@@ -3,6 +3,8 @@ import GroupList from './GroupList';
 import ChatBox from './ChatBox';
 import VideoCallComponent from './VideoCallComponent';
 import GroupCallComponent from './GroupCallComponent';
+import MobileHomePage from './mobile/MobileHomePage';
+import { isMobileDevice } from '../utils/deviceUtils';
 import styled from 'styled-components';
 import colors from '../styles/colors'
 import { Link } from 'react-router-dom';
@@ -880,7 +882,9 @@ const HomePage = () => {
     setGroups(data.list);
 
     if (data.list.length > 0 && firsttime) {
-      setSelectedGroup(data.list[0]);
+      if(!isMobile){
+        setSelectedGroup(data.list[0]);
+      }
       setIsPageLoading(false);
     }
 
@@ -1309,18 +1313,22 @@ const HomePage = () => {
   };
 
   // Function to create a new channel
-  const handleCreateChannel = async () => {
-    if (newChannelName.trim()) {
-      if (newChannelName.length > 30) {
+  const handleCreateChannel = async (params) => {
+
+    let name = params?.name || newChannelName;
+    let description = params?.description || newChannelDescription;
+
+    if (name.trim()) {
+      if (name.length > 30) {
         alert("Group name cannot be more than 30 characters");
         return;
       }
-      if (newChannelDescription.length > 500) {
+      if (description.length > 500) {
         alert("Group description cannot be more than 500 characters");
         return;
       }
       try {
-        const response = await createGroup(newChannelName.trim(), newChannelDescription.trim());
+        const response = await createGroup(name.trim(), description.trim());
         const newGroup = response.data;
         newGroup.role = 'admin';
         setGroups((prevGroups) => [...prevGroups, newGroup]);
@@ -1507,6 +1515,95 @@ const HomePage = () => {
   // if (isPageLoading) {
   //   return <LoadingComponent />;
   // }
+
+  const [isMobile, setIsMobile] = useState(isMobileDevice());
+
+  useEffect(() => {
+    if(isMobileDevice()){
+      setSelectedGroup(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(isMobileDevice());
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  if (isMobile) {
+    return (
+      <MobileHomePage
+        currentUser={currentUser}
+        groups={groups}
+        privateChats={privateChats}
+        selectedGroup={selectedGroup}
+        messagesMap={messagesMap}
+        userMap={userMap}
+        groupMembers={groupMembers}
+        isVideoCallActive={isVideoCallActive}
+        isGroupCallActive={isGroupCallActive}
+        onSelectGroup={(group) => setSelectedGroup(group)}
+        onCreateGroup={handleCreateChannel}
+        onEditGroup={handleEditGroup}
+        onDeleteGroup={handleLeaveChannel}
+        onAddMember={handleAddMember}
+        onRemoveMember={handleRemoveMember}
+        onMakeAdmin={handleMakeAdmin}
+        onSendMessage={sendMessage}
+        onCreatePrivateChat={handleCreateChat}
+        onDeleteChat={handleDeleteChat}
+        onEditChat={handleEditGroup}
+        // Video call related props
+        localVideoRef={localVideoRef}
+        remoteVideoRef={remoteVideoRef}
+        endCall={endCall}
+        videoCallState={videoCallState}
+        pendingCall={pendingCall}
+        acceptCall={acceptCall}
+        rejectCall={rejectCall}
+        userInfo={getUserInfoForCall()}
+        toggleVideo={toggleVideo}
+        toggleAudio={toggleAudio}
+        localAudioVideo={localAudioVideo}
+        remoteAudioVideo={remoteAudioVideo}
+        handleVideoCall={handleVideoCall}
+        onStartVideoCall={() => setIsVideoCallActive(true)}
+        onEndVideoCall={() => setIsVideoCallActive(false)}
+        onStartGroupCall={() => setIsGroupCallActive(true)}
+        onEndGroupCall={() => setIsGroupCallActive(false)}
+        onUpdateProfile={(userData) => setCurrentUser({ ...currentUser, ...userData })}
+        onLogout={() => {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }}
+        toggleDropdown={toggleDropdown}
+        visibleDropdown={visibleDropdown}
+        setVisibleDropdown={setVisibleDropdown}
+        sendTypingStatus={sendTypingStatus}
+        handleShowUserProfilePopup={handleShowUserProfilePopup}
+        fetchMessages={fetchMessages}
+        hasMoreMessages={hasMoreMessages}
+        handleNewMessage={handleNewMessage}
+        handleReaction={handleReaction}
+        newMessageCount={newMessageCount}
+        newMessageEdit={newMessageEdit}
+        handleUpdateLatestReadMessage={handleUpdateLatestReadMessage}
+        typingUsers={typingUsers}
+        userStatusMap={userStatusMap}
+        onOpenAddMemberModal={(group) => { setSelectedGroup(group); setIsAddMemberModalOpen(true); }}
+        onOpenEditGroupModal={(group) => { setSelectedGroup(group); setIsEditGroupModalOpen(group); }}
+        friendRequests={friendRequests}
+        setFriendRequests={setFriendRequests}
+        friendRequestsSent={friendRequestsSent}
+        setFriendRequestsSent={setFriendRequestsSent}
+        friendRequestChange={friendRequestChange}
+        setFriendRequestChange={setFriendRequestChange}
+      />
+    );
+  }
 
   return (
     <Container>
@@ -2016,7 +2113,7 @@ const HomePage = () => {
       {friendRequestsModal && (
         <ModalOverlay>
           <ModalContent style={{ height: '80vh' }}>
-            <FriendsComponent setFriendRequests={setFriendRequests} friendRequests={friendRequests} friendRequestsSent={friendRequestsSent} />
+            <FriendsComponent setFriendRequests={setFriendRequests} friendRequests={friendRequests} friendRequestsSent={friendRequestsSent} setFriendRequestsSent={setFriendRequestsSent} />
             <ModalButton secondary onClick={() => setFriendRequestsModal(false)}>
               Close
             </ModalButton>

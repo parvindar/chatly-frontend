@@ -144,6 +144,16 @@ const UserProfilePopup = ({ user_id, onClose, onMessageClick, friendRequestChang
           }));
         }
 
+        if (user_id) {
+          getUserProfile(user_id)
+            .then(response => {
+              setUser(response);
+            })
+            .catch(error => {
+              console.error("Error fetching user profile:", error);
+            });
+        }
+
       })
       .catch(error => {
         console.error('Error acting on friend request:', error);
