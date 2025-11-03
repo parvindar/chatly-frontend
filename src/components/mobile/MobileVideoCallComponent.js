@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import colors from '../../styles/colors';
 import { MdCallEnd, MdCall, MdCallMissed, MdVideocam, MdVideocamOff, MdMic, MdMicOff } from 'react-icons/md';
-import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhone, FiLogIn, FiLogOut, FiMoreVertical, FiUser } from 'react-icons/fi';
+import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhone, FiLogIn, FiLogOut, FiMoreVertical, FiUser, FiMinimize2 } from 'react-icons/fi';
 
 
 const VideoCallContainer = styled.div`
@@ -42,6 +42,33 @@ const RemoteVideo = styled.video`
   z-index: 1;
 `;
 
+const MinimizeButton = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  color: white;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.8);
+  }
+
+  ${VideoCallContainer}:hover & {
+    opacity: 1;
+  }
+`;
+
 const VideoUserInfo = styled.div`
   position: absolute;
   bottom: 8px;
@@ -78,6 +105,10 @@ const LocalVideoContainer = styled.div`
     transform: scale(1.1);
   }
   overflow: hidden;
+
+  ${props => props.isMinimized && `
+    opacity: 0;
+  `}
 `;
 
 const LocalVideo = styled.video`
@@ -113,7 +144,7 @@ const LocalVideo = styled.video`
 
 const CallControls = styled.div`
   position: absolute;
-  bottom: 12px;
+  bottom: 36px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -247,29 +278,42 @@ const VideoCallComponent = ({
   toggleVideo,
   toggleAudio,
   localAudioVideo,
-  remoteAudioVideo
+  remoteAudioVideo,
+  isMinimized,
+  setMinimized
 }) => {
   return (
-    <VideoCallContainer>
+    <VideoCallContainer onClick={() => isMinimized && setMinimized(false)}>
       {videoCallState === 'running' ? (
         <>
+
+        {!isMinimized &&
+            <MinimizeButton onClick={(e) => {
+                e.stopPropagation();
+                setMinimized(true);
+            }}>
+                <FiMinimize2 size={16} />
+            </MinimizeButton>
+        }
+          
           {!remoteAudioVideo.video && <UserInfoContainer>
             <ProfileImage
               src={userInfo?.profile_pic || 'https://i.pravatar.cc/100'}
               alt={userInfo?.name || 'User'}
             />
-            <UserName>{userInfo?.name || 'User'}</UserName>
+            { !isMinimized && <UserName>{userInfo?.name || 'User'}</UserName>}
 
           </UserInfoContainer>
           }
 
           <RemoteVideo ref={remoteVideoRef} autoPlay playsInline />
+          {!isMinimized && (
           <VideoUserInfo className="video-user-info">
             <span>{userInfo?.name}</span>
             {!remoteAudioVideo.audio && <FiMicOff size={14} />}
             {!remoteAudioVideo.video && <FiVideoOff size={14} />}
-          </VideoUserInfo>
-          <LocalVideoContainer >
+          </VideoUserInfo> )}
+          <LocalVideoContainer isMinimized={isMinimized} >
             {!localAudioVideo.video && <UserInfoContainer>
               <ProfileImage style={{ borderWidth: '1px' }}
                 src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'}
@@ -278,6 +322,7 @@ const VideoCallComponent = ({
             </UserInfoContainer>}
             <LocalVideo ref={localVideoRef} autoPlay playsInline muted />
           </LocalVideoContainer>
+          {!isMinimized && (
           <CallControls isRunning={true} className="call-controls">
             <ToggleButton
               enabled={localAudioVideo.video}
@@ -297,6 +342,7 @@ const VideoCallComponent = ({
               <MdCallEnd />
             </ControlButton>
           </CallControls>
+            )}
         </>
       ) : videoCallState === 'incoming' ? (
         <>

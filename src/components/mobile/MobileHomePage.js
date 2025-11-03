@@ -28,7 +28,19 @@ const VideoCallModal = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-`;
+
+  ${props => props.minimized && `
+    position: fixed;
+    top : 8px;
+    right: 8px;
+    left: auto;
+    bottom: auto;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+  `};
+  `;
 
 const VideoCallContainer = styled.div`
   width: 100%;
@@ -417,6 +429,14 @@ const MobileHomePage = ({
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
 
+  const [isVideoCallMinimized, setIsVideoCallMinimized] = useState(false);
+
+  useEffect(()=>{
+    if(videoCallState === 'idle' && isVideoCallMinimized){
+      setIsVideoCallMinimized(false);
+    }
+  },[videoCallState])
+
   useEffect(() => {
     onSelectGroup(null);
   }, []);
@@ -676,23 +696,25 @@ const MobileHomePage = ({
   return (
     <Container>
       {videoCallState !== 'idle' && (
-        <VideoCallModal>
+        <VideoCallModal minimized={isVideoCallMinimized}>
             <VideoCallContainer>
-          <VideoCallComponent
-            currentUser={currentUser}
-            localVideoRef={localVideoRef}
-            remoteVideoRef={remoteVideoRef}
-            endCall={endCall}
-            videoCallState={videoCallState}
-            pendingCall={pendingCall}
-            acceptCall={acceptCall}
-            rejectCall={rejectCall}
-            userInfo={userInfo}
-            toggleVideo={toggleVideo}
-            toggleAudio={toggleAudio}
-            localAudioVideo={localAudioVideo}
-            remoteAudioVideo={remoteAudioVideo}
-          />
+              <VideoCallComponent
+                currentUser={currentUser}
+                localVideoRef={localVideoRef}
+                remoteVideoRef={remoteVideoRef}
+                endCall={endCall}
+                videoCallState={videoCallState}
+                pendingCall={pendingCall}
+                acceptCall={acceptCall}
+                rejectCall={rejectCall}
+                userInfo={userInfo}
+                toggleVideo={toggleVideo}
+                toggleAudio={toggleAudio}
+                localAudioVideo={localAudioVideo}
+                remoteAudioVideo={remoteAudioVideo}
+                isMinimized={isVideoCallMinimized}
+                setMinimized={setIsVideoCallMinimized}
+            />
           </VideoCallContainer>
         </VideoCallModal>
       )}
