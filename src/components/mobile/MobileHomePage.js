@@ -9,6 +9,7 @@ import VideoCallComponent from './MobileVideoCallComponent';
 import ChatBox from '../ChatBox';
 import FriendsComponent from '../FriendsComponent';
 import CurrentUserProfilePopup from '../CurrentUserProfilePopup';
+import UserProfilePopup from '../UserProfilePopup';
 import CreateGroupModal from '../CreateGroupModal';
 import NewPrivateChatModal from '../NewPrivateChatModal';
 import { useVideoCall } from '../../components/useVideoCall'; // Import the custom hook for video call
@@ -367,6 +368,11 @@ const MobileHomePage = ({
   onCreatePrivateChat,
   onDeleteChat,
   onEditChat,
+  showUserProfilePopup,
+  setShowUserProfilePopup,
+  handleShowUserProfilePopup,
+  handleOnSaveUserProfile,
+  onClickSendMessage,
   // Video call related props
   localVideoRef,
   remoteVideoRef,
@@ -391,7 +397,6 @@ const MobileHomePage = ({
   visibleDropdown,
   setVisibleDropdown,
   sendTypingStatus,
-  handleShowUserProfilePopup,
   fetchMessages,
   hasMoreMessages,
   handleNewMessage,
@@ -476,6 +481,21 @@ const MobileHomePage = ({
                 <NavbarTitle>Chats</NavbarTitle>
               </TopNavbar>
             )}
+            {showUserProfilePopup && (showUserProfilePopup.id != currentUser.id ? (
+            <UserProfilePopup
+                user_id={showUserProfilePopup.id}
+                onClose={() => setShowUserProfilePopup(null)}
+                onMessageClick={() => {
+                    onClickSendMessage(showUserProfilePopup.id);
+                    setShowUserProfilePopup(null);
+                }}
+                friendRequestChange={friendRequestChange}
+                />
+            ) : <CurrentUserProfilePopup
+                user_id={showUserProfilePopup.id}
+                onClose={() => setShowUserProfilePopup(null)}
+                onSave={handleOnSaveUserProfile}
+            />)} 
             <ListContainer visible={!selectedGroup}>
               <GroupList
                 groups={privateChats}
@@ -504,8 +524,9 @@ const MobileHomePage = ({
                   <ChatProfilePic 
                     src={selectedGroup.user?.profile_pic || 'https://i.pravatar.cc/40'}
                     alt="Chat"
+                    onClick={ () => handleShowUserProfilePopup(selectedGroup.user)}
                   />
-                  <ChatTitle>
+                  <ChatTitle onClick={ () => handleShowUserProfilePopup(selectedGroup.user)}>
                     {selectedGroup.user?.name}
                   </ChatTitle>
                   {videoCallState === 'idle' && (
@@ -534,7 +555,7 @@ const MobileHomePage = ({
                   handleReaction={handleReaction}
                   newMessageCount={newMessageCount?.[selectedGroup.id]}
                   newMessageEdit={newMessageEdit}
-                  setShowUserProfilePopup={handleShowUserProfilePopup}
+                  setShowUserProfilePopup={setShowUserProfilePopup}
                   handleUpdateLatestReadMessage={handleUpdateLatestReadMessage}
                   isVideoCallActive={isVideoCallActive}
                   onStartVideoCall={onStartVideoCall}
@@ -554,6 +575,22 @@ const MobileHomePage = ({
                 <NavbarTitle>Groups</NavbarTitle>
               </TopNavbar>
             )}
+            {showUserProfilePopup && (showUserProfilePopup.id != currentUser.id ? (
+            <UserProfilePopup
+                user_id={showUserProfilePopup.id}
+                onClose={() => setShowUserProfilePopup(null)}
+                onMessageClick={() => {
+                    onClickSendMessage(showUserProfilePopup.id);
+                    setActiveTab('private');
+                    setShowUserProfilePopup(null);
+                }}
+                friendRequestChange={friendRequestChange}
+                />
+            ) : <CurrentUserProfilePopup
+                user_id={showUserProfilePopup.id}
+                onClose={() => setShowUserProfilePopup(null)}
+                onSave={handleOnSaveUserProfile}
+            />)} 
             <ListContainer visible={!selectedGroup}>
               <GroupList
                 groups={groups}

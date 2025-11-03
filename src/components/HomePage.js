@@ -1601,6 +1601,10 @@ const HomePage = () => {
         setFriendRequestsSent={setFriendRequestsSent}
         friendRequestChange={friendRequestChange}
         setFriendRequestChange={setFriendRequestChange}
+        showUserProfilePopup={showUserProfilePopup}
+        setShowUserProfilePopup={setShowUserProfilePopup}
+        handleOnSaveUserProfile={handleOnSaveUserProfile}
+        onClickSendMessage={onClickSendMessage}
       />
     );
   }
