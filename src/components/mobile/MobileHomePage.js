@@ -3,9 +3,10 @@ import styled from 'styled-components';
 import { IoChatboxEllipses, IoChevronBackOutline } from "react-icons/io5";
 import { HiUserGroup } from "react-icons/hi2";
 import { FaUserFriends } from "react-icons/fa";
-import { FiVideo } from "react-icons/fi";
+import { FiVideo,FiPhone } from "react-icons/fi";
 import GroupList from '../GroupList';
 import VideoCallComponent from './MobileVideoCallComponent';
+import GroupCallComponent from './MobileGroupCallComponent';
 import ChatBox from '../ChatBox';
 import FriendsComponent from '../FriendsComponent';
 import CurrentUserProfilePopup from '../CurrentUserProfilePopup';
@@ -52,6 +53,26 @@ const VideoCallContainer = styled.div`
   position: relative;
 `;
 
+const GroupCallContainer = styled.div`
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  z-index: 1002;
+  background-color: #24262A;
+  ${props => props.minimized && `
+    position: fixed;
+    top : 8px;
+    right: 8px;
+    left: auto;
+    bottom: auto;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+  `};
+`;
+
 const ChatWrapper = styled.div`
   position: fixed;
   top: 0;
@@ -60,6 +81,8 @@ const ChatWrapper = styled.div`
   bottom: 60px;
   background-color: #2c2f33;
   z-index: 1001;
+  display: flex;
+  flex-direction: column;
 `;
 
 const ChatHeader = styled.div`
@@ -260,101 +283,8 @@ const FloatingActionButton = styled.button`
   }
 `;
 
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(5px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1005;
-`;
-
-const ModalContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  background-color: #23272a;
-  padding: 20px;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 350px;
-  max-height: 75vh;
-  color: white;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-`;
-
-const ModalInput = styled.input`
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  background-color: #3a3f45;
-  color: white;
-  outline: none;
-
-  &:focus {
-    border-color: #7289da;
-  }
-`;
-
-const ModalTextarea = styled.textarea`
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  background-color: #3a3f45;
-  color: white;
-  outline: none;
-  resize: none;
-
-  &:focus {
-    border-color: #7289da;
-  }
-`;
-
-const ModalButtonContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-`;
-
-const ModalButton = styled.button`
-  width: 100%;
-  padding: 10px;
-  background-color: ${props => props.secondary ? '#36393f' : colors.primary};
-  color: ${colors.textPrimary};
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: ${props => props.secondary ? '#2c2f33' : colors.primaryHover};
-  }
-`;
-
-const UserList = styled.div`
-  max-height: 300px;
-  overflow-y: auto;
-  margin: 10px 0;
-`;
-
-const UserItem = styled.div`
-  padding: 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  
-  &:hover {
-    background-color: #36393f;
-  }
+const ChatBoxContainer = styled.div`
+  height: ${props => props.isGroupCallActive ? 'calc(100% - 110px)' : '100%'};
 `;
 
 const MobileHomePage = ({
@@ -369,6 +299,8 @@ const MobileHomePage = ({
   groupMembers,
   isVideoCallActive,
   isGroupCallActive,
+  isGroupCallShuttingDown,
+  setIsGroupCallShuttingDown,
   onSelectGroup,
   onCreateGroup,
   onEditGroup,
@@ -424,12 +356,15 @@ const MobileHomePage = ({
   setFriendRequestsSent,
   friendRequestChange,
   setFriendRequestChange,
+
+    setIsGroupCallActive,
 }) => {
   const [activeTab, setActiveTab] = useState('private');
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
 
   const [isVideoCallMinimized, setIsVideoCallMinimized] = useState(false);
+  const [isGroupCallMinimized, setIsGroupCallMinimized] = useState(false);
 
   useEffect(()=>{
     if(videoCallState === 'idle' && isVideoCallMinimized){
@@ -630,7 +565,7 @@ const MobileHomePage = ({
               />
             </ListContainer>
             {selectedGroup && (
-              <ChatWrapper>
+              <ChatWrapper isGroupCallActive={isGroupCallActive}>
                 <ChatHeader>
                   <BackButton onClick={() => {
                     onSelectGroup(null);
@@ -648,7 +583,28 @@ const MobileHomePage = ({
                   <ChatTitle>
                     {selectedGroup.name}
                   </ChatTitle>
+
+                  {!isGroupCallActive && (
+                    <VideoCallButton 
+                      onClick={() => {
+                        setIsGroupCallActive(true);
+                      }}
+                    >
+                      <FiVideo />
+                    </VideoCallButton>
+                  )}
+                  {/* {isGroupCallActive && (
+                    <VideoCallButton 
+                      onClick={() => {
+                        setIsGroupCallActive(false);
+                      }}
+                    >
+                     <FiPhone color='red' />
+                    </VideoCallButton>
+                  )} */}
                 </ChatHeader>
+                { isGroupCallActive && <div style={{marginTop : '110px'}} ></div>}
+                <ChatBoxContainer isGroupCallActive={isGroupCallActive}>
                 <ChatBox
                   group={selectedGroup}
                   messages={messagesMap[selectedGroup.id] || []}
@@ -673,6 +629,7 @@ const MobileHomePage = ({
                   onRemoveMember={onRemoveMember}
                   onMakeAdmin={onMakeAdmin}
                 />
+                </ChatBoxContainer>
               </ChatWrapper>
             )}
           </>
@@ -718,6 +675,23 @@ const MobileHomePage = ({
           </VideoCallContainer>
         </VideoCallModal>
       )}
+
+      {(isGroupCallActive || isGroupCallShuttingDown) && (
+            <GroupCallContainer minimized={isGroupCallMinimized}>
+              <GroupCallComponent
+                currentUser={currentUser}
+                group={selectedGroup}
+                handleGroupCallEnded={() => {
+                  setIsGroupCallActive(false);
+                  setIsGroupCallShuttingDown(false);
+                }}
+                isGroupCallActive={isGroupCallActive}
+                isGroupCallShuttingDown={isGroupCallShuttingDown}
+                isMinimized={isGroupCallMinimized}
+                setMinimized={setIsGroupCallMinimized}
+              />
+            </GroupCallContainer>
+          )}
       {/* Add FAB */}
       {((activeTab === 'private' || activeTab === 'group') && !selectedGroup) && (
         <FloatingActionButton onClick={handleCreateNew}>

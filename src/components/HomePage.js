@@ -1605,6 +1605,11 @@ const HomePage = () => {
         setShowUserProfilePopup={setShowUserProfilePopup}
         handleOnSaveUserProfile={handleOnSaveUserProfile}
         onClickSendMessage={onClickSendMessage}
+
+        isGroupCallShuttingDown={isGroupCallShuttingDown}
+        setIsGroupCallActive={setIsGroupCallActive}
+        setIsGroupCallShuttingDown={setIsGroupCallShuttingDown}
+
       />
     );
   }

@@ -1,3 +1,13 @@
+
+export const getInitials = (name) => {
+    if (!name) return '';
+    
+    return name
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase())
+        .join('');
+};
+
 const mentionRegex = /@(\w+\.\w+|\w+)/g;
 export function parseMessage(text) {
     const parts = [];
