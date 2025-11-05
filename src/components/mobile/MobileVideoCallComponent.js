@@ -22,13 +22,11 @@ aspect-ratio: 16 / 9;
   
   // border: 2px solid ${colors.primaryActive};
 
-  &:hover .call-controls {
-    opacity: 1;
-  }
-
-  &:hover .video-user-info {
-    opacity: 1;
-  }
+  ${props => props.showControls && `
+    .call-controls, .video-user-info {
+      opacity: 1;
+    }
+  `}
 `;
 
 const RemoteVideo = styled.video`
@@ -64,14 +62,17 @@ const MinimizeButton = styled.button`
     background: rgba(0, 0, 0, 0.8);
   }
 
-  ${VideoCallContainer}:hover & {
-    opacity: 1;
-  }
+  // ${VideoCallContainer}:hover & {
+  //   opacity: 1;
+  // }
+
+  pointer-events: ${props => (props.isRunning && !props.showControls) ? 'none' : 'auto'};
+
 `;
 
 const VideoUserInfo = styled.div`
   position: absolute;
-  bottom: 8px;
+  top: 8px;
   left: 8px;
   background: rgba(0, 0, 0, 0.6);
   padding: 4px 8px;
@@ -152,12 +153,10 @@ const CallControls = styled.div`
   z-index: 3000;
   opacity: ${props => props.isRunning ? 0 : 1};
   transition: opacity 0.3s ease;
-  pointer-events: auto;
+  pointer-events: ${props => (props.isRunning && !props.showControls) ? 'none' : 'auto'};
 
-  ${props => props.isRunning && `
-    ${VideoCallContainer}:hover & {
-      opacity: 1;
-    }
+  ${props => props.isRunning && props.showControls && `
+    opacity: 1;
   `}
 `;
 
@@ -282,13 +281,37 @@ const VideoCallComponent = ({
   isMinimized,
   setMinimized
 }) => {
+
+  const [showControls, setShowControls] = useState(false);
+
+  // Auto-hide controls after delay
+  React.useEffect(() => {
+    if (showControls) {
+      const timer = setTimeout(() => {
+        setShowControls(false);
+      }, 5000); // Hide after 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [showControls]);
+
+  const handleContainerTouch = (e) => {
+    e.preventDefault();
+    if (isMinimized) {
+      setMinimized(false);
+    } else {
+      setShowControls(!showControls);
+    }
+  };
+
   return (
-    <VideoCallContainer onClick={() => isMinimized && setMinimized(false)}>
+    <VideoCallContainer 
+      onClick={handleContainerTouch}
+      showControls={showControls}>
       {videoCallState === 'running' ? (
         <>
 
         {!isMinimized &&
-            <MinimizeButton onClick={(e) => {
+            <MinimizeButton className="call-controls" onClick={(e) => {
                 e.stopPropagation();
                 setMinimized(true);
             }}>
@@ -323,17 +346,17 @@ const VideoCallComponent = ({
             <LocalVideo ref={localVideoRef} autoPlay playsInline muted />
           </LocalVideoContainer>
           {!isMinimized && (
-          <CallControls isRunning={true} className="call-controls">
+          <CallControls isRunning={true} showControls={showControls} className="call-controls">
             <ToggleButton
               enabled={localAudioVideo.video}
-              onClick={toggleVideo}
+              onClick={ (e) => { e.stopPropagation(); toggleVideo();}}
               title={localAudioVideo.video ? 'Disable Video' : 'Enable Video'}
             >
               {localAudioVideo.video ? <MdVideocam /> : <MdVideocamOff />}
             </ToggleButton>
             <ToggleButton
               enabled={localAudioVideo.audio}
-              onClick={toggleAudio}
+              onClick={(e) => { e.stopPropagation(); toggleAudio(); }}
               title={localAudioVideo.audio ? 'Disable Audio' : 'Enable Audio'}
             >
               {localAudioVideo.audio ? <MdMic /> : <MdMicOff />}

@@ -81,7 +81,7 @@ const VideoContainer = styled.div`
     width: 100%;
     height: 100%;
     border-radius: 0;
-    z-index: 1000;
+    z-index: 5000;
   `}
 `;
 
@@ -136,18 +136,16 @@ const Controls = styled.div`
   justify-content: center;
   align-items: center;
   gap: 16px;
-//   padding: 20px;
   height: 60px;
-  //gradient background
-  background: linear-gradient(to top, rgba(21, 21, 21, 0.72), rgba(35, 34, 34, 0.62));
-  // background: transparent;
+  // background: linear-gradient(to top, rgba(21, 21, 21, 0.72), rgba(35, 34, 34, 0.62));
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   z-index: 5;
-//   border-top: 1px solid #3c4043;
-
+  opacity: ${props => props.show ? 1 : 0};
+  pointer-events: ${props => props.show ? 'auto' : 'none'};
+  transition: opacity 0.3s ease;
 `;
 
 const ControlButton = styled.button`
@@ -304,6 +302,16 @@ const GroupCallComponent = ({ currentUser, group, handleGroupCallEnded, isGroupC
   const roomId = group.id;
   const [maximizedParticipant, setMaximizedParticipant] = useState(null);
   const [showControls, setShowControls] = useState(false);
+
+  // Auto-hide controls after delay
+  useEffect(() => {
+    if (showControls) {
+      const timer = setTimeout(() => {
+        setShowControls(false);
+      }, 3000); // Hide after 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [showControls]);
 
   const getName = (name) => {
     return isMinimized ? getInitials(name) : name;
@@ -488,8 +496,8 @@ const GroupCallComponent = ({ currentUser, group, handleGroupCallEnded, isGroupC
         ))}
       </VideoGrid>
 
-      { !isMinimized && showControls &&
-      <Controls onClick={ () => {if(showControls) setShowControls(false)}}>
+      { !isMinimized &&
+      <Controls show={showControls} onClick={ () => {if(showControls) setShowControls(false)}}>
         {callState !== "idle" && (
           <>
             <ControlButton
