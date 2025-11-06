@@ -2,8 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { registerServiceWorker } from './serviceWorkerRegistration';
 
 import './styles/theme.css';
+
+// Register service worker for PWA support
+registerServiceWorker();
 
 ReactDOM.render(
   <React.StrictMode>
