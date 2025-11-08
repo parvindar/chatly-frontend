@@ -156,11 +156,16 @@ const TopNavbar = styled.div`
   display: flex;
   align-items: center;
   padding: 16px;
-  background-color: #23272a;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  position: sticky;
+  background: rgba(35, 39, 42, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  // border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 `;
 
 const NavbarTitle = styled.h1`
@@ -174,8 +179,9 @@ const ListContainer = styled.div`
   flex: 1;
   overflow-y: auto;
   padding-bottom: 80px;
+  padding-top: 60px;
   display: ${props => props.visible ? 'block' : 'none'};
-  margin-top: -1px;
+  // margin-top: -1px;
 `;
 
 const TabBar = styled.div`
