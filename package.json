@@ -33,6 +33,7 @@
   "devDependencies": {
     "@babel/preset-react": "^7.26.3",
     "@webpack-cli/serve": "^3.0.1",
+    "copy-webpack-plugin": "^13.0.1",
     "cross-env": "^7.0.3",
     "css-loader": "^7.1.2",
     "eslint": "^7.32.0",

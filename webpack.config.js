@@ -1,6 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 const webpack = require('webpack');
 const dotenv = require('dotenv');
@@ -52,6 +53,10 @@ module.exports = {
         test: /\.css$/i,
         use: ['style-loader', 'css-loader'],
       },
+      {
+        test: /\.(png|ico|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource',
+      },
     ],
   },
   resolve: {
@@ -64,10 +69,17 @@ module.exports = {
       }),
     new HtmlWebpackPlugin({
       template: './public/index.html',
+      publicPath: '/',
     }),
     new webpack.DefinePlugin({
         'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
       }),
+    new CopyPlugin({
+      patterns: [
+        { from: 'public/icons', to: 'icons' },
+        { from: 'public/manifest.json', to: 'manifest.json' },
+      ],
+    }),
   ],
 
   optimization: {
