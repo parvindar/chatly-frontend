@@ -79,7 +79,7 @@ const ChatWrapper = styled.div`
   top: 0;
   left: 0;
   right: 0;
-  bottom: 68px;
+  bottom: 0;
   background-color: #2c2f33;
   z-index: 1001;
   display: flex;
@@ -184,7 +184,7 @@ const TabBar = styled.div`
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   padding: 8px 12px;
-  position: fixed;
+  position: absolute;
   bottom: 12px;
   left: 12px;
   right: 12px;
@@ -274,9 +274,9 @@ const IconWrapper = styled.div`
 const ContentArea = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 60px; /* Height of the tab bar */
+  // padding-bottom: 60px; /* Height of the tab bar */
   position: relative;
-  height: calc(100vh - 60px);
+  // height: calc(100vh - 60px);
 `;
 
 const FloatingActionButton = styled.button`
@@ -311,8 +311,16 @@ const FloatingActionButton = styled.button`
   }
 `;
 
+const ChatBoxWrapper = styled.div`
+    position: fixed;
+    width: 100%;
+    top: 60px;
+    bottom: 0;
+    padding-top: ${props => props.isGroupCallActive ? '110px' : '0px'};
+`;
+
 const ChatBoxContainer = styled.div`
-  height: ${props => props.isGroupCallActive ? 'calc(100% - 110px)' : '100%'};
+  padding-top: ${props => props.isGroupCallActive ? '110px' : '0px'};
 `;
 
 const MobileHomePage = ({
@@ -442,7 +450,6 @@ const MobileHomePage = ({
     // };
 
   const renderContent = () => {
-    console.log(privateChats, groups, selectedGroup);
     switch (activeTab) {
       case 'friends':
         return (
@@ -523,6 +530,7 @@ const MobileHomePage = ({
                     </VideoCallButton>
                   )}
                 </ChatHeader>
+                <ChatBoxWrapper>
                 <ChatBox
                   group={selectedGroup}
                   messages={messagesMap[selectedGroup.id] || []}
@@ -546,6 +554,7 @@ const MobileHomePage = ({
                   onDeleteChat={onDeleteChat}
                   onEditChat={onEditChat}
                 />
+                </ChatBoxWrapper>
               </ChatWrapper>
             )}
           </>
@@ -632,7 +641,9 @@ const MobileHomePage = ({
                   )} */}
                 </ChatHeader>
                 { isGroupCallActive && <div style={{marginTop : '110px'}} ></div>}
-                <ChatBoxContainer isGroupCallActive={isGroupCallActive}>
+                
+                  <ChatBoxWrapper isGroupCallActive={isGroupCallActive}>
+                    {/* <ChatBoxContainer isGroupCallActive={isGroupCallActive}> */}
                 <ChatBox
                   group={selectedGroup}
                   messages={messagesMap[selectedGroup.id] || []}
@@ -657,7 +668,8 @@ const MobileHomePage = ({
                   onRemoveMember={onRemoveMember}
                   onMakeAdmin={onMakeAdmin}
                 />
-                </ChatBoxContainer>
+                {/* </ChatBoxContainer> */}
+                </ChatBoxWrapper>
               </ChatWrapper>
             )}
           </>
@@ -739,6 +751,7 @@ const MobileHomePage = ({
       <ContentArea>
         {renderContent()}
       </ContentArea>
+      { !selectedGroup &&
       <TabBar>
         <TabButton
           active={activeTab === 'private'}
@@ -775,6 +788,7 @@ const MobileHomePage = ({
           />
         </ProfileTabButton>
       </TabBar>
+    }
     </Container>
   );
 };
