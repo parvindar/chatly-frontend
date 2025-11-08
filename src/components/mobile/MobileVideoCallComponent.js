@@ -145,15 +145,17 @@ const LocalVideo = styled.video`
 
 const CallControls = styled.div`
   position: absolute;
-  bottom: 36px;
+  bottom: 48px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 20px;
+  gap: 32px;
   z-index: 3000;
   opacity: ${props => props.isRunning ? 0 : 1};
   transition: opacity 0.3s ease;
   pointer-events: ${props => (props.isRunning && !props.showControls) ? 'none' : 'auto'};
+  align-items: center;
+  justify-content: center;
 
   ${props => props.isRunning && props.showControls && `
     opacity: 1;
@@ -164,18 +166,21 @@ const ControlButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: ${props => props.isLarge ? '64px' : '40px'};
+  height: ${props => props.isLarge ? '64px' : '40px'};
   border-radius: 50%;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   background-color: ${props => props.variant === 'end' ? '#f04747' : colors.primary};
   color: white;
+  box-shadow: 0 4px 16px ${props => props.variant === 'end' ? 'rgba(240, 71, 71, 0.4)' : `rgba(${parseInt(colors.primary.slice(1,3),16)}, ${parseInt(colors.primary.slice(3,5),16)}, ${parseInt(colors.primary.slice(5,7),16)}, 0.4)`};
+  font-weight: 600;
 
   &:hover {
     background-color: ${props => props.variant === 'end' ? '#d32f2f' : colors.primaryHover};
-    transform: scale(1.1);
+    transform: scale(1.12);
+    box-shadow: 0 8px 24px ${props => props.variant === 'end' ? 'rgba(240, 71, 71, 0.6)' : `rgba(${parseInt(colors.primary.slice(1,3),16)}, ${parseInt(colors.primary.slice(3,5),16)}, ${parseInt(colors.primary.slice(5,7),16)}, 0.6)`};
   }
 
   &:active {
@@ -183,15 +188,30 @@ const ControlButton = styled.button`
   }
 
   svg {
-    font-size: 24px;
+    font-size: ${props => props.isLarge ? '32px' : '24px'};
   }
 `;
 
 const ToggleButton = styled(ControlButton)`
   background-color: ${props => props.enabled ? colors.primary : '#666'};
+  width: 56px;
+  height: 56px;
+
+  svg {
+    font-size: 28px;
+  }
   
   &:hover {
     background-color: ${props => props.enabled ? colors.primaryHover : '#555'};
+  }
+`;
+
+const EndCallButton = styled(ControlButton)`
+  width: 56px;
+  height: 56px;
+
+  svg {
+    font-size: 28px;
   }
 `;
 
@@ -213,8 +233,20 @@ const CallStatusContainer = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 12px;
   margin-bottom: 20px;
+  animation: fadeInScale 0.4s ease-out;
+
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.85);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
 `;
 
 const UserInfoContainer = styled.div`
@@ -233,14 +265,28 @@ const UserInfoContainer = styled.div`
 
 const ProfileImage = styled.img`
   height: 40%;
-  max-width: 120px;
-  max-height: 120px;
+  max-width: 140px;
+  max-height: 140px;
   aspect-ratio: 1;
   border-radius: 50%;
 //   margin: 8px;
 margin-bottom: 2%;
-  border: 3px solid ${colors.primary};
+  border: 4px solid ${colors.primary};
   object-fit: cover;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.1);
+  animation: profilePulse 2s ease-in-out infinite;
+
+  @keyframes profilePulse {
+    0%, 100% {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5),
+                  0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+    50% {
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6),
+                  0 0 0 3px rgba(255, 255, 255, 0.15);
+    }
+  }
 `;
 
 const UserName = styled.div`
@@ -262,6 +308,18 @@ const StatusText = styled.div`
   overflow: hidden;
   white-space: nowrap;
   max-width: 100%;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  animation: pulse 1.5s ease-in-out infinite;
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
 `;
 
 const VideoCallComponent = ({
@@ -363,9 +421,9 @@ const VideoCallComponent = ({
             >
               {localAudioVideo.audio ? <MdMic /> : <MdMicOff />}
             </ToggleButton>
-            <ControlButton variant="end" onClick={endCall}>
+            <EndCallButton variant="end" onClick={endCall}>
               <MdCallEnd />
-            </ControlButton>
+            </EndCallButton>
           </CallControls>
             )}
         </>
@@ -381,10 +439,10 @@ const VideoCallComponent = ({
             <StatusText>is calling you...</StatusText>
           </CallStatusContainer>
           <CallControls isRunning={false}>
-            <ControlButton onClick={acceptCall}>
+            <ControlButton isLarge onClick={acceptCall}>
               <MdCall />
             </ControlButton>
-            <ControlButton variant="end" onClick={rejectCall}>
+            <ControlButton isLarge variant="end" onClick={rejectCall}>
               <MdCallEnd />
             </ControlButton>
           </CallControls>
@@ -401,7 +459,7 @@ const VideoCallComponent = ({
             <StatusText>Calling...</StatusText>
           </CallStatusContainer>
           <CallControls isRunning={false}>
-            <ControlButton variant="end" onClick={rejectCall}>
+            <ControlButton isLarge variant="end" onClick={rejectCall}>
               <MdCallEnd />
             </ControlButton>
           </CallControls>
