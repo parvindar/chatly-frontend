@@ -156,7 +156,7 @@ const Container = styled.div`
   right: 0;
   bottom: 0;
   width: 100%;
-  overflow: hidden;
+  // overflow: hidden;
 `;
 
 const TopNavbar = styled.div`
