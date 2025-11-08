@@ -4,6 +4,7 @@ import { IoChatboxEllipses, IoChevronBackOutline } from "react-icons/io5";
 import { HiUserGroup } from "react-icons/hi2";
 import { FaUserFriends } from "react-icons/fa";
 import { FiVideo,FiPhone } from "react-icons/fi";
+import { MdAdd } from "react-icons/md";
 import GroupList from '../GroupList';
 import VideoCallComponent from './MobileVideoCallComponent';
 import GroupCallComponent from './MobileGroupCallComponent';
@@ -299,12 +300,20 @@ const FloatingActionButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
   cursor: pointer;
   z-index: 1002;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  padding: 0;
+
+  svg {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
   &:hover {
     background-color: rgba(78, 115, 223, 0.4);
@@ -741,7 +750,7 @@ const MobileHomePage = ({
       {/* Add FAB */}
       {((activeTab === 'private' || activeTab === 'group') && !selectedGroup) && (
         <FloatingActionButton onClick={handleCreateNew}>
-          +
+          <MdAdd />
         </FloatingActionButton>
       )}
       <CreateGroupModal
