@@ -63,6 +63,7 @@ const UserComponent = ({ user }) => (
             <ProfileImage
                 src={user.profile_pic || 'https://i.pravatar.cc/40'}
                 alt={user.name || 'User'}
+                referrerPolicy="no-referrer"
             />
             {/* <OnlineStatusIndicator status={userStatusMap[user.id]} /> */}
         </UserProfilePic>
@@ -81,31 +82,52 @@ const OuterContainer = styled.div`
 
 const TabsContainer = styled.div`
   display: flex;
-  justify-content: space-between; /* Distribute tabs evenly */
-  background-color: #23272a; /* Match the left panel background */
-  padding: 4px;
-  border-bottom: 1px solid #2c2f33; /* Subtle border below the tabs */
+  justify-content: space-between;
+  background: rgba(35, 39, 42, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 6px 12px;
+  margin: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
 `;
 
 const Tab = styled.div`
-  flex: 1; /* Make all tabs take equal width */
-  text-align: center; /* Center the text inside the tab */
+  flex: 1;
+  text-align: center;
   font-size: 12px;
   font-weight: 600;
-  color: ${(props) => (props.isActive ? colors.textPrimary : colors.textSecondary)}; /* Highlight active tab */
   cursor: pointer;
-  padding: 4px 0; /* Add vertical padding */
-  border-radius: 4px; /* Add rounded corners */
-  transition: background-color 0.2s, color 0.2s;
-
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
   background-color: ${(props) =>
-        props.isActive ? '#414a53' : 'transparent'}; /* Selected color */
+        props.isActive ? 'rgba(78, 115, 223, 0.3)' : 'rgba(255, 255, 255, 0.08)'};
+  border: 1px solid ${(props) =>
+        props.isActive ? 'rgba(78, 115, 223, 0.6)' : 'rgba(255, 255, 255, 0.12)'};
   color: ${(props) =>
-        props.isActive ? colors.textPrimary : colors.textSecondary}; /* Change text color for selected item */
+        props.isActive ? colors.textPrimary : colors.textSecondary};
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: ${(props) =>
+        props.isActive ? '0 2px 8px rgba(78, 115, 223, 0.2)' : 'none'};
+  margin: 0 4px;
+
+  &:first-child {
+    border-radius: 16px 12px 12px 16px;
+  }
+
+  &:last-child {
+    border-radius: 12px 16px 16px 12px;
+  }
 
   &:hover {
     background-color: ${(props) =>
-        props.isActive ? '#414a53' : '#34363c'}; /* Hover color, a bit darker */
+        props.isActive ? 'rgba(78, 115, 223, 0.4)' : 'rgba(255, 255, 255, 0.15)'};
+    border-color: ${(props) =>
+        props.isActive ? 'rgba(78, 115, 223, 0.7)' : 'rgba(255, 255, 255, 0.2)'};
     color: ${colors.textPrimary};
   }
 `;

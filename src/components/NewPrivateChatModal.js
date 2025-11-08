@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import colors from '../styles/colors';
 import { getUsersList } from '../api/sdk';
 import { useApiAction } from './useAPIAction';
+import { getInitials } from '../utils/common';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -63,6 +64,37 @@ const UserItem = styled.div`
   &:hover {
     background-color: #36393f;
   }
+`;
+
+const UserProfilePic = styled.div`
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+`;
+
+const ProfileImage = styled.img`
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+const UserDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+`;
+
+const UserName = styled.span`
+  font-size: 14px;
+  color: white;
+`;
+
+const UserId = styled.span`
+  font-size: 12px;
+  color: #99aab5;
+  margin-top: 2px;
 `;
 
 const ModalButtonContainer = styled.div`
@@ -139,7 +171,17 @@ const NewPrivateChatModal = ({ isOpen, onClose, onCreateChat }) => {
         <UserList>
           {searchResults.map((user) => (
             <UserItem key={user.id} onClick={() => handleUserSelect(user)}>
-              {user.name || user.username}
+              <UserProfilePic>
+                <ProfileImage
+                  src={user.profile_pic || 'https://i.pravatar.cc/40'}
+                  alt={getInitials(user.name) || 'User'}
+                  referrerPolicy="no-referrer"
+                />
+              </UserProfilePic>
+              <UserDetails>
+                <UserName>{user.name || user.username || 'User'}</UserName>
+                <UserId>{user.user_id || user.id}</UserId>
+              </UserDetails>
               {isLoading('createChat') && <span> Loading...</span>}
             </UserItem>
           ))}

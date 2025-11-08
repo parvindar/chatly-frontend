@@ -16,6 +16,7 @@ import NewPrivateChatModal from '../NewPrivateChatModal';
 import { useVideoCall } from '../../components/useVideoCall'; // Import the custom hook for video call
 
 import colors from '../../styles/colors';
+import { getInitials } from '../../utils/common';
 
 const VideoCallModal = styled.div`
   position: fixed;
@@ -78,7 +79,7 @@ const ChatWrapper = styled.div`
   top: 0;
   left: 0;
   right: 0;
-  bottom: 60px;
+  bottom: 68px;
   background-color: #2c2f33;
   z-index: 1001;
   display: flex;
@@ -172,41 +173,60 @@ const NavbarTitle = styled.h1`
 const ListContainer = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 60px;
+  padding-bottom: 80px;
   display: ${props => props.visible ? 'block' : 'none'};
   margin-top: -1px;
 `;
 
 const TabBar = styled.div`
   display: flex;
-  background-color: #23272a;
-  padding: 6px;
+  background: rgba(35, 39, 42, 0.3);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  padding: 8px 12px;
   position: fixed;
-  bottom: 0;
-  width: 100%;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
   height: 50px;
   z-index: 1000;
   gap: 8px;
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 25px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
 `;
 
 const TabButton = styled.button`
   flex: 1;
   padding: 8px;
-  background-color: ${props => props.active ? colors.primary : 'transparent'};
+  background-color: ${props => props.active ? 'rgba(78, 115, 223, 0.3)' : 'rgba(255, 255, 255, 0.08)'};
   color: white;
-  border: none;
-  border-radius: 4px;
+  border: 1px solid ${props => props.active ? 'rgba(78, 115, 223, 0.6)' : 'rgba(255, 255, 255, 0.12)'};
+  border-radius: 12px;
   margin: 0 5px;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: ${props => props.active ? '0 2px 8px rgba(78, 115, 223, 0.2)' : 'none'};
+
+  &:first-child {
+    border-radius: 20px 12px 12px 20px;
+  }
+
+  &:last-child {
+    border-radius: 12px 20px 20px 12px;
+  }
 
   &:hover {
-    background-color: ${colors.primaryHover};
+    background-color: ${props => props.active ? 'rgba(78, 115, 223, 0.4)' : 'rgba(255, 255, 255, 0.15)'};
+    border-color: ${props => props.active ? 'rgba(78, 115, 223, 0.7)' : 'rgba(255, 255, 255, 0.2)'};
   }
 
   svg {
@@ -219,21 +239,26 @@ const TabButton = styled.button`
 `;
 
 const ProfileTabButton = styled(TabButton)`
-//   position: relative;
-//   overflow: hidden;
-//   padding: 0;
-//   width: 32px;
-     height: 36px;
-//   border-radius: 50%;
-     margin: 2px 5px;
+  height: 36px;
+  margin: 2px 5px;
   background-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  transition: all 0.3s ease;
   
   img {
     width: 32px;
     height: 32px;
     object-fit: cover;
     border-radius: 50%;
-    border: 2px solid ${props => props.active ? colors.primary : 'transparent'};
+    border: 2px solid ${props => props.active ? colors.primary : 'rgba(255, 255, 255, 0.2)'};
+    transition: all 0.3s ease;
+  }
+
+  &:hover {
+    // border-color: rgba(255, 255, 255, 0.25);
+    // box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
   }
 `;
 
@@ -261,20 +286,23 @@ const FloatingActionButton = styled.button`
   width: 40px;
   height: 40px;
   border-radius: 28px;
-  background-color: ${colors.primary};
+  background-color: rgba(78, 115, 223, 0.3);
   color: white;
-  border: none;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(78, 115, 223, 0.6);
+  box-shadow: 0 4px 8px rgba(78, 115, 223, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
   cursor: pointer;
   z-index: 1002;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 
   &:hover {
-    background-color: ${colors.primaryHover};
+    background-color: rgba(78, 115, 223, 0.4);
+    border-color: rgba(78, 115, 223, 0.7);
     transform: scale(1.05);
   }
 
@@ -477,7 +505,7 @@ const MobileHomePage = ({
                     <IoChevronBackOutline />
                   </BackButton>
                   <ChatProfilePic 
-                    src={selectedGroup.user?.profile_pic || 'https://i.pravatar.cc/40'}
+                    src={selectedGroup.user?.profile_pic || `https://i.pravatar.cc/40?u=${selectedGroup.user.id}`}
                     alt="Chat"
                     onClick={ () => handleShowUserProfilePopup(selectedGroup.user)}
                   />
@@ -575,8 +603,8 @@ const MobileHomePage = ({
                   </BackButton>
                   <ChatProfilePic 
                     src={selectedGroup.type === 'private' ? 
-                      userMap[selectedGroup.members.find(id => id !== currentUser.id)]?.profile_pic || 'https://i.pravatar.cc/40' : 
-                      selectedGroup.avatar || 'https://i.pravatar.cc/40'
+                      userMap[selectedGroup.members.find(id => id !== currentUser.id)]?.profile_pic || `https://i.pravatar.cc/40?u=${selectedGroup.id}` : 
+                      selectedGroup.avatar || `https://i.pravatar.cc/40?u=${selectedGroup.id}`
                     } 
                     alt="Chat"
                   />
@@ -742,7 +770,8 @@ const MobileHomePage = ({
         >
           <img 
             src={currentUser?.profile_pic || 'https://i.pravatar.cc/40'} 
-            alt="Profile"
+            alt={getInitials(currentUser?.name) || ''}
+            referrerPolicy="no-referrer"
           />
         </ProfileTabButton>
       </TabBar>

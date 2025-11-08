@@ -287,7 +287,7 @@ const MeetingPage = () => {
                 <VideoContainer participantCount={participants.length + 1}>
                     {(callState !== "active" || !isVideoEnabled) && (
                         <ProfileInfo>
-                            <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
+                            <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" referrerPolicy="no-referrer" />
                             <span style={{ fontWeight: 'bold', marginTop: '12px'}}>{currentUser?.name || 'You'}</span>
                             {!isAudioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px'}} size={14} />}
                         </ProfileInfo>
@@ -308,7 +308,7 @@ const MeetingPage = () => {
                     <VideoContainer participantCount={participants.length + 1} key={participant.id}>
                       {!participant.videoEnabled && (
                         <ProfileInfo>
-                            <img src={participant.user_info?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
+                            <img src={participant.user_info?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" referrerPolicy="no-referrer" />
                             <span style={{ fontWeight: 'bold', marginTop: '12px'}}>{participant.user_info?.name}</span>
                             {!participant.audioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px'}} size={14} />}
                         </ProfileInfo>

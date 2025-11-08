@@ -246,9 +246,9 @@ const InputContainer = styled.div`
 `;
 
 const Input = styled.input`
-  padding: 12px;
+  padding: 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: 12px;
   background-color: #23272a;
   color: white;
   width: 100%;
@@ -1482,6 +1482,7 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
                   <ProfilePic
                     src={userMap[message.sender_id]?.profile_pic || 'https://i.pravatar.cc/40'}
                     alt={userMap[message.sender_id]?.name.split(' ').map((n) => n[0]).join('')}
+                    referrerPolicy="no-referrer"
                     onClick={() => setShowUserProfilePopup(userMap[message.sender_id])}
                   />
                 )}
@@ -1667,7 +1668,7 @@ const ChatBox = ({ currentUser, group, messages, onSendMessage, typingUsers = {}
             </span>
           </ReplyToHeader>
           <ReplyToMessageItem>
-            <ProfilePic src={userMap[replyingToMessage.sender_id]?.profile_pic || 'https://i.pravatar.cc/40'} alt={userMap[replyingToMessage.sender_id]?.name.split(' ').map((n) => n[0]).join('')} />
+            <ProfilePic src={userMap[replyingToMessage.sender_id]?.profile_pic || 'https://i.pravatar.cc/40'} alt={userMap[replyingToMessage.sender_id]?.name.split(' ').map((n) => n[0]).join('')} referrerPolicy="no-referrer" />
             <MessageContent>
               <SenderName>
                 <span>{userMap[replyingToMessage.sender_id]?.name}</span>

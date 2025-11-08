@@ -1724,6 +1724,7 @@ const HomePage = () => {
                   <ProfileImage
                     src={chat.user.profile_pic || 'https://i.pravatar.cc/40'}
                     alt={chat.user.name || 'User'}
+                    referrerPolicy="no-referrer"
                   />
                   <OnlineStatusIndicator status={userStatusMap[chat.user.id]} />
                 </UserProfilePic>
@@ -1869,6 +1870,7 @@ const HomePage = () => {
                   src={selectedGroup.user.profile_pic || 'https://i.pravatar.cc/80'}
                   alt={selectedGroup.user.name}
                   style={{ border: `2px solid ${colors.primary}` }}
+                  referrerPolicy="no-referrer"
                 />
                 <OnlineStatusIndicator status={userStatusMap[selectedGroup.user.id]} style={{ width: '12px', height: '12px', right: '2px', bottom: '2px' }} /> {/* Adjusted indicator */}
               </UserProfilePic>
@@ -1968,6 +1970,7 @@ const HomePage = () => {
                     <ProfileImage
                       src={member.profile_pic || 'https://i.pravatar.cc/40'}
                       alt={member.name}
+                      referrerPolicy="no-referrer"
                     />
                     <OnlineStatusIndicator status={member.status} />
                   </UserProfilePic>
@@ -2062,6 +2065,7 @@ const HomePage = () => {
                     <ProfileImage
                       src={user.profile_pic || 'https://i.pravatar.cc/40'}
                       alt={user.name}
+                      referrerPolicy="no-referrer"
                     />
                     {/* <OnlineStatusIndicator isOnline={user.is_member} /> */}
                   </UserProfilePic>
@@ -2102,6 +2106,7 @@ const HomePage = () => {
                     <ProfileImage
                       src={user.profile_pic || 'https://i.pravatar.cc/40'}
                       alt={user.name}
+                      referrerPolicy="no-referrer"
                     />
                     {/* <OnlineStatusIndicator isOnline={user.is_member} /> */}
                   </UserProfilePic>

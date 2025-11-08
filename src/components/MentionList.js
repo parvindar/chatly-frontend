@@ -123,7 +123,7 @@ const MentionList = ({ options, onSelect }) => {
                     tabIndex={-1}
                 >
                     <div className="left-group">
-                        <img src={option.profile_pic || "https://i.pravatar.cc/40"} alt={option.name} />
+                        <img src={option.profile_pic || "https://i.pravatar.cc/40"} alt={option.name} referrerPolicy="no-referrer" />
                         <span className="name">{option.name}</span>
                     </div>
                     <span className="right-group user-id">{option.user_id}</span>

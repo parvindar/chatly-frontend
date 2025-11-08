@@ -257,6 +257,7 @@ const VideoCallComponent = ({
             <ProfileImage
               src={userInfo?.profile_pic || 'https://i.pravatar.cc/100'}
               alt={userInfo?.name || 'User'}
+              referrerPolicy="no-referrer"
             />
             <UserName>{userInfo?.name || 'User'}</UserName>
 
@@ -274,6 +275,7 @@ const VideoCallComponent = ({
               <ProfileImage style={{ borderWidth: '1px' }}
                 src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'}
                 alt={currentUser?.name || 'User'}
+                referrerPolicy="no-referrer"
               />
             </UserInfoContainer>}
             <LocalVideo ref={localVideoRef} autoPlay playsInline muted />
@@ -304,6 +306,7 @@ const VideoCallComponent = ({
             <ProfileImage
               src={userInfo?.profile_pic || 'https://i.pravatar.cc/100'}
               alt={userInfo?.name || 'User'}
+              referrerPolicy="no-referrer"
             />
             <UserName>{userInfo?.name || 'User'}</UserName>
             <StatusText>is calling you...</StatusText>
@@ -323,6 +326,7 @@ const VideoCallComponent = ({
             <ProfileImage
               src={userInfo?.profile_pic || 'https://i.pravatar.cc/100'}
               alt={userInfo?.name || 'User'}
+              referrerPolicy="no-referrer"
             />
             <UserName>{userInfo?.name || 'User'}</UserName>
             <StatusText>Calling...</StatusText>

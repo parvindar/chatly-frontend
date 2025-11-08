@@ -438,7 +438,7 @@ const GroupCallComponent = ({ currentUser, group, handleGroupCallEnded, isGroupC
           onClick={() => setMaximizedParticipant(maximizedParticipant === 'local' ? null : 'local')}
         >
           <ProfileInfo isVideoEnabled={isVideoEnabled} isMaximized={maximizedParticipant === 'local'}>
-            <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
+            <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" referrerPolicy="no-referrer" />
             <span style={{ fontWeight: 'bold', marginTop: '12px' }}>You</span>
             {!isAudioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px' }} size={14} />}
           </ProfileInfo>
@@ -473,7 +473,7 @@ const GroupCallComponent = ({ currentUser, group, handleGroupCallEnded, isGroupC
               playsInline
             />
             <ProfileInfo isVideoEnabled={participant.videoEnabled} isMaximized={maximizedParticipant === participant.id}>
-              <img src={participant.user_info?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
+              <img src={participant.user_info?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" referrerPolicy="no-referrer" />
               <span style={{ fontWeight: 'bold', marginTop: '12px' }}>{participant.user_info?.name}</span>
               {!participant.audioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px' }} size={14} />}
             </ProfileInfo>

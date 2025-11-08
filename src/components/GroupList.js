@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import colors from '../styles/colors';
 import { FiMoreVertical } from 'react-icons/fi';
 import TypingAnimation from './TypingAnimation';
+import { getInitials } from '../utils/common';
 
 const GroupItem = styled.div`
   display: flex;
@@ -233,8 +234,9 @@ const GroupList = ({
             >
               <UserProfilePic>
                 <ProfileImage
-                  src={type === 'private' ? item.user?.profile_pic || 'https://i.pravatar.cc/100' : item.profile_pic || 'https://i.pravatar.cc/100'}
-                  alt={type === 'private' ? item.user?.name : item.name}
+                  src={type === 'private' ? item.user?.profile_pic || `https://i.pravatar.cc/100?u=${item.user?.id}` : item.profile_pic || `https://i.pravatar.cc/100?u=${item.id}`}
+                  alt={type === 'private' ? getInitials(item.user?.name) : getInitials(item.name)}
+                  referrerPolicy="no-referrer"
                 />
                 {type === 'private' && (
                   <OnlineStatusIndicator status={userStatusMap[item.user?.id] || 'offline'} />

@@ -368,7 +368,7 @@ const GroupCallComponent = ({ currentUser, group, handleGroupCallEnded, isGroupC
         <VideoContainer participantCount={participants.length + 1}>
           {/* {(callState !== "active" || !isVideoEnabled || !localVideoRef.current?.srcObject) && ( */}
           <ProfileInfo isVideoEnabled={isVideoEnabled}>
-            <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
+            <img src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" referrerPolicy="no-referrer" />
             <span style={{ fontWeight: 'bold', marginTop: '12px' }}>{currentUser?.name || 'You'}</span>
             {!isAudioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px' }} size={14} />}
           </ProfileInfo>
@@ -396,7 +396,7 @@ const GroupCallComponent = ({ currentUser, group, handleGroupCallEnded, isGroupC
             />
             {/* {(!participant.videoEnabled || !participant.videoRef) && ( */}
             <ProfileInfo isVideoEnabled={participant.videoEnabled}>
-              <img src={participant.user_info?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" />
+              <img src={participant.user_info?.profile_pic || 'https://i.pravatar.cc/100'} alt="Profile" referrerPolicy="no-referrer" />
               <span style={{ fontWeight: 'bold', marginTop: '12px' }}>{participant.user_info?.name}</span>
               {!participant.audioEnabled && <FiMicOff style={{ position: 'absolute', left: '12px', bottom: '12px' }} size={14} />}
             </ProfileInfo>
