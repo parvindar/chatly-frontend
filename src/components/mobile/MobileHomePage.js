@@ -334,7 +334,7 @@ const FloatingActionButton = styled.button`
 `;
 
 const ChatBoxWrapper = styled.div`
-    position: absolute;
+    position: fixed;
     width: 100%;
     top: 60px;
     bottom: 0;
