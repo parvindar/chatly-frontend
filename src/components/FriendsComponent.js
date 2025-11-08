@@ -77,7 +77,7 @@ const UserComponent = ({ user }) => (
 
 const OuterContainer = styled.div`
     width : 100%;
-    height : 100%;
+    height : 95%;
 `
 
 const TabsContainer = styled.div`

@@ -150,7 +150,13 @@ const Container = styled.div`
   flex-direction: column;
   height: 100vh;
   background-color: #2c2f33;
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  overflow: hidden;
 `;
 
 const TopNavbar = styled.div`
@@ -283,6 +289,7 @@ const ContentArea = styled.div`
   overflow-y: auto;
   // padding-bottom: 60px; /* Height of the tab bar */
   position: relative;
+  height: 100%;
   // height: calc(100vh - 60px);
 `;
 
