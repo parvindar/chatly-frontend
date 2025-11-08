@@ -338,7 +338,7 @@ const ChatBoxWrapper = styled.div`
     width: 100%;
     top: 60px;
     bottom: 0;
-    padding-top: ${props => props.isGroupCallActive ? '110px' : '0px'};
+    padding-top: ${props => props.isGroupCallActive ? '152px' : '0px'};
 `;
 
 const ChatBoxContainer = styled.div`

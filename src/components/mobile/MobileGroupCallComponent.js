@@ -56,17 +56,17 @@ const VideoGrid = styled.div`
   // scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   // width: 100%;
-  height: 80px;
+  height: 120px;
   ${CustomScrollbar}
 `;
 
 const VideoContainer = styled.div`
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 100px;
+  height: 100px;
   flex-shrink: 0;
   background: #3c4043;
-  border-radius: 50%;
+  border-radius: 20px;
   overflow: hidden;
   scroll-snap-align: start;
   border: 2px solid ${colors.primary};
