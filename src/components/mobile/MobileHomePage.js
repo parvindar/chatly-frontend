@@ -188,10 +188,10 @@ const ListContainer = styled.div`
 const TabBar = styled.div`
   display: flex;
   background: rgba(35, 39, 42, 0.3);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 8px 12px;
-  position: absolute;
+  position: fixed;
   bottom: 12px;
   left: 12px;
   right: 12px;
