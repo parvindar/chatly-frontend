@@ -255,6 +255,7 @@ const Input = styled.input`
   padding-right: 80px;
   padding-left: 28px;
   position: relative;
+  font-size: 16px;
 
   &:focus {
     outline: none;
