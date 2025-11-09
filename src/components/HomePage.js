@@ -530,6 +530,10 @@ const Tab = styled.div`
   padding: 10px 0; /* Add vertical padding */
   border-radius: 4px; /* Add rounded corners */
   transition: background-color 0.2s, color 0.2s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   background-color: ${(props) =>
     props.isActive ? '#414a53' : 'transparent'}; /* Selected color */
@@ -541,6 +545,25 @@ const Tab = styled.div`
     props.isActive ? '#414a53' : '#34363c'}; /* Hover color, a bit darker */
     color: ${colors.textPrimary};
   }
+`;
+
+const TabBadge = styled.div`
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  background: #ff6b6b;
+  border-radius: 50%;
+  font-size: 10px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+  flex-shrink: 0;
 `;
 
 const VideoCallSection = styled.div`
@@ -827,6 +850,24 @@ const HomePage = () => {
       }
     }
   }, [])
+
+  // Compute unread badge counts based on comparing last_read_message_id with latest_message.id
+  // Shows count of chats/groups with unread messages when not viewing that tab
+  const unreadGroupsCount = selectedTab !== 'groups' && groups
+    ? groups.filter(group =>
+        group.latest_message?.id &&
+        group.last_read_message_id &&
+        BigInt(group.last_read_message_id) < BigInt(group.latest_message.id)
+      ).length
+    : 0;
+
+  const unreadPrivateChatsCount = selectedTab !== 'privateChats' && privateChats
+    ? privateChats.filter(chat =>
+        chat.latest_message?.id &&
+        chat.last_read_message_id &&
+        BigInt(chat.last_read_message_id) < BigInt(chat.latest_message.id)
+      ).length
+    : 0;
 
   const fetchPrivateChatss = async () => {
     const data = await fetchPrivateChats(currentUser.id);
@@ -1615,12 +1656,18 @@ const HomePage = () => {
             onClick={() => setSelectedTab('groups')}
           >
             Groups
+            {unreadGroupsCount > 0 && (
+              <TabBadge>{unreadGroupsCount > 9 ? '9+' : unreadGroupsCount}</TabBadge>
+            )}
           </Tab>
           <Tab
             isActive={selectedTab === 'privateChats'}
             onClick={() => setSelectedTab('privateChats')}
           >
             DMs
+            {unreadPrivateChatsCount > 0 && (
+              <TabBadge>{unreadPrivateChatsCount > 9 ? '9+' : unreadPrivateChatsCount}</TabBadge>
+            )}
           </Tab>
         </TabsContainer>
 

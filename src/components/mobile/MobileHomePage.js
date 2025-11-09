@@ -301,6 +301,7 @@ const TabButton = styled.button`
   backdrop-filter: blur(15px) saturate(160%);
   -webkit-backdrop-filter: blur(15px) saturate(160%);
   box-shadow: ${props => props.active ? 'inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 12px rgba(99, 140, 245, 0.15)' : 'inset 0 0.5px 0 rgba(255, 255, 255, 0.08)'};
+  position: relative;
 
   &:first-child {
     border-radius: 18px 12px 12px 18px;
@@ -321,6 +322,34 @@ const TabButton = styled.button`
 
   &:active svg {
     transform: scale(0.88);
+  }
+`;
+
+const MessageBadge = styled.div`
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+  animation: pulse 2s infinite;
+
+  @keyframes pulse {
+    0%, 100% {
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+    }
+    50% {
+      box-shadow: 0 4px 20px rgba(255, 107, 107, 0.6);
+    }
   }
 `;
 
@@ -532,6 +561,24 @@ const MobileHomePage = ({
   useEffect(() => {
     onSelectGroup(null);
   }, []);
+
+  // Compute unread badge counts based on comparing last_read_message_id with latest_message.id
+  // This matches the HomePage logic and automatically clears when messages are marked as read
+  const unreadPrivateCount = activeTab !== 'private' && privateChats
+    ? privateChats.filter(chat =>
+        chat.latest_message?.id && 
+        chat.last_read_message_id && 
+        BigInt(chat.last_read_message_id) < BigInt(chat.latest_message.id)
+      ).length
+    : 0;
+
+  const unreadGroupCount = activeTab !== 'group' && groups
+    ? groups.filter(group =>
+        group.latest_message?.id &&
+        group.last_read_message_id &&
+        BigInt(group.last_read_message_id) < BigInt(group.latest_message.id)
+      ).length
+    : 0;
 
   // Handle phone back button press
   useEffect(() => {
@@ -924,6 +971,9 @@ const MobileHomePage = ({
           <IconWrapper active={activeTab === 'private'}>
             <IoChatboxEllipses />
           </IconWrapper>
+          {unreadPrivateCount > 0 && activeTab !== 'private' && (
+            <MessageBadge>{unreadPrivateCount > 9 ? '9+' : unreadPrivateCount}</MessageBadge>
+          )}
         </TabButton>
         <TabButton
           active={activeTab === 'group'}
@@ -932,6 +982,9 @@ const MobileHomePage = ({
           <IconWrapper active={activeTab === 'group'}>
             <HiUserGroup />
           </IconWrapper>
+          {unreadGroupCount > 0 && activeTab !== 'group' && (
+            <MessageBadge>{unreadGroupCount > 9 ? '9+' : unreadGroupCount}</MessageBadge>
+          )}
         </TabButton>
         <TabButton
           active={activeTab === 'friends'}
@@ -940,6 +993,9 @@ const MobileHomePage = ({
           <IconWrapper active={activeTab === 'friends'}>
             <FaUserFriends />
           </IconWrapper>
+          {friendRequests?.length > 0 && (
+            <MessageBadge>{friendRequests.length > 9 ? '9+' : friendRequests.length}</MessageBadge>
+          )}
         </TabButton>
         <ProfileTabButton
           active={activeTab === 'profile'}
