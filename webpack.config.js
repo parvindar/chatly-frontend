@@ -78,6 +78,7 @@ module.exports = {
       patterns: [
         { from: 'public/icons', to: 'icons' },
         { from: 'public/manifest.json', to: 'manifest.json' },
+        { from: 'public/sounds', to: 'sounds' },
       ],
     }),
   ],

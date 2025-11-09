@@ -412,24 +412,33 @@ export const useVideoCall = ({ id: userId }) => {
   };
 
   // Initialize separate ringtone audio elements for incoming and outgoing calls
+  // Initialize separate ringtone audio elements for incoming and outgoing calls
   useEffect(() => {
     if (!outgoingRingtoneRef.current) {
       const outgoingAudio = new Audio();
       // Outgoing call tone - using local sound file
-      outgoingAudio.src = "/sounds/call-outgoing.mp3";
+      const publicUrl = process.env.PUBLIC_URL || '';
+      outgoingAudio.src = `${publicUrl}/sounds/call-outgoing.mp3`;
       outgoingAudio.loop = true;
       outgoingAudio.preload = "auto";
       outgoingAudio.volume = 0.7;
+      outgoingAudio.onerror = () => {
+        console.warn("Failed to load outgoing ringtone:", outgoingAudio.src);
+      };
       outgoingRingtoneRef.current = outgoingAudio;
     }
 
     if (!incomingRingtoneRef.current) {
       const incomingAudio = new Audio();
       // Incoming call tone - using local sound file (Discord-style)
-      incomingAudio.src = "/sounds/gta_ringtone.mp3";
+      const publicUrl = process.env.PUBLIC_URL || '';
+      incomingAudio.src = `${publicUrl}/sounds/gta_ringtone.mp3`;
       incomingAudio.loop = true;
       incomingAudio.preload = "auto";
       incomingAudio.volume = 0.7;
+      incomingAudio.onerror = () => {
+        console.warn("Failed to load incoming ringtone:", incomingAudio.src);
+      };
       incomingRingtoneRef.current = incomingAudio;
     }
   }, []);
