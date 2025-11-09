@@ -9,6 +9,7 @@ export const useVideoCall = ({ id: userId }) => {
   const localStreamRef = useRef(null);
   const outgoingRingtoneRef = useRef(null);
   const incomingRingtoneRef = useRef(null);
+  const vibrationIntervalRef = useRef(null);
   const [currentCall, setCurrentCall] = useState(null);
   const [videoCallState, setVideoCallState] = useState("idle"); // New state for video call status
   const [remoteICECandidate, setRemoteICECandidate] = useState([]);
@@ -366,22 +367,52 @@ export const useVideoCall = ({ id: userId }) => {
 
   // Vibration patterns for different call states
   const triggerIncomingCallVibration = () => {
+    // Stop any existing vibration interval
+    if (vibrationIntervalRef.current) {
+      clearInterval(vibrationIntervalRef.current);
+    }
+    
     if (navigator.vibrate) {
       // Incoming call vibration pattern: longer vibrations with pauses
       // [vibrate, pause, vibrate, pause, vibrate, pause]
       navigator.vibrate([400, 200, 400, 200, 400]);
+      
+      // Loop vibration every 1100ms (duration of pattern above)
+      vibrationIntervalRef.current = setInterval(() => {
+        if (navigator.vibrate) {
+          navigator.vibrate([400, 200, 400, 200, 400]);
+        }
+      }, 1100);
     }
   };
 
   const triggerOutgoingCallVibration = () => {
+    // Stop any existing vibration interval
+    if (vibrationIntervalRef.current) {
+      clearInterval(vibrationIntervalRef.current);
+    }
+    
     if (navigator.vibrate) {
       // Outgoing call vibration pattern: shorter, lighter vibrations
       // [vibrate, pause, vibrate, pause]
       navigator.vibrate([200, 100, 200]);
+      
+      // Loop vibration every 500ms (duration of pattern above)
+      vibrationIntervalRef.current = setInterval(() => {
+        if (navigator.vibrate) {
+          navigator.vibrate([200, 100, 200]);
+        }
+      }, 500);
     }
   };
 
   const stopVibration = () => {
+    // Clear any existing vibration interval
+    if (vibrationIntervalRef.current) {
+      clearInterval(vibrationIntervalRef.current);
+      vibrationIntervalRef.current = null;
+    }
+    
     if (navigator.vibrate) {
       navigator.vibrate(0); // Stop all vibration
     }
