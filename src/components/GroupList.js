@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import colors from '../styles/colors';
+import { CustomScrollbar } from '../styles/styles';
 import { FiMoreVertical } from 'react-icons/fi';
 import TypingAnimation from './TypingAnimation';
 import { getInitials } from '../utils/common';
@@ -174,22 +175,7 @@ const GroupListContainer = styled.div`
   padding: 8px;
 
   /* Custom scrollbar styling */
-  &::-webkit-scrollbar {
-    width: 8px; /* Width of the scrollbar */
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #2c2f33; /* Track background color */
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #7289da; /* Thumb color */
-    border-radius: 4px; /* Rounded corners for the thumb */
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #5b6eae; /* Thumb color on hover */
-  }
+  ${CustomScrollbar}
 `;
 
 const GroupList = ({ 

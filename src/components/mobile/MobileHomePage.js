@@ -76,72 +76,107 @@ const GroupCallContainer = styled.div`
 `;
 
 const ChatWrapper = styled.div`
-  // position: fixed;
-  // top: 0;
-  // left: 0;
-  // right: 0;
-  // bottom: 0;
-  // background-color: #2c2f33;
-  // z-index: 1001;
-  // display: flex;
-  // flex-direction: column;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
 `;
 
 const ChatHeader = styled.div`
   display: flex;
   align-items: center;
-  padding: 15px;
-  background-color: #23272a;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px 18px;
+  background: rgba(30, 33, 38, 0.45);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
 `;
 
 const BackButton = styled.button`
   background: none;
   border: none;
-  color: white;
+  color: #ffffff;
   font-size: 24px;
-  padding: 0 15px 0 0;
+  padding: 8px 12px 8px 0;
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  border-radius: 8px;
 
   &:hover {
-    color: ${colors.primary};
+    color: rgba(99, 140, 245, 0.9);
+    background-color: rgba(99, 140, 245, 0.08);
+  }
+
+  &:active {
+    transform: scale(0.92);
   }
 `;
 
 const ChatProfilePic = styled.img`
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  margin-right: 10px;
+  margin-right: 14px;
   object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.25s ease;
+  cursor: pointer;
+
+  &:hover {
+    border-color: rgba(99, 140, 245, 0.4);
+    box-shadow: 0 6px 16px rgba(99, 140, 245, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
 `;
 
 const ChatTitle = styled.div`
-  color: white;
+  color: #ffffff;
   font-size: 18px;
+  font-weight: 600;
   flex: 1;
+  letter-spacing: -0.2px;
+  cursor: pointer;
+  transition: color 0.25s ease;
+
+  &:hover {
+    color: rgba(99, 140, 245, 0.95);
+  }
 `;
 
 const VideoCallButton = styled.button`
-  background: none;
-  border: none;
-  color: white;
+  background: linear-gradient(135deg, rgba(99, 140, 245, 0.2) 0%, rgba(78, 115, 223, 0.15) 100%);
+  border: 1.2px solid rgba(99, 140, 245, 0.4);
+  color: #ffffff;
   font-size: 20px;
-  padding: 8px;
+  padding: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(15px) saturate(150%);
+  -webkit-backdrop-filter: blur(15px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4px 12px rgba(99, 140, 245, 0.1);
 
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, rgba(99, 140, 245, 0.3) 0%, rgba(78, 115, 223, 0.25) 100%);
+    border-color: rgba(99, 140, 245, 0.6);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 6px 16px rgba(99, 140, 245, 0.2);
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.92);
   }
 `;
 
@@ -149,129 +184,167 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #2c2f33;
+  background: linear-gradient(135deg, #1a1d22 0%, #242830 100%);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   width: 100%;
-  // overflow: hidden;
+  
+  /* Ensure distorted background is visible through glass */
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(99, 140, 245, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(99, 140, 245, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
 `;
 
 const TopNavbar = styled.div`
   display: flex;
   align-items: center;
-  padding: 16px;
-  background: rgba(35, 39, 42, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  // border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 18px 20px;
+  background: rgba(30, 33, 38, 0.45);
+  backdrop-filter: blur(30px) saturate(200%);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  // border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 `;
 
 const NavbarTitle = styled.h1`
-  color: white;
-  font-size: 20px;
-  font-weight: 600;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 700;
   margin: 0;
+  letter-spacing: -0.3px;
 `;
 
 const ListContainer = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 80px;
-  padding-top: 60px;
+  padding-bottom: 88px;
+  padding-top: 68px;
   display: ${props => props.visible ? 'block' : 'none'};
-  // margin-top: -1px;
+  
+  /* Smooth scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+  }
 `;
 
 const TabBar = styled.div`
   display: flex;
-  background: rgba(35, 39, 42, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  padding: 8px 12px;
+  background: rgba(30, 33, 38, 0.35);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  padding: 12px 14px;
   position: fixed;
-  bottom: 12px;
-  left: 12px;
-  right: 12px;
-  height: 50px;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  height: 56px;
   z-index: 1000;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 25px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1.2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15), inset 0 1.5px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
 `;
 
 const TabButton = styled.button`
   flex: 1;
-  padding: 8px;
-  background-color: ${props => props.active ? 'rgba(78, 115, 223, 0.3)' : 'rgba(255, 255, 255, 0.08)'};
+  padding: 10px;
+  background-color: ${props => props.active ? 'rgba(99, 140, 245, 0.25)' : 'rgba(255, 255, 255, 0.05)'};
   color: white;
-  border: 1px solid ${props => props.active ? 'rgba(78, 115, 223, 0.6)' : 'rgba(255, 255, 255, 0.12)'};
-  border-radius: 12px;
-  margin: 0 5px;
-  transition: all 0.3s ease;
+  border: 1.2px solid ${props => props.active ? 'rgba(99, 140, 245, 0.5)' : 'rgba(255, 255, 255, 0.1)'};
+  border-radius: 14px;
+  margin: 0 4px;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 20px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: ${props => props.active ? '0 2px 8px rgba(78, 115, 223, 0.2)' : 'none'};
+  backdrop-filter: blur(15px) saturate(160%);
+  -webkit-backdrop-filter: blur(15px) saturate(160%);
+  box-shadow: ${props => props.active ? 'inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 4px 12px rgba(99, 140, 245, 0.15)' : 'inset 0 0.5px 0 rgba(255, 255, 255, 0.08)'};
 
   &:first-child {
-    border-radius: 20px 12px 12px 20px;
+    border-radius: 18px 12px 12px 18px;
   }
 
   &:last-child {
-    border-radius: 12px 20px 20px 12px;
+    border-radius: 12px 18px 18px 12px;
   }
 
   &:hover {
-    background-color: ${props => props.active ? 'rgba(78, 115, 223, 0.4)' : 'rgba(255, 255, 255, 0.15)'};
-    border-color: ${props => props.active ? 'rgba(78, 115, 223, 0.7)' : 'rgba(255, 255, 255, 0.2)'};
+    background-color: ${props => props.active ? 'rgba(99, 140, 245, 0.35)' : 'rgba(255, 255, 255, 0.1)'};
+    border-color: ${props => props.active ? 'rgba(99, 140, 245, 0.6)' : 'rgba(255, 255, 255, 0.2)'};
   }
 
   svg {
-    transition: transform 0.2s;
+    transition: transform 0.25s ease;
   }
 
   &:active svg {
-    transform: scale(0.9);
+    transform: scale(0.88);
   }
 `;
 
 const ProfileTabButton = styled(TabButton)`
-  height: 36px;
-  margin: 2px 5px;
+  height: 40px;
+  margin: 2px 4px;
   background-color: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   border: none;
-  transition: all 0.3s ease;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   
   img {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     object-fit: cover;
     border-radius: 50%;
-    border: 2px solid ${props => props.active ? colors.primary : 'rgba(255, 255, 255, 0.2)'};
-    transition: all 0.3s ease;
+    border: 2.5px solid ${props => props.active ? 'rgba(99, 140, 245, 0.6)' : 'rgba(255, 255, 255, 0.15)'};
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: ${props => props.active ? 'inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 4px 12px rgba(99, 140, 245, 0.15)' : 'inset 0 0.5px 0 rgba(255, 255, 255, 0.1)'};
   }
 
   &:hover {
-    // border-color: rgba(255, 255, 255, 0.25);
-    // box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+    img {
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 8px rgba(255, 255, 255, 0.08);
+    }
   }
 `;
 
@@ -281,62 +354,84 @@ const IconWrapper = styled.div`
   justify-content: center;
   width: 100%;
   height: 100%;
-  color: ${props => props.active ? '#ffffff' : 'rgba(255, 255, 255, 0.7)'};
+  color: ${props => props.active ? '#ffffff' : 'rgba(255, 255, 255, 0.65)'};
+  transition: color 0.25s ease;
 `;
 
 const ContentArea = styled.div`
   flex: 1;
   overflow-y: auto;
-  // padding-bottom: 60px; /* Height of the tab bar */
   position: relative;
   height: 100%;
-  // height: calc(100vh - 60px);
+  z-index: 1;
+  
+  /* Smooth scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+  }
 `;
 
 const FloatingActionButton = styled.button`
   position: fixed;
-  right: 20px;
-  bottom: 80px; /* Above the tab bar */
-  width: 40px;
-  height: 40px;
-  border-radius: 28px;
-  background-color: rgba(78, 115, 223, 0.3);
-  color: white;
-  border: 1px solid rgba(78, 115, 223, 0.6);
-  box-shadow: 0 4px 8px rgba(78, 115, 223, 0.2);
+  right: 24px;
+  bottom: 88px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(99, 140, 245, 0.35) 0%, rgba(78, 115, 223, 0.25) 100%);
+  color: #ffffff;
+  border: 1.2px solid rgba(99, 140, 245, 0.5);
+  box-shadow: 0 12px 32px rgba(99, 140, 245, 0.25), inset 0 1.5px 0 rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 1002;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 0;
 
   svg {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   &:hover {
-    background-color: rgba(78, 115, 223, 0.4);
-    border-color: rgba(78, 115, 223, 0.7);
-    transform: scale(1.05);
+    background: linear-gradient(135deg, rgba(99, 140, 245, 0.45) 0%, rgba(78, 115, 223, 0.35) 100%);
+    border-color: rgba(99, 140, 245, 0.7);
+    transform: scale(1.08);
+    box-shadow: 0 16px 40px rgba(99, 140, 245, 0.3), inset 0 1.5px 0 rgba(255, 255, 255, 0.2);
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.92);
   }
 `;
 
 const ChatBoxWrapper = styled.div`
     position: fixed;
     width: 100%;
-    top: 60px;
+    top: 76px;
     bottom: 0;
     padding-top: ${props => props.isGroupCallActive ? '152px' : '0px'};
 `;

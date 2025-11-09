@@ -7,6 +7,7 @@ import MobileHomePage from './mobile/MobileHomePage';
 import { isMobileDevice } from '../utils/deviceUtils';
 import styled from 'styled-components';
 import colors from '../styles/colors'
+import { CustomScrollbar } from '../styles/styles';
 import { Link } from 'react-router-dom';
 import mockData from '../mockData.json'; // Import mock data
 import {
@@ -74,22 +75,7 @@ const GroupListContainer = styled.div`
   padding: 8px;
 
   /* Custom scrollbar styling */
-  &::-webkit-scrollbar {
-    width: 8px; /* Width of the scrollbar */
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #2c2f33; /* Track background color */
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #7289da; /* Thumb color */
-    border-radius: 4px; /* Rounded corners for the thumb */
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #5b6eae; /* Thumb color on hover */
-  }
+  ${CustomScrollbar}
 `;
 
 const RightPanel = styled.div`
@@ -314,22 +300,7 @@ const UserList = styled.div`
   margin-top: 10px;
   margin-bottom: 10px;
   /* Custom scrollbar styling */
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #2c2f33;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #7289da;
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #5b6eae;
-  }
+  ${CustomScrollbar}
 `;
 
 const UserItem = styled.div`
@@ -398,22 +369,7 @@ const MemberListContainer = styled.div`
   padding: 8px;
 
   /* Custom scrollbar styling */
-  &::-webkit-scrollbar {
-    width: 8px; /* Width of the scrollbar */
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #2c2f33; /* Track background color */
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #7289da; /* Thumb color */
-    border-radius: 4px; /* Rounded corners for the thumb */
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #5b6eae; /* Thumb color on hover */
-  }
+  ${CustomScrollbar}
 `;
 
 const RightPanelMembers = styled.div`
@@ -1643,6 +1599,7 @@ const HomePage = () => {
           <CurrentUserProfilePic
             src={currentUser?.profile_pic || 'https://i.pravatar.cc/40'}
             alt={currentUser?.name || 'User'}
+            referrerPolicy="no-referrer"
           />
           <CurrentUserDetails>
             <CurrentUserName>{currentUser?.name || 'User Name'}</CurrentUserName>
