@@ -31,17 +31,25 @@ const VideoCallModal = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   ${props => props.minimized && `
     position: fixed;
-    top : 8px;
-    right: 8px;
+    top : 12px;
+    right: 12px;
     left: auto;
     bottom: auto;
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
     border-radius: 50%;
     overflow: hidden;
+    background: linear-gradient(135deg, rgba(26, 29, 34, 0.95) 0%, rgba(36, 40, 48, 0.95) 100%);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 0 2px rgba(99, 140, 245, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(30px) saturate(200%);
+    -webkit-backdrop-filter: blur(30px) saturate(200%);
+    border: 2px solid rgba(99, 140, 245, 0.4);
   `};
   `;
 

@@ -6,28 +6,38 @@ import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhone, FiLogIn, FiLogOut, FiMor
 
 
 const VideoCallContainer = styled.div`
-aspect-ratio: 16 / 9;
-    // height: 100%;
-  // max-width: 500px;
+  aspect-ratio: 16 / 9;
   max-height: 35vh;
-  // width: 100%;
   margin: 0 auto;
-//   position: relative;
   border-radius: 15px;
   overflow: hidden;
   background: linear-gradient(135deg, #1a1d22 60%, #242830 100%);
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3),
               0 0 0 1px rgba(255, 255, 255, 0.1),
               inset 0 0 30px rgba(0, 0, 0, 0.4);
-  // position: relative;
-  
-  // border: 2px solid ${colors.primaryActive};
+
+  ${props => props.isMinimized && `
+    animation: minimizedPulse 2s ease-in-out infinite;
+  `}
 
   ${props => props.showControls && `
     .call-controls, .video-user-info {
       opacity: 1;
     }
   `}
+
+  @keyframes minimizedPulse {
+    0%, 100% {
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                  0 0 0 2px rgba(99, 140, 245, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    50% {
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                  0 0 0 4px rgba(99, 140, 245, 0.6),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+  }
 `;
 
 const RemoteVideo = styled.video`
@@ -43,21 +53,37 @@ const RemoteVideo = styled.video`
 
 const MinimizeButton = styled.button`
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.6);
-  border: none;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 10;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   color: white;
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 
   &:hover {
     background: rgba(0, 0, 0, 0.8);
@@ -330,6 +356,21 @@ const StatusText = styled.div`
   }
 `;
 
+const UserInfoContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  background-color: #1a1a1a;
+  gap: 24px;
+`;
+
 const VideoCallComponent = ({
   currentUser,
   localVideoRef,
@@ -372,7 +413,8 @@ const VideoCallComponent = ({
   return (
     <VideoCallContainer 
       onClick={handleContainerTouch}
-      showControls={showControls}>
+      showControls={showControls}
+      isMinimized={isMinimized}>
       {videoCallState === 'running' ? (
         <>
 
@@ -405,7 +447,7 @@ const VideoCallComponent = ({
           </VideoUserInfo> )}
           <LocalVideoContainer isMinimized={isMinimized} >
             {!localAudioVideo.video && <UserInfoContainer>
-              <ProfileImage style={{ borderWidth: '1px' }}
+              <ProfileImage style={{ borderWidth: '1px', width: '60%', maxWidth: '80px' }}
                 src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'}
                 alt={currentUser?.name || 'User'}
                 referrerPolicy="no-referrer"
