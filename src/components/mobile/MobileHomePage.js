@@ -104,11 +104,14 @@ const BackButton = styled.button`
   border: none;
   color: #ffffff;
   font-size: 24px;
-  padding: 8px 12px 8px 0;
+  padding: 0;
+  margin-right: 12px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
   transition: all 0.25s ease;
   border-radius: 8px;
 
@@ -167,12 +170,12 @@ const VideoCallButton = styled.button`
   transition: all 0.25s ease;
   backdrop-filter: blur(15px) saturate(150%);
   -webkit-backdrop-filter: blur(15px) saturate(150%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 4px 12px rgba(99, 140, 245, 0.1);
+  box-shadow: 0 4px 12px rgba(99, 140, 245, 0.08);
 
   &:hover {
     background: linear-gradient(135deg, rgba(99, 140, 245, 0.3) 0%, rgba(78, 115, 223, 0.25) 100%);
     border-color: rgba(99, 140, 245, 0.6);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 6px 16px rgba(99, 140, 245, 0.2);
+    box-shadow: 0 6px 16px rgba(99, 140, 245, 0.12);
   }
 
   &:active {
@@ -278,7 +281,7 @@ const TabBar = styled.div`
   justify-content: center;
   border: 1.2px solid rgba(255, 255, 255, 0.12);
   border-radius: 28px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.15), inset 0 1.5px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
 `;
 
@@ -393,38 +396,38 @@ const FloatingActionButton = styled.button`
   bottom: 88px;
   width: 48px;
   height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(99, 140, 245, 0.35) 0%, rgba(78, 115, 223, 0.25) 100%);
-  color: #ffffff;
-  border: 1.2px solid rgba(99, 140, 245, 0.5);
-  box-shadow: 0 12px 32px rgba(99, 140, 245, 0.25), inset 0 1.5px 0 rgba(255, 255, 255, 0.15);
+  border-radius: 28px;
+  background-color: rgba(78, 115, 223, 0.3);
+  color: white;
+  border: 1px solid rgba(78, 115, 223, 0.6);
+  box-shadow: 0 6px 16px rgba(99, 140, 245, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 1002;
-  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   padding: 0;
 
   svg {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   &:hover {
-    background: linear-gradient(135deg, rgba(99, 140, 245, 0.45) 0%, rgba(78, 115, 223, 0.35) 100%);
-    border-color: rgba(99, 140, 245, 0.7);
-    transform: scale(1.08);
-    box-shadow: 0 16px 40px rgba(99, 140, 245, 0.3), inset 0 1.5px 0 rgba(255, 255, 255, 0.2);
+    background-color: rgba(78, 115, 223, 0.4);
+    border-color: rgba(78, 115, 223, 0.7);
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(99, 140, 245, 0.15);
   }
 
   &:active {
-    transform: scale(0.92);
+    transform: scale(0.95);
   }
 `;
 
@@ -518,6 +521,7 @@ const MobileHomePage = ({
 
   const [isVideoCallMinimized, setIsVideoCallMinimized] = useState(false);
   const [isGroupCallMinimized, setIsGroupCallMinimized] = useState(false);
+  const [touchStartX, setTouchStartX] = useState(0);
 
   useEffect(()=>{
     if(videoCallState === 'idle' && isVideoCallMinimized){
@@ -528,6 +532,39 @@ const MobileHomePage = ({
   useEffect(() => {
     onSelectGroup(null);
   }, []);
+
+  // Handle phone back button press
+  useEffect(() => {
+    const handleBackPress = (event) => {
+      if (selectedGroup) {
+        event.preventDefault();
+        onSelectGroup(null);
+        setActiveTab(selectedGroup.type === 'private' ? 'private' : 'group');
+      }
+    };
+
+    // For Android back button
+    window.addEventListener('popstate', handleBackPress);
+    return () => {
+      window.removeEventListener('popstate', handleBackPress);
+    };
+  }, [selectedGroup, onSelectGroup]);
+
+  // Handle swipe right gesture
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const swipeDistance = touchEndX - touchStartX;
+    
+    // If swiped more than 50px to the right and chat is open, trigger back
+    if (swipeDistance > 50 && selectedGroup) {
+      onSelectGroup(null);
+      setActiveTab(selectedGroup.type === 'private' ? 'private' : 'group');
+    }
+  };
 
   const handleCreateNew = () => {
     if (activeTab === 'private') {
@@ -808,7 +845,10 @@ const MobileHomePage = ({
   };
 
   return (
-    <Container>
+    <Container
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       {videoCallState !== 'idle' && (
         <VideoCallModal minimized={isVideoCallMinimized}>
             <VideoCallContainer>
