@@ -552,10 +552,15 @@ const MobileHomePage = ({
 
   // Handle swipe right gesture
   const handleTouchStart = (e) => {
-    setTouchStartX(e.touches[0].clientX);
+    // Only track swipe if it starts from the left edge (within 30px)
+    if (e.touches[0].clientX < 30) {
+      setTouchStartX(e.touches[0].clientX);
+    }
   };
 
   const handleTouchEnd = (e) => {
+    if (touchStartX === 0) return; // Swipe didn't start from left edge
+    
     const touchEndX = e.changedTouches[0].clientX;
     const swipeDistance = touchEndX - touchStartX;
     
@@ -564,6 +569,8 @@ const MobileHomePage = ({
       onSelectGroup(null);
       setActiveTab(selectedGroup.type === 'private' ? 'private' : 'group');
     }
+    
+    setTouchStartX(0); // Reset after gesture
   };
 
   const handleCreateNew = () => {
