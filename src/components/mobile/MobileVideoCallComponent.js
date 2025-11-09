@@ -15,10 +15,11 @@ aspect-ratio: 16 / 9;
 //   position: relative;
   border-radius: 15px;
   overflow: hidden;
-  background-color: #1a1a1a;
+  background: linear-gradient(135deg, #1a1d22 60%, #242830 100%);
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3),
               0 0 0 1px rgba(255, 255, 255, 0.1),
               inset 0 0 30px rgba(0, 0, 0, 0.4);
+  // position: relative;
   
   // border: 2px solid ${colors.primaryActive};
 
@@ -166,29 +167,40 @@ const ControlButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: ${props => props.isLarge ? '64px' : '40px'};
-  height: ${props => props.isLarge ? '64px' : '40px'};
+  width: ${props => props.isLarge ? '70px' : '48px'};
+  height: ${props => props.isLarge ? '70px' : '48px'};
   border-radius: 50%;
-  border: none;
+  border: 2px solid rgba(255, 255, 255, 0.2);
   cursor: pointer;
-  transition: all 0.3s ease;
-  background-color: ${props => props.variant === 'end' ? '#f04747' : colors.primary};
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: ${props => props.variant === 'end' 
+    ? 'linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%)' 
+    : 'linear-gradient(135deg, rgba(99, 140, 245, 0.3) 0%, rgba(78, 115, 223, 0.2) 100%)'};
   color: white;
-  box-shadow: 0 4px 16px ${props => props.variant === 'end' ? 'rgba(240, 71, 71, 0.4)' : `rgba(${parseInt(colors.primary.slice(1,3),16)}, ${parseInt(colors.primary.slice(3,5),16)}, ${parseInt(colors.primary.slice(5,7),16)}, 0.4)`};
+  box-shadow: ${props => props.variant === 'end' 
+    ? '0 8px 24px rgba(255, 107, 107, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)' 
+    : '0 8px 24px rgba(99, 140, 245, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'};
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
   font-weight: 600;
 
   &:hover {
-    background-color: ${props => props.variant === 'end' ? '#d32f2f' : colors.primaryHover};
-    transform: scale(1.12);
-    box-shadow: 0 8px 24px ${props => props.variant === 'end' ? 'rgba(240, 71, 71, 0.6)' : `rgba(${parseInt(colors.primary.slice(1,3),16)}, ${parseInt(colors.primary.slice(3,5),16)}, ${parseInt(colors.primary.slice(5,7),16)}, 0.6)`};
+    background: ${props => props.variant === 'end' 
+      ? 'linear-gradient(135deg, #ff7e7e 0%, #ff6666 100%)' 
+      : 'linear-gradient(135deg, rgba(99, 140, 245, 0.5) 0%, rgba(78, 115, 223, 0.35) 100%)'};
+    transform: scale(1.08);
+    box-shadow: ${props => props.variant === 'end' 
+      ? '0 12px 32px rgba(255, 107, 107, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25)' 
+      : '0 12px 32px rgba(99, 140, 245, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'};
+    border-color: rgba(255, 255, 255, 0.3);
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(0.92);
   }
 
   svg {
-    font-size: ${props => props.isLarge ? '32px' : '24px'};
+    font-size: ${props => props.isLarge ? '36px' : '24px'};
   }
 `;
 
@@ -217,107 +229,103 @@ const EndCallButton = styled(ControlButton)`
 
 const CallStatusContainer = styled.div`
   position: absolute;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-    height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   text-align: center;
   color: white;
   z-index: 3;
-//   background-color: rgba(0, 0, 0, 0.7);
   padding: 20px;
+  box-sizing: border-box;
   border-radius: 15px;
-  width: 90%;
-  max-width: 400px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(26, 29, 34, 0.9) 0%, rgba(36, 40, 48, 0.9) 100%);
+  backdrop-filter: blur(25px) saturate(200%);
+  -webkit-backdrop-filter: blur(25px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   animation: fadeInScale 0.4s ease-out;
 
   @keyframes fadeInScale {
     from {
       opacity: 0;
-      transform: translate(-50%, -50%) scale(0.85);
+      transform: scale(0.9);
     }
     to {
       opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
+      transform: scale(1);
     }
   }
 `;
 
-const UserInfoContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 3;
-    background-color: #1a1a1a;
-`
-
 const ProfileImage = styled.img`
-  height: 40%;
+  height: auto;
+  width: 120px;
   max-width: 140px;
   max-height: 140px;
   aspect-ratio: 1;
   border-radius: 50%;
-//   margin: 8px;
-margin-bottom: 2%;
-  border: 4px solid ${colors.primary};
+  border: 3px solid rgba(99, 140, 245, 0.7);
   object-fit: cover;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5),
-              0 0 0 1px rgba(255, 255, 255, 0.1);
-  animation: profilePulse 2s ease-in-out infinite;
+  box-shadow: 0 0 40px rgba(99, 140, 245, 0.5),
+              0 0 80px rgba(99, 140, 245, 0.25),
+              0 12px 40px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: profileRing 3s ease-in-out infinite;
+  position: relative;
 
-  @keyframes profilePulse {
+  @keyframes profileRing {
     0%, 100% {
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5),
-                  0 0 0 1px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 40px rgba(99, 140, 245, 0.5),
+                  0 0 80px rgba(99, 140, 245, 0.25),
+                  0 12px 40px rgba(0, 0, 0, 0.4),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transform: scale(1);
     }
     50% {
-      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6),
-                  0 0 0 3px rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 50px rgba(99, 140, 245, 0.7),
+                  0 0 100px rgba(99, 140, 245, 0.35),
+                  0 12px 48px rgba(0, 0, 0, 0.5),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transform: scale(1.02);
     }
   }
 `;
 
 const UserName = styled.div`
-  font-size: clamp(0.8rem, 2vw, 1rem);
-  font-weight: bold;
-//   margin-bottom: 0.5rem;
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  font-weight: 700;
   color: white;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
   max-width: 100%;
+  letter-spacing: -0.3px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 `;
 
 const StatusText = styled.div`
-  font-size: clamp(0.875rem, 3vw, 1rem);
-  color: ${colors.textSecondary};
-//   margin-bottom: 24px;
+  font-size: clamp(0.875rem, 2.5vw, 1rem);
+  color: rgba(255, 255, 255, 0.75);
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
   max-width: 100%;
   font-weight: 500;
-  letter-spacing: 0.3px;
-  animation: pulse 1.5s ease-in-out infinite;
+  letter-spacing: 0.5px;
+  animation: statusPulse 2s ease-in-out infinite;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 
-  @keyframes pulse {
+  @keyframes statusPulse {
     0%, 100% {
       opacity: 1;
     }
     50% {
-      opacity: 0.6;
+      opacity: 0.7;
     }
   }
 `;
