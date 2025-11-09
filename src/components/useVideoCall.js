@@ -7,6 +7,8 @@ export const useVideoCall = ({ id: userId }) => {
   const remoteVideoRef = useRef(null);
   const pcRef = useRef(null);
   const localStreamRef = useRef(null);
+  const outgoingRingtoneRef = useRef(null);
+  const incomingRingtoneRef = useRef(null);
   const [currentCall, setCurrentCall] = useState(null);
   const [videoCallState, setVideoCallState] = useState("idle"); // New state for video call status
   const [remoteICECandidate, setRemoteICECandidate] = useState([]);
@@ -16,6 +18,7 @@ export const useVideoCall = ({ id: userId }) => {
   const [isRemoteVideoEnabled, setIsRemoteVideoEnabled] = useState(true);
   const [remoteAudioVideo, setRemoteAudioVideo] = useState({ audio: true, video: true });
   const [localAudioVideo, setLocalAudioVideo] = useState({ audio: true, video: true });
+  const [isRingtonePlaying, setIsRingtonePlaying] = useState(false);
   // const localVideoRef = useRef(null);
   // const remoteVideoRef = useRef(null);
   // const pcRef = useRef(null);
@@ -329,6 +332,8 @@ export const useVideoCall = ({ id: userId }) => {
 
     setPendingCall(from);
     setVideoCallState("incoming");
+    playRingtone('incoming'); // Play incoming ringtone
+    triggerIncomingCallVibration(); // Vibrate for incoming call
   };
 
   const handleCallAccepted = ({ from }) => {
@@ -342,6 +347,7 @@ export const useVideoCall = ({ id: userId }) => {
     const { from } = msg;
 
     if (from === pendingCall) {
+      stopRingtone(); // Stop ringtone when call is rejected by remote user
       setPendingCall(null);
       setVideoCallState("idle");
     }
@@ -358,6 +364,76 @@ export const useVideoCall = ({ id: userId }) => {
     console.log("localAudioVideo:", localAudioVideo);
   }, [localAudioVideo])
 
+  // Vibration patterns for different call states
+  const triggerIncomingCallVibration = () => {
+    if (navigator.vibrate) {
+      // Incoming call vibration pattern: longer vibrations with pauses
+      // [vibrate, pause, vibrate, pause, vibrate, pause]
+      navigator.vibrate([400, 200, 400, 200, 400]);
+    }
+  };
+
+  const triggerOutgoingCallVibration = () => {
+    if (navigator.vibrate) {
+      // Outgoing call vibration pattern: shorter, lighter vibrations
+      // [vibrate, pause, vibrate, pause]
+      navigator.vibrate([200, 100, 200]);
+    }
+  };
+
+  const stopVibration = () => {
+    if (navigator.vibrate) {
+      navigator.vibrate(0); // Stop all vibration
+    }
+  };
+
+  const playRingtone = (type = 'incoming') => {
+    const ringtone = type === 'outgoing' ? outgoingRingtoneRef.current : incomingRingtoneRef.current;
+    if (ringtone) {
+      ringtone.currentTime = 0;
+      ringtone.play().catch(err => {
+        console.warn(`Failed to play ${type} ringtone:`, err);
+      });
+      setIsRingtonePlaying(true);
+    }
+  };
+
+  const stopRingtone = () => {
+    if (outgoingRingtoneRef.current) {
+      outgoingRingtoneRef.current.pause();
+      outgoingRingtoneRef.current.currentTime = 0;
+    }
+    if (incomingRingtoneRef.current) {
+      incomingRingtoneRef.current.pause();
+      incomingRingtoneRef.current.currentTime = 0;
+    }
+    stopVibration(); // Stop vibration when stopping ringtone
+    setIsRingtonePlaying(false);
+  };
+
+  // Initialize separate ringtone audio elements for incoming and outgoing calls
+  useEffect(() => {
+    if (!outgoingRingtoneRef.current) {
+      const outgoingAudio = new Audio();
+      // Outgoing call tone - using local sound file
+      outgoingAudio.src = "/sounds/call-outgoing.mp3";
+      outgoingAudio.loop = true;
+      outgoingAudio.preload = "auto";
+      outgoingAudio.volume = 0.7;
+      outgoingRingtoneRef.current = outgoingAudio;
+    }
+
+    if (!incomingRingtoneRef.current) {
+      const incomingAudio = new Audio();
+      // Incoming call tone - using local sound file (Discord-style)
+      incomingAudio.src = "/sounds/gta_ringtone.mp3";
+      incomingAudio.loop = true;
+      incomingAudio.preload = "auto";
+      incomingAudio.volume = 0.7;
+      incomingRingtoneRef.current = incomingAudio;
+    }
+  }, []);
+
   const requestCall = (remoteUserId) => {
     sendMessageWebSocket({
       type: "video_call",
@@ -369,9 +445,12 @@ export const useVideoCall = ({ id: userId }) => {
     });
     setPendingCall(remoteUserId);
     setVideoCallState("outgoing");
+    playRingtone('outgoing'); // Play outgoing ringtone
+    triggerOutgoingCallVibration(); // Vibrate for outgoing call
   };
 
   const acceptCall = () => {
+    stopRingtone(); // Stop ringtone when accepting call
     if (pendingCall) {
       setPendingCall(null);
       startCall(pendingCall);
@@ -379,7 +458,7 @@ export const useVideoCall = ({ id: userId }) => {
   };
 
   const rejectCall = () => {
-
+    stopRingtone(); // Stop ringtone when rejecting call
     if (pendingCall) {
       sendMessageWebSocket({
         type: "video_call",
@@ -408,6 +487,7 @@ export const useVideoCall = ({ id: userId }) => {
   }
 
   const endCallProcess = () => {
+    stopRingtone(); // Stop ringtone when ending call
     if (pcRef.current) {
       pcRef.current.close();
       pcRef.current = null;
@@ -507,6 +587,9 @@ export const useVideoCall = ({ id: userId }) => {
     toggleVideo,
     toggleAudio,
     localAudioVideo,
-    remoteAudioVideo
+    remoteAudioVideo,
+    isRingtonePlaying,
+    playRingtone,
+    stopRingtone
   };
 };

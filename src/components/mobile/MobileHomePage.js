@@ -522,6 +522,9 @@ const MobileHomePage = ({
   toggleAudio,
   localAudioVideo,
   remoteAudioVideo,
+  isRingtonePlaying,
+  playRingtone,
+  stopRingtone,
   onStartVideoCall,
   onEndVideoCall,
   onStartGroupCall,
@@ -927,6 +930,9 @@ const MobileHomePage = ({
                 toggleAudio={toggleAudio}
                 localAudioVideo={localAudioVideo}
                 remoteAudioVideo={remoteAudioVideo}
+                isRingtonePlaying={isRingtonePlaying}
+                playRingtone={playRingtone}
+                stopRingtone={stopRingtone}
                 isMinimized={isVideoCallMinimized}
                 setMinimized={setIsVideoCallMinimized}
             />

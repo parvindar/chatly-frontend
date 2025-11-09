@@ -73,25 +73,13 @@ const MinimizeButton = styled.button`
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
               inset 0 1px 0 rgba(255, 255, 255, 0.1);
 
-  &:hover {
+  &:active {
     background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
     border-color: rgba(255, 255, 255, 0.25);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4),
                 inset 0 1px 0 rgba(255, 255, 255, 0.15);
-    transform: scale(1.1);
-  }
-
-  &:active {
     transform: scale(0.95);
   }
-
-  &:hover {
-    background: rgba(0, 0, 0, 0.8);
-  }
-
-  // ${VideoCallContainer}:hover & {
-  //   opacity: 1;
-  // }
 
   pointer-events: ${props => (props.isRunning && !props.showControls) ? 'none' : 'auto'};
 
@@ -121,16 +109,14 @@ const LocalVideoContainer = styled.div`
   bottom: 10px;
   right: 10px;
   border-radius: 8px;
-  // border: 2px solid ${colors.secondary};
   z-index: 3;
   transition: transform 0.3s ease;
-  cursor: pointer;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
               0 0 0 1px rgba(255, 255, 255, 0.1),
               inset 0 0 20px rgba(0, 0, 0, 0.4);
 
-  &:hover {
-    transform: scale(1.1);
+  &:active {
+    transform: scale(0.95);
   }
   overflow: hidden;
 
@@ -210,19 +196,15 @@ const ControlButton = styled.button`
   -webkit-backdrop-filter: blur(10px) saturate(150%);
   font-weight: 600;
 
-  &:hover {
+  &:active {
     background: ${props => props.variant === 'end' 
       ? 'linear-gradient(135deg, #ff7e7e 0%, #ff6666 100%)' 
       : 'linear-gradient(135deg, rgba(99, 140, 245, 0.5) 0%, rgba(78, 115, 223, 0.35) 100%)'};
-    transform: scale(1.08);
+    transform: scale(0.92);
     box-shadow: ${props => props.variant === 'end' 
       ? '0 12px 32px rgba(255, 107, 107, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25)' 
       : '0 12px 32px rgba(99, 140, 245, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'};
     border-color: rgba(255, 255, 255, 0.3);
-  }
-
-  &:active {
-    transform: scale(0.92);
   }
 
   svg {
@@ -237,10 +219,6 @@ const ToggleButton = styled(ControlButton)`
 
   svg {
     font-size: 28px;
-  }
-  
-  &:hover {
-    background-color: ${props => props.enabled ? colors.primaryHover : '#555'};
   }
 `;
 
