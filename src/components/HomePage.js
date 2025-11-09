@@ -852,8 +852,8 @@ const HomePage = () => {
   }, [])
 
   // Compute unread badge counts based on comparing last_read_message_id with latest_message.id
-  // Shows count of chats/groups with unread messages when not viewing that tab
-  const unreadGroupsCount = selectedTab !== 'groups' && groups
+  // Shows count of chats/groups with unread messages
+  const unreadGroupsCount = groups
     ? groups.filter(group =>
         group.latest_message?.id &&
         group.last_read_message_id &&
@@ -861,7 +861,7 @@ const HomePage = () => {
       ).length
     : 0;
 
-  const unreadPrivateChatsCount = selectedTab !== 'privateChats' && privateChats
+  const unreadPrivateChatsCount = privateChats
     ? privateChats.filter(chat =>
         chat.latest_message?.id &&
         chat.last_read_message_id &&

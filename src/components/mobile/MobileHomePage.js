@@ -332,7 +332,6 @@ const MessageBadge = styled.div`
   width: 20px;
   height: 20px;
   background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
-  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -564,7 +563,7 @@ const MobileHomePage = ({
 
   // Compute unread badge counts based on comparing last_read_message_id with latest_message.id
   // This matches the HomePage logic and automatically clears when messages are marked as read
-  const unreadPrivateCount = activeTab !== 'private' && privateChats
+  const unreadPrivateCount = privateChats
     ? privateChats.filter(chat =>
         chat.latest_message?.id && 
         chat.last_read_message_id && 
@@ -572,7 +571,7 @@ const MobileHomePage = ({
       ).length
     : 0;
 
-  const unreadGroupCount = activeTab !== 'group' && groups
+  const unreadGroupCount = groups
     ? groups.filter(group =>
         group.latest_message?.id &&
         group.last_read_message_id &&
@@ -971,7 +970,7 @@ const MobileHomePage = ({
           <IconWrapper active={activeTab === 'private'}>
             <IoChatboxEllipses />
           </IconWrapper>
-          {unreadPrivateCount > 0 && activeTab !== 'private' && (
+          {unreadPrivateCount > 0 && (
             <MessageBadge>{unreadPrivateCount > 9 ? '9+' : unreadPrivateCount}</MessageBadge>
           )}
         </TabButton>
@@ -982,7 +981,7 @@ const MobileHomePage = ({
           <IconWrapper active={activeTab === 'group'}>
             <HiUserGroup />
           </IconWrapper>
-          {unreadGroupCount > 0 && activeTab !== 'group' && (
+          {unreadGroupCount > 0 && (
             <MessageBadge>{unreadGroupCount > 9 ? '9+' : unreadGroupCount}</MessageBadge>
           )}
         </TabButton>
