@@ -267,11 +267,8 @@ const CallStatusContainer = styled.div`
 `;
 
 const ProfileImage = styled.img`
-  height: auto;
   width: 120px;
-  max-width: 140px;
-  max-height: 140px;
-  aspect-ratio: 1;
+  height: 120px;
   border-radius: 50%;
   border: 3px solid rgba(99, 140, 245, 0.7);
   object-fit: cover;
@@ -425,7 +422,7 @@ const VideoCallComponent = ({
           </VideoUserInfo> )}
           <LocalVideoContainer isMinimized={isMinimized} >
             {!localAudioVideo.video && <UserInfoContainer>
-              <ProfileImage style={{ borderWidth: '1px', width: '60%', maxWidth: '80px' }}
+              <ProfileImage style={{ borderWidth: '1px', width: '60px', height: '60px' }}
                 src={currentUser?.profile_pic || 'https://i.pravatar.cc/100'}
                 alt={currentUser?.name || 'User'}
                 referrerPolicy="no-referrer"
