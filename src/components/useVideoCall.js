@@ -423,8 +423,9 @@ export const useVideoCall = ({ id: userId }) => {
   const playRingtone = (type = 'incoming') => {
     const ringtone = type === 'outgoing' ? outgoingRingtoneRef.current : incomingRingtoneRef.current;
     if (ringtone) {
-      // Start incoming ringtone at 4.85 seconds
+      // Always set currentTime before playing to ensure it starts from the correct position
       ringtone.currentTime = type === 'incoming' ? 4.85 : 0;
+      
       ringtone.play().catch(err => {
         console.warn(`Failed to play ${type} ringtone:`, err);
       });
@@ -435,11 +436,11 @@ export const useVideoCall = ({ id: userId }) => {
   const stopRingtone = () => {
     if (outgoingRingtoneRef.current) {
       outgoingRingtoneRef.current.pause();
-      outgoingRingtoneRef.current.currentTime = 0;
+      // Don't reset currentTime here - let playRingtone set it
     }
     if (incomingRingtoneRef.current) {
       incomingRingtoneRef.current.pause();
-      incomingRingtoneRef.current.currentTime = 0;
+      // Don't reset currentTime here - let playRingtone set it
     }
     stopVibration(); // Stop vibration when stopping ringtone
     setIsRingtonePlaying(false);
@@ -455,22 +456,28 @@ export const useVideoCall = ({ id: userId }) => {
       outgoingAudio.src = `${publicUrl}/sounds/call-outgoing.mp3`;
       outgoingAudio.loop = true;
       outgoingAudio.preload = "auto";
-      outgoingAudio.volume = 0.7;
+      outgoingAudio.volume = 1.0; // Set to max for iOS to use system volume
       
-      // For Android: Set audio type to 'ringtone' for proper volume control
+      // For iOS Safari: Set playsinline and webkit-playsinline for proper audio handling
+      outgoingAudio.setAttribute('playsinline', 'true');
+      outgoingAudio.setAttribute('webkit-playsinline', 'true');
+      outgoingAudio.setAttribute('x-webkit-airplay', 'allow'); // Allow airplay for proper routing
+      
+      // For Android: Set audio type for proper volume control
       outgoingAudio.setAttribute('type', 'audio/mpeg');
       outgoingAudio.setAttribute('preload', 'auto');
       
-      // For iOS: Use communications audio category
+      // For iOS: Use communications audio category (if supported)
       if (outgoingAudio.setSinkId) {
         outgoingAudio.setSinkId('communications').catch(err => {
           console.warn("Could not set audio output device:", err);
         });
       }
-      outgoingAudio.setAttribute('x-webkit-airplay', 'deny');
       
-      // Add to DOM but hide it (required for Android audio routing)
+      // Add to DOM but hide it (required for proper audio routing)
       outgoingAudio.style.display = 'none';
+      outgoingAudio.style.position = 'absolute';
+      outgoingAudio.style.left = '-9999px';
       document.body.appendChild(outgoingAudio);
       
       outgoingAudio.onerror = () => {
@@ -486,22 +493,28 @@ export const useVideoCall = ({ id: userId }) => {
       incomingAudio.src = `${publicUrl}/sounds/gta_ringtone.mp3`;
       incomingAudio.loop = true;
       incomingAudio.preload = "auto";
-      incomingAudio.volume = 0.7;
+      incomingAudio.volume = 1.0; // Set to max for iOS to use system volume
       
-      // For Android: Set audio type to 'ringtone' for proper volume control
+      // For iOS Safari: Set playsinline and webkit-playsinline for proper audio handling
+      incomingAudio.setAttribute('playsinline', 'true');
+      incomingAudio.setAttribute('webkit-playsinline', 'true');
+      incomingAudio.setAttribute('x-webkit-airplay', 'allow'); // Allow airplay for proper routing
+      
+      // For Android: Set audio type for proper volume control
       incomingAudio.setAttribute('type', 'audio/mpeg');
       incomingAudio.setAttribute('preload', 'auto');
       
-      // For iOS: Use communications audio category
+      // For iOS: Use communications audio category (if supported)
       if (incomingAudio.setSinkId) {
         incomingAudio.setSinkId('communications').catch(err => {
           console.warn("Could not set audio output device:", err);
         });
       }
-      incomingAudio.setAttribute('x-webkit-airplay', 'deny');
       
-      // Add to DOM but hide it (required for Android audio routing)
+      // Add to DOM but hide it (required for proper audio routing)
       incomingAudio.style.display = 'none';
+      incomingAudio.style.position = 'absolute';
+      incomingAudio.style.left = '-9999px';
       document.body.appendChild(incomingAudio);
       
       incomingAudio.onerror = () => {
