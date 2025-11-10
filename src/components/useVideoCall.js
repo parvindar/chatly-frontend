@@ -143,6 +143,7 @@ export const useVideoCall = ({ id: userId }) => {
   };
 
   const startCall = async (remoteUserId) => {
+    stopRingtone(); // Ensure all ringtones are stopped when call starts
     setVideoCallState("running"); // Set state to running when the call starts
 
     const stream = await navigator.mediaDevices
@@ -339,6 +340,7 @@ export const useVideoCall = ({ id: userId }) => {
 
   const handleCallAccepted = ({ from }) => {
     if (from === pendingCall) {
+      stopRingtone(); // Stop outgoing ringtone when call is accepted
       setPendingCall(null);
       startCall(from);
     }
@@ -421,7 +423,8 @@ export const useVideoCall = ({ id: userId }) => {
   const playRingtone = (type = 'incoming') => {
     const ringtone = type === 'outgoing' ? outgoingRingtoneRef.current : incomingRingtoneRef.current;
     if (ringtone) {
-      ringtone.currentTime = 0;
+      // Start incoming ringtone at 4.85 seconds
+      ringtone.currentTime = type === 'incoming' ? 4.85 : 0;
       ringtone.play().catch(err => {
         console.warn(`Failed to play ${type} ringtone:`, err);
       });
@@ -446,13 +449,30 @@ export const useVideoCall = ({ id: userId }) => {
   // Initialize separate ringtone audio elements for incoming and outgoing calls
   useEffect(() => {
     if (!outgoingRingtoneRef.current) {
-      const outgoingAudio = new Audio();
-      // Outgoing call tone - using local sound file
+      // Create audio element for outgoing ringtone
+      const outgoingAudio = document.createElement('audio');
       const publicUrl = process.env.PUBLIC_URL || '';
       outgoingAudio.src = `${publicUrl}/sounds/call-outgoing.mp3`;
       outgoingAudio.loop = true;
       outgoingAudio.preload = "auto";
       outgoingAudio.volume = 0.7;
+      
+      // For Android: Set audio type to 'ringtone' for proper volume control
+      outgoingAudio.setAttribute('type', 'audio/mpeg');
+      outgoingAudio.setAttribute('preload', 'auto');
+      
+      // For iOS: Use communications audio category
+      if (outgoingAudio.setSinkId) {
+        outgoingAudio.setSinkId('communications').catch(err => {
+          console.warn("Could not set audio output device:", err);
+        });
+      }
+      outgoingAudio.setAttribute('x-webkit-airplay', 'deny');
+      
+      // Add to DOM but hide it (required for Android audio routing)
+      outgoingAudio.style.display = 'none';
+      document.body.appendChild(outgoingAudio);
+      
       outgoingAudio.onerror = () => {
         console.warn("Failed to load outgoing ringtone:", outgoingAudio.src);
       };
@@ -460,18 +480,51 @@ export const useVideoCall = ({ id: userId }) => {
     }
 
     if (!incomingRingtoneRef.current) {
-      const incomingAudio = new Audio();
-      // Incoming call tone - using local sound file (Discord-style)
+      // Create audio element for incoming ringtone
+      const incomingAudio = document.createElement('audio');
       const publicUrl = process.env.PUBLIC_URL || '';
       incomingAudio.src = `${publicUrl}/sounds/gta_ringtone.mp3`;
       incomingAudio.loop = true;
       incomingAudio.preload = "auto";
       incomingAudio.volume = 0.7;
+      
+      // For Android: Set audio type to 'ringtone' for proper volume control
+      incomingAudio.setAttribute('type', 'audio/mpeg');
+      incomingAudio.setAttribute('preload', 'auto');
+      
+      // For iOS: Use communications audio category
+      if (incomingAudio.setSinkId) {
+        incomingAudio.setSinkId('communications').catch(err => {
+          console.warn("Could not set audio output device:", err);
+        });
+      }
+      incomingAudio.setAttribute('x-webkit-airplay', 'deny');
+      
+      // Add to DOM but hide it (required for Android audio routing)
+      incomingAudio.style.display = 'none';
+      document.body.appendChild(incomingAudio);
+      
       incomingAudio.onerror = () => {
         console.warn("Failed to load incoming ringtone:", incomingAudio.src);
       };
       incomingRingtoneRef.current = incomingAudio;
     }
+
+    // Cleanup function to remove audio elements
+    return () => {
+      if (outgoingRingtoneRef.current) {
+        outgoingRingtoneRef.current.pause();
+        if (outgoingRingtoneRef.current.parentNode) {
+          document.body.removeChild(outgoingRingtoneRef.current);
+        }
+      }
+      if (incomingRingtoneRef.current) {
+        incomingRingtoneRef.current.pause();
+        if (incomingRingtoneRef.current.parentNode) {
+          document.body.removeChild(incomingRingtoneRef.current);
+        }
+      }
+    };
   }, []);
 
   const requestCall = (remoteUserId) => {
