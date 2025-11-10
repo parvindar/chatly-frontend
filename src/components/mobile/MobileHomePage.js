@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import { IoChatboxEllipses, IoChevronBackOutline } from "react-icons/io5";
 import { HiUserGroup } from "react-icons/hi2";
 import { FaUserFriends } from "react-icons/fa";
-import { FiVideo,FiPhone } from "react-icons/fi";
+import { FiVideo, FiPhone, FiMoreVertical } from "react-icons/fi";
 import { MdAdd } from "react-icons/md";
 import GroupList from '../GroupList';
 import VideoCallComponent from './MobileVideoCallComponent';
@@ -14,6 +14,8 @@ import CurrentUserProfilePopup from '../CurrentUserProfilePopup';
 import UserProfilePopup from '../UserProfilePopup';
 import CreateGroupModal from '../CreateGroupModal';
 import NewPrivateChatModal from '../NewPrivateChatModal';
+import AddMemberModal from '../AddMemberModal';
+import EditGroupComponent from '../EditGroupComponent';
 import { useVideoCall } from '../../components/useVideoCall'; // Import the custom hook for video call
 
 import colors from '../../styles/colors';
@@ -188,6 +190,75 @@ const VideoCallButton = styled.button`
 
   &:active {
     transform: scale(0.92);
+  }
+`;
+
+const ThreeDotsMenu = styled.button`
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 22px;
+  padding: 8px;
+  margin-left: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: rgba(255, 255, 255, 1);
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+`;
+
+const DropdownMenuContainer = styled.div`
+  position: absolute;
+  top: 56px;
+  right: 18px;
+  background: linear-gradient(135deg, rgba(26, 29, 34, 0.98) 0%, rgba(36, 40, 48, 0.98) 100%);
+  backdrop-filter: blur(25px) saturate(200%);
+  -webkit-backdrop-filter: blur(25px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  z-index: 1002;
+  padding: 8px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5),
+              0 0 0 1px rgba(255, 255, 255, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  min-width: 160px;
+  animation: dropdownSlide 0.2s ease-out;
+
+  @keyframes dropdownSlide {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+
+const MenuItem = styled.div`
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(99, 140, 245, 0.15);
+  }
+
+  &:active {
+    transform: scale(0.98);
   }
 `;
 
@@ -557,10 +628,14 @@ const MobileHomePage = ({
   const [activeTab, setActiveTab] = useState('private');
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+  const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
 
   const [isVideoCallMinimized, setIsVideoCallMinimized] = useState(false);
   const [isGroupCallMinimized, setIsGroupCallMinimized] = useState(false);
   const [touchStartX, setTouchStartX] = useState(0);
+  const dropdownRef = useRef(null);
 
   useEffect(()=>{
     if(videoCallState === 'idle' && isVideoCallMinimized){
@@ -571,6 +646,47 @@ const MobileHomePage = ({
   useEffect(() => {
     onSelectGroup(null);
   }, []);
+
+  // Handle clicking outside dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showDropdown]);
+
+  const handleAddMember = async (userId) => {
+    if (onAddMember) {
+      await onAddMember(userId);
+      setIsAddMemberModalOpen(false);
+    }
+  };
+
+  const handleEditGroup = async (groupId, group) => {
+    if (onEditGroup) {
+      await onEditGroup(groupId, group);
+      setIsEditGroupModalOpen(false);
+    }
+  };
+
+  const handleLeaveGroup = () => {
+    if (selectedGroup && onDeleteGroup) {
+      onDeleteGroup(selectedGroup.id);
+      onSelectGroup(null);
+      setShowDropdown(false);
+    }
+  };
 
   // Compute unread badge counts based on comparing last_read_message_id with latest_message.id
   // This matches the HomePage logic and automatically clears when messages are marked as read
@@ -848,6 +964,40 @@ const MobileHomePage = ({
                       <FiVideo />
                     </VideoCallButton>
                   )}
+                  
+                  <ThreeDotsMenu 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDropdown(!showDropdown);
+                    }}
+                  >
+                    <FiMoreVertical />
+                  </ThreeDotsMenu>
+                  
+                  {showDropdown && (
+                    <DropdownMenuContainer ref={dropdownRef}>
+                      {selectedGroup.role === 'admin' && (
+                        <>
+                          <MenuItem onClick={() => {
+                            setIsAddMemberModalOpen(true);
+                            setShowDropdown(false);
+                          }}>
+                            Add Member
+                          </MenuItem>
+                          <MenuItem onClick={() => {
+                            setIsEditGroupModalOpen(selectedGroup);
+                            setShowDropdown(false);
+                          }}>
+                            Edit Group
+                          </MenuItem>
+                        </>
+                      )}
+                      <MenuItem onClick={handleLeaveGroup}>
+                        Leave Group
+                      </MenuItem>
+                    </DropdownMenuContainer>
+                  )}
+                  
                   {/* {isGroupCallActive && (
                     <VideoCallButton 
                       onClick={() => {
@@ -972,6 +1122,19 @@ const MobileHomePage = ({
         onClose={() => setShowNewChat(false)}
         onCreateChat={onCreatePrivateChat}
       />
+      <AddMemberModal
+        isOpen={isAddMemberModalOpen}
+        onClose={() => setIsAddMemberModalOpen(false)}
+        selectedGroup={selectedGroup}
+        onAddMember={handleAddMember}
+      />
+      {isEditGroupModalOpen && (
+        <EditGroupComponent
+          group={isEditGroupModalOpen}
+          setIsModalOpen={setIsEditGroupModalOpen}
+          handleEditGroup={handleEditGroup}
+        />
+      )}
       <ContentArea>
         {renderContent()}
       </ContentArea>

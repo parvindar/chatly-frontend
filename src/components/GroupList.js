@@ -260,14 +260,14 @@ const GroupList = ({
                     { label: 'Delete Chat', action: () => onDeleteGroup && onDeleteGroup(item.id) }
                   ] : [
                     ...(item.role === 'admin' ? [
-                      { 
-                        label: 'Add Member', 
-                        action: () => onOpenAddMemberModal ? onOpenAddMemberModal(item) : onAddMember && onAddMember(item.id)
-                      },
-                      { 
-                        label: 'Edit', 
-                        action: () => onOpenEditGroupModal ? onOpenEditGroupModal(item) : onEditGroup && onEditGroup(item)
-                      }
+                      // { 
+                      //   label: 'Add Member', 
+                      //   action: () => setIsAddMemberModalOpen(true)
+                      // },
+                      // { 
+                      //   label: 'Edit', 
+                      //   action: () => onOpenEditGroupModal ? onOpenEditGroupModal(item) : onEditGroup && onEditGroup(item)
+                      // }
                     ] : []),
                     { label: 'Leave', action: () => onDeleteGroup && onDeleteGroup(item.id) }
                   ]}
