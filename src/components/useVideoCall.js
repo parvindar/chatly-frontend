@@ -423,12 +423,31 @@ export const useVideoCall = ({ id: userId }) => {
   const playRingtone = (type = 'incoming') => {
     const ringtone = type === 'outgoing' ? outgoingRingtoneRef.current : incomingRingtoneRef.current;
     if (ringtone) {
-      // Always set currentTime before playing to ensure it starts from the correct position
-      ringtone.currentTime = type === 'incoming' ? 4.85 : 0;
+      // Pause first to ensure we can set currentTime properly
+      ringtone.pause();
       
-      ringtone.play().catch(err => {
-        console.warn(`Failed to play ${type} ringtone:`, err);
-      });
+      // Set the start time - 4.85 seconds for incoming, 0 for outgoing
+      const startTime = type === 'incoming' ? 4.85 : 0;
+      
+      // For iOS Safari: Need to ensure currentTime is set before playing
+      try {
+        ringtone.currentTime = startTime;
+      } catch (err) {
+        console.warn(`Failed to set currentTime for ${type} ringtone:`, err);
+      }
+      
+      // Use a small timeout to ensure currentTime is set in iOS Safari
+      setTimeout(() => {
+        // Verify and reset if needed (iOS Safari workaround)
+        if (Math.abs(ringtone.currentTime - startTime) > 0.1) {
+          ringtone.currentTime = startTime;
+        }
+        
+        ringtone.play().catch(err => {
+          console.warn(`Failed to play ${type} ringtone:`, err);
+        });
+      }, 50);
+      
       setIsRingtonePlaying(true);
     }
   };
@@ -436,11 +455,11 @@ export const useVideoCall = ({ id: userId }) => {
   const stopRingtone = () => {
     if (outgoingRingtoneRef.current) {
       outgoingRingtoneRef.current.pause();
-      // Don't reset currentTime here - let playRingtone set it
+      outgoingRingtoneRef.current.currentTime = 0; // Reset to start
     }
     if (incomingRingtoneRef.current) {
       incomingRingtoneRef.current.pause();
-      // Don't reset currentTime here - let playRingtone set it
+      incomingRingtoneRef.current.currentTime = 4.85; // Reset to incoming start position
     }
     stopVibration(); // Stop vibration when stopping ringtone
     setIsRingtonePlaying(false);
@@ -458,27 +477,33 @@ export const useVideoCall = ({ id: userId }) => {
       outgoingAudio.preload = "auto";
       outgoingAudio.volume = 1.0; // Set to max for iOS to use system volume
       
-      // For iOS Safari: Set playsinline and webkit-playsinline for proper audio handling
-      outgoingAudio.setAttribute('playsinline', 'true');
-      outgoingAudio.setAttribute('webkit-playsinline', 'true');
-      outgoingAudio.setAttribute('x-webkit-airplay', 'allow'); // Allow airplay for proper routing
+      // Critical iOS attributes for proper playback
+      outgoingAudio.setAttribute('playsinline', '');
+      outgoingAudio.setAttribute('webkit-playsinline', '');
+      
+      // iOS doesn't support ringtone volume for web apps
+      // But we can try to optimize for the ringer volume by not setting x-webkit-airplay
+      // This makes iOS treat it more like a notification sound
       
       // For Android: Set audio type for proper volume control
       outgoingAudio.setAttribute('type', 'audio/mpeg');
       outgoingAudio.setAttribute('preload', 'auto');
       
-      // For iOS: Use communications audio category (if supported)
-      if (outgoingAudio.setSinkId) {
-        outgoingAudio.setSinkId('communications').catch(err => {
-          console.warn("Could not set audio output device:", err);
-        });
+      // Try to use voicechat/communications category (iOS 15+)
+      if (typeof outgoingAudio.setSinkId === 'function') {
+        outgoingAudio.setSinkId('communications').catch(() => {});
       }
       
-      // Add to DOM but hide it (required for proper audio routing)
-      outgoingAudio.style.display = 'none';
-      outgoingAudio.style.position = 'absolute';
-      outgoingAudio.style.left = '-9999px';
+      // iOS Web Audio Workaround: Add as visible element initially to ensure proper audio routing
+      // Then hide it after it's registered with the audio system
       document.body.appendChild(outgoingAudio);
+      outgoingAudio.style.position = 'fixed';
+      outgoingAudio.style.top = '-1px';
+      outgoingAudio.style.left = '-1px';
+      outgoingAudio.style.width = '1px';
+      outgoingAudio.style.height = '1px';
+      outgoingAudio.style.opacity = '0';
+      outgoingAudio.style.pointerEvents = 'none';
       
       outgoingAudio.onerror = () => {
         console.warn("Failed to load outgoing ringtone:", outgoingAudio.src);
@@ -495,27 +520,33 @@ export const useVideoCall = ({ id: userId }) => {
       incomingAudio.preload = "auto";
       incomingAudio.volume = 1.0; // Set to max for iOS to use system volume
       
-      // For iOS Safari: Set playsinline and webkit-playsinline for proper audio handling
-      incomingAudio.setAttribute('playsinline', 'true');
-      incomingAudio.setAttribute('webkit-playsinline', 'true');
-      incomingAudio.setAttribute('x-webkit-airplay', 'allow'); // Allow airplay for proper routing
+      // Critical iOS attributes for proper playback
+      incomingAudio.setAttribute('playsinline', '');
+      incomingAudio.setAttribute('webkit-playsinline', '');
+      
+      // iOS doesn't support ringtone volume for web apps
+      // But we can try to optimize for the ringer volume by not setting x-webkit-airplay
+      // This makes iOS treat it more like a notification sound
       
       // For Android: Set audio type for proper volume control
       incomingAudio.setAttribute('type', 'audio/mpeg');
       incomingAudio.setAttribute('preload', 'auto');
       
-      // For iOS: Use communications audio category (if supported)
-      if (incomingAudio.setSinkId) {
-        incomingAudio.setSinkId('communications').catch(err => {
-          console.warn("Could not set audio output device:", err);
-        });
+      // Try to use voicechat/communications category (iOS 15+)
+      if (typeof incomingAudio.setSinkId === 'function') {
+        incomingAudio.setSinkId('communications').catch(() => {});
       }
       
-      // Add to DOM but hide it (required for proper audio routing)
-      incomingAudio.style.display = 'none';
-      incomingAudio.style.position = 'absolute';
-      incomingAudio.style.left = '-9999px';
+      // iOS Web Audio Workaround: Add as visible element initially to ensure proper audio routing
+      // Then hide it after it's registered with the audio system
       document.body.appendChild(incomingAudio);
+      incomingAudio.style.position = 'fixed';
+      incomingAudio.style.top = '-1px';
+      incomingAudio.style.left = '-1px';
+      incomingAudio.style.width = '1px';
+      incomingAudio.style.height = '1px';
+      incomingAudio.style.opacity = '0';
+      incomingAudio.style.pointerEvents = 'none';
       
       incomingAudio.onerror = () => {
         console.warn("Failed to load incoming ringtone:", incomingAudio.src);
