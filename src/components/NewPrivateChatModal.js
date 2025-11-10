@@ -5,6 +5,7 @@ import { getUsersList } from '../api/sdk';
 import { useApiAction } from './useAPIAction';
 import { getInitials } from '../utils/common';
 import { FiSearch, FiX } from 'react-icons/fi';
+import UserItem from './common/UserItem';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -166,68 +167,7 @@ const UserList = styled.div`
   }
 `;
 
-const UserItem = styled.div`
-  padding: 14px 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
-  margin-bottom: 6px;
-  
-  &:hover {
-    background: rgba(99, 140, 245, 0.12);
-    border-color: rgba(99, 140, 245, 0.2);
-    transform: translateX(4px);
-  }
 
-  &:active {
-    transform: scale(0.98) translateX(4px);
-  }
-`;
-
-const UserProfilePic = styled.div`
-  position: relative;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-`;
-
-const ProfileImage = styled.img`
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(99, 140, 245, 0.3);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-`;
-
-const UserDetails = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 4px;
-  min-width: 0;
-`;
-
-const UserName = styled.span`
-  font-size: 15px;
-  font-weight: 600;
-  color: white;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const UserId = styled.span`
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
 
 const EmptyState = styled.div`
   text-align: center;
@@ -355,19 +295,11 @@ const NewPrivateChatModal = ({ isOpen, onClose, onCreateChat }) => {
             <LoadingState>Searching...</LoadingState>
           ) : searchResults.length > 0 ? (
             searchResults.map((user) => (
-              <UserItem key={user.id} onClick={() => handleUserSelect(user)}>
-                <UserProfilePic>
-                  <ProfileImage
-                    src={user.profile_pic || 'https://i.pravatar.cc/40'}
-                    alt={getInitials(user.name) || 'User'}
-                    referrerPolicy="no-referrer"
-                  />
-                </UserProfilePic>
-                <UserDetails>
-                  <UserName>{user.name || user.username || 'User'}</UserName>
-                  <UserId>@{user.user_id || user.id}</UserId>
-                </UserDetails>
-              </UserItem>
+              <UserItem 
+                key={user.id} 
+                user={user}
+                onClick={() => handleUserSelect(user)}
+              />
             ))
           ) : searchTerm.trim() ? (
             <EmptyState>No users found</EmptyState>

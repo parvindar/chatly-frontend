@@ -136,23 +136,55 @@ const DropdownMenuContainer = styled.div`
   position: absolute;
   top: 30px;
   right: 10px;
-  background-color: #23272a;
-  border: 1px solid #7289da;
-  border-radius: 4px;
-  z-index: 10;
-  padding: 5px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: rgba(30, 33, 38, 0.95);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1.2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  z-index: 1010;
+  padding: 6px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  min-width: 140px;
+  animation: dropdownFadeIn 0.2s ease-out;
+
+  @keyframes dropdownFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const MenuItem = styled.div`
-  padding: 8px;
+  padding: 10px 14px;
   font-size: 14px;
   color: white;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin-bottom: 2px;
 
-  &:hover {
-    background-color: #3a3f45;
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: rgba(99, 140, 245, 0.25);
+      border: 1px solid rgba(99, 140, 245, 0.3);
+      transform: translateX(2px);
+    }
+  }
+
+  &:active {
+    background: rgba(99, 140, 245, 0.35);
+    transform: scale(0.98);
   }
 `;
 

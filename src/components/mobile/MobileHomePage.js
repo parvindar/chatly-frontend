@@ -16,6 +16,7 @@ import CreateGroupModal from '../CreateGroupModal';
 import NewPrivateChatModal from '../NewPrivateChatModal';
 import AddMemberModal from '../AddMemberModal';
 import EditGroupComponent from '../EditGroupComponent';
+import GroupInfoModal from '../GroupInfoModal';
 import { useVideoCall } from '../../components/useVideoCall'; // Import the custom hook for video call
 
 import colors from '../../styles/colors';
@@ -631,6 +632,7 @@ const MobileHomePage = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
   const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
+  const [isGroupInfoModalOpen, setIsGroupInfoModalOpen] = useState(false);
 
   const [isVideoCallMinimized, setIsVideoCallMinimized] = useState(false);
   const [isGroupCallMinimized, setIsGroupCallMinimized] = useState(false);
@@ -950,8 +952,9 @@ const MobileHomePage = ({
                       selectedGroup.avatar || `https://i.pravatar.cc/40?u=${selectedGroup.id}`
                     } 
                     alt="Chat"
+                    onClick={() => setIsGroupInfoModalOpen(true)}
                   />
-                  <ChatTitle>
+                  <ChatTitle onClick={() => setIsGroupInfoModalOpen(true)}>
                     {selectedGroup.name}
                   </ChatTitle>
 
@@ -1135,6 +1138,16 @@ const MobileHomePage = ({
           handleEditGroup={handleEditGroup}
         />
       )}
+      <GroupInfoModal
+        isOpen={isGroupInfoModalOpen}
+        onClose={() => setIsGroupInfoModalOpen(false)}
+        group={selectedGroup}
+        currentUser={currentUser}
+        onMemberClick={(member) => {
+          setShowUserProfilePopup(member);
+          setIsGroupInfoModalOpen(false);
+        }}
+      />
       <ContentArea>
         {renderContent()}
       </ContentArea>

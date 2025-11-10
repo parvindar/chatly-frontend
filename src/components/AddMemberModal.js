@@ -4,6 +4,7 @@ import colors from '../styles/colors';
 import { getGroupMemberOptions } from '../api/sdk';
 import { useApiAction } from './useAPIAction';
 import _ from 'lodash';
+import UserItem from './common/UserItem';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -120,75 +121,7 @@ const UserList = styled.div`
   }
 `;
 
-const UserItem = styled.div`
-  padding: 14px 12px;
-  border-radius: 12px;
-  cursor: ${props => props.isMember ? 'not-allowed' : 'pointer'};
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
-  margin-bottom: 6px;
-  opacity: ${props => props.isMember ? 0.5 : 1};
-  
-  &:hover {
-    background: ${props => props.isMember ? 'transparent' : 'rgba(99, 140, 245, 0.12)'};
-    border-color: ${props => props.isMember ? 'transparent' : 'rgba(99, 140, 245, 0.2)'};
-    transform: ${props => props.isMember ? 'none' : 'translateX(4px)'};
-  }
 
-  &:active {
-    transform: ${props => props.isMember ? 'none' : 'scale(0.98) translateX(4px)'};
-  }
-`;
-
-const UserProfilePic = styled.div`
-  position: relative;
-  width: 44px;
-  height: 44px;
-  flex-shrink: 0;
-`;
-
-const ProfileImage = styled.img`
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(99, 140, 245, 0.3);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-`;
-
-const UserDetails = styled.div`
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 4px;
-  min-width: 0;
-`;
-
-const UserName = styled.span`
-  font-size: 15px;
-  font-weight: 600;
-  color: white;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const UserId = styled.span`
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const AlreadyInGroupLabel = styled.span`
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
-  font-weight: 500;
-`;
 
 const ModalButton = styled.button`
   width: 100%;
@@ -263,28 +196,18 @@ const AddMemberModal = ({ isOpen, onClose, selectedGroup, onAddMember }) => {
           {searchResults.map((user) => (
             <UserItem
               key={user.id}
-              isMember={user.is_member || isLoading("addMember")}
+              user={user}
+              disabled={user.is_member || isLoading("addMember")}
               onClick={() => {
                 if (!user.is_member && !isLoading("addMember")) {
                   runAction("addMember", () => onAddMember(user.id));
                 }
               }}
-            >
-              <UserProfilePic>
-                <ProfileImage
-                  src={user.profile_pic || 'https://i.pravatar.cc/40'}
-                  alt={user.name}
-                  referrerPolicy="no-referrer"
-                />
-              </UserProfilePic>
-              <UserDetails>
-                <UserName>{user.name}</UserName>
-                <UserId>@{user.user_id}</UserId>
-                {user.is_member && (
-                  <AlreadyInGroupLabel>Already in group</AlreadyInGroupLabel>
-                )}
-              </UserDetails>
-            </UserItem>
+              badge={user.is_member ? {
+                variant: 'already-member',
+                text: 'Already in group'
+              } : null}
+            />
           ))}
         </UserList>
         <ModalButton onClick={handleClose}>
