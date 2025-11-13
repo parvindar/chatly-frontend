@@ -10,6 +10,7 @@ export const useVideoCall = ({ id: userId }) => {
   const outgoingRingtoneRef = useRef(null);
   const incomingRingtoneRef = useRef(null);
   const vibrationIntervalRef = useRef(null);
+  const audioUnlockedRef = useRef(false);
   const [currentCall, setCurrentCall] = useState(null);
   const [videoCallState, setVideoCallState] = useState("idle"); // New state for video call status
   const [remoteICECandidate, setRemoteICECandidate] = useState([]);
@@ -203,6 +204,7 @@ export const useVideoCall = ({ id: userId }) => {
   };
 
   const handleOffer = async ({ from, sdp }) => {
+    stopRingtone();
     setVideoCallState("running");
     const stream = await navigator.mediaDevices.getUserMedia({
       video: true,
@@ -423,10 +425,10 @@ export const useVideoCall = ({ id: userId }) => {
   const playRingtone = (type = 'incoming') => {
     const ringtone = type === 'outgoing' ? outgoingRingtoneRef.current : incomingRingtoneRef.current;
     if (ringtone) {
-      const startTime = type === 'incoming' ? 4.85 : 0;
+      // const startTime = type === 'incoming' ? 0 : 0;
       
       ringtone.pause();
-      ringtone.currentTime = startTime;
+      // ringtone.currentTime = startTime;
       
       ringtone.play().catch(err => {
         console.warn(`Failed to play ${type} ringtone:`, err);
@@ -443,7 +445,7 @@ export const useVideoCall = ({ id: userId }) => {
     }
     if (incomingRingtoneRef.current) {
       incomingRingtoneRef.current.pause();
-      incomingRingtoneRef.current.currentTime = 4.85; // Reset to incoming start position
+      incomingRingtoneRef.current.currentTime = 0; // Reset to beginning of file (not 4.85)
     }
     stopVibration(); // Stop vibration when stopping ringtone
     setIsRingtonePlaying(false);
@@ -499,7 +501,7 @@ export const useVideoCall = ({ id: userId }) => {
       // Create audio element for incoming ringtone
       const incomingAudio = document.createElement('audio');
       const publicUrl = process.env.PUBLIC_URL || '';
-      incomingAudio.src = `${publicUrl}/sounds/gta_ringtone.mp3`;
+      incomingAudio.src = `${publicUrl}/sounds/gta-ringtone-2.mp3`;
       incomingAudio.loop = true;
       incomingAudio.preload = "auto";
       incomingAudio.volume = 1.0; // Set to max for iOS to use system volume
@@ -538,8 +540,43 @@ export const useVideoCall = ({ id: userId }) => {
       incomingRingtoneRef.current = incomingAudio;
     }
 
+    // Unlock audio on user interaction for iOS
+    const unlockAudio = () => {
+      if (!audioUnlockedRef.current) {
+        console.log('Unlocking audio for iOS...');
+        
+        // Play and immediately pause both ringtones to unlock audio
+        if (outgoingRingtoneRef.current) {
+          outgoingRingtoneRef.current.play().then(() => {
+            outgoingRingtoneRef.current.pause();
+            outgoingRingtoneRef.current.currentTime = 0;
+          }).catch(() => {});
+        }
+        
+        if (incomingRingtoneRef.current) {
+          incomingRingtoneRef.current.play().then(() => {
+            incomingRingtoneRef.current.pause();
+            incomingRingtoneRef.current.currentTime = 0;
+          }).catch(() => {});
+        }
+        
+        audioUnlockedRef.current = true;
+        console.log('Audio unlocked');
+      }
+    };
+
+    // Add event listeners for user interaction
+    const events = ['click', 'touchstart', 'touchend', 'scroll'];
+    events.forEach(event => {
+      document.addEventListener(event, unlockAudio, { once: true, passive: true });
+    });
+
     // Cleanup function to remove audio elements
     return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, unlockAudio);
+      });
+      
       if (outgoingRingtoneRef.current) {
         outgoingRingtoneRef.current.pause();
         if (outgoingRingtoneRef.current.parentNode) {
