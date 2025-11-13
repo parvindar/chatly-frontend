@@ -423,49 +423,14 @@ export const useVideoCall = ({ id: userId }) => {
   const playRingtone = (type = 'incoming') => {
     const ringtone = type === 'outgoing' ? outgoingRingtoneRef.current : incomingRingtoneRef.current;
     if (ringtone) {
-      // Set the start time - 4.85 seconds for incoming, 0 for outgoing
       const startTime = type === 'incoming' ? 4.85 : 0;
       
-      // Pause first
       ringtone.pause();
+      ringtone.currentTime = startTime;
       
-      // iOS Safari workaround: Use load() to reset the audio element
-      ringtone.load();
-      
-      // Wait for the audio to be ready
-      const playAudio = () => {
-        // Set currentTime after load
-        try {
-          ringtone.currentTime = startTime;
-        } catch (err) {
-          console.warn(`Failed to set currentTime for ${type} ringtone:`, err);
-        }
-        
-        // Multiple attempts to set currentTime for iOS
-        let attempts = 0;
-        const setTimeAndPlay = () => {
-          if (attempts < 3 && Math.abs(ringtone.currentTime - startTime) > 0.1) {
-            ringtone.currentTime = startTime;
-            attempts++;
-            setTimeout(setTimeAndPlay, 10);
-          } else {
-            ringtone.play().catch(err => {
-              console.warn(`Failed to play ${type} ringtone:`, err);
-            });
-          }
-        };
-        
-        setTimeAndPlay();
-      };
-      
-      // Use loadedmetadata event for iOS Safari
-      if (ringtone.readyState >= 2) {
-        // Already loaded
-        playAudio();
-      } else {
-        ringtone.addEventListener('loadedmetadata', playAudio, { once: true });
-        ringtone.addEventListener('canplay', playAudio, { once: true });
-      }
+      ringtone.play().catch(err => {
+        console.warn(`Failed to play ${type} ringtone:`, err);
+      });
       
       setIsRingtonePlaying(true);
     }
