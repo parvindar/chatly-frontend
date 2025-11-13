@@ -548,19 +548,19 @@ export const useVideoCall = ({ id: userId }) => {
         // Mute, disable loop, play, pause, reset, restore for incoming ringtone only
         if (incomingRingtoneRef.current) {
           const audio = incomingRingtoneRef.current;
-          const originalVolume = audio.volume;
+          // const originalVolume = audio.volume;
           
-          audio.volume = 0; // Mute BEFORE playing
-          
-          audio.play().then(() => {
-            // Immediately pause after play starts
-            audio.pause();
-            audio.currentTime = 0;
-            audio.volume = originalVolume; // Restore volume
-          }).catch(() => {
-            // Restore on error
-            audio.volume = originalVolume;
-          });
+          // audio.volume = 0; // Mute BEFORE playing
+          audio.pause();
+          // audio.play().then(() => {
+          //   // Immediately pause after play starts
+          //   audio.pause();
+          //   audio.currentTime = 0;
+          //   audio.volume = originalVolume; // Restore volume
+          // }).catch(() => {
+          //   // Restore on error
+          //   audio.volume = originalVolume;
+          // });
         }
         
         audioUnlockedRef.current = true;
