@@ -545,17 +545,21 @@ export const useVideoCall = ({ id: userId }) => {
       if (!audioUnlockedRef.current) {
         console.log('Unlocking audio for iOS...');
         
-        // Mute, play, pause, unmute, and reset only incoming ringtone to unlock audio silently
-        
+        // Mute, disable loop, play, pause, reset, restore for incoming ringtone only
         if (incomingRingtoneRef.current) {
-          const originalVolume = incomingRingtoneRef.current.volume;
-          incomingRingtoneRef.current.volume = 0; // Mute
-          incomingRingtoneRef.current.play().then(() => {
-            incomingRingtoneRef.current.pause();
-            incomingRingtoneRef.current.currentTime = 0;
-            incomingRingtoneRef.current.volume = originalVolume; // Restore volume
+          const audio = incomingRingtoneRef.current;
+          const originalVolume = audio.volume;
+          
+          audio.volume = 0; // Mute BEFORE playing
+          
+          audio.play().then(() => {
+            // Immediately pause after play starts
+            audio.pause();
+            audio.currentTime = 0;
+            audio.volume = originalVolume; // Restore volume
           }).catch(() => {
-            incomingRingtoneRef.current.volume = originalVolume; // Restore on error
+            // Restore on error
+            audio.volume = originalVolume;
           });
         }
         
